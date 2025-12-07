@@ -9,6 +9,7 @@ import {
   UserRound,
   Building,
   List,
+  Banknote
 } from "lucide-react";
 
 type SideMenuItem = {
@@ -27,51 +28,15 @@ export const data: SideMenuItem[] = [
   },
   {
     title: "Fund Houses",
-    url: "/dashboard/fund-houses",
+    url: "/fund-houses",
     icon: Building,
     description: "View performance by fund house",
   },
   {
     title: "Schemes",
-    url: "/dashboard/schemes",
+    url: "/schemes",
     icon: List,
     description: "View performance by scheme",
-  },
-  {
-    title: "Services",
-    url: "/services",
-    icon: FileText,
-    description: "Manage the services you offer",
-  },
-  {
-    title: "Bookings",
-    url: "/bookings",
-    icon: Calendar,
-    description: "View and manage customer appointments",
-  },
-  {
-    title: "Discounts",
-    url: "/discounts",
-    icon: Tag,
-    description: "Create and manage promotional discounts",
-  },
-  {
-    title: "Membership",
-    url: "/membership",
-    icon: Award,
-    description: "Manage customer loyalty programs and memberships",
-  },
-  {
-    title: "Inventory",
-    url: "/inventory",
-    icon: Package,
-    description: "Track and manage your product stock",
-  },
-  {
-    title: "Employees",
-    url: "/employees",
-    icon: UserRound,
-    description: "Manage your staff and their roles",
   },
   {
     title: "Settings",

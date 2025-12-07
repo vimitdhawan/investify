@@ -10,6 +10,7 @@ export interface FundHouseSummary {
 export interface SchemeSummary {
   amc: string;
   schemeName: string;
+  isin: string;
   investedValue: number;
   marketValue: number;
   absoluteGainLoss: number;

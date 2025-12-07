@@ -1,6 +1,7 @@
-import { Portfolio, PortfolioSummary } from "@/lib/types/portfolio";
+import { Portfolio, PortfolioSummary, Transaction, Scheme } from "@/lib/types/portfolio";
 import { getAllMutualFundSchemes, getSchemeNav } from "@/lib/repository/mf";
 import { FundHouseSummary, SchemeSummary } from "@/lib/types/summary";
+import { TransactionType, MutualFundType } from "@/lib/types/enums";
 import fs from "fs/promises";
 import path from "path";
 
@@ -74,8 +75,8 @@ export async function getPortfolioSummary(): Promise<PortfolioSummary> {
 
     for (const mutualFund of portfolio.mutual_funds) {
         for (const scheme of mutualFund.schemes) {
-            const purchaseTransactions = scheme.transactions.filter(t => t.type === 'PURCHASE_SIP' || t.type === 'PURCHASE' || t.type === 'SWITCH_IN');
-            const redemptionTransactions = scheme.transactions.filter(t => t.type === 'REDEMPTION' || t.type === 'SWITCH_OUT');
+            const purchaseTransactions = scheme.transactions.filter(t => t.type === TransactionType.PurchaseSIP || t.type === TransactionType.Purchase || t.type === TransactionType.SwitchIn);
+            const redemptionTransactions = scheme.transactions.filter(t => t.type === TransactionType.Redemption || t.type === TransactionType.SwitchOut);
 
             let totalUnitsPurchased = 0;
             let totalCost = 0;
@@ -134,8 +135,8 @@ export async function getFundHouseSummary(): Promise<FundHouseSummary[]> {
         }
 
         for (const scheme of mutualFund.schemes) {
-            const purchaseTransactions = scheme.transactions.filter(t => t.type === 'PURCHASE_SIP' || t.type === 'PURCHASE' || t.type === 'SWITCH_IN');
-            const redemptionTransactions = scheme.transactions.filter(t => t.type === 'REDEMPTION' || t.type === 'SWITCH_OUT');
+            const purchaseTransactions = scheme.transactions.filter(t => t.type === TransactionType.PurchaseSIP || t.type === TransactionType.Purchase || t.type === TransactionType.SwitchIn);
+            const redemptionTransactions = scheme.transactions.filter(t => t.type === TransactionType.Redemption || t.type === TransactionType.SwitchOut);
 
             let totalUnitsPurchased = 0;
             let totalCost = 0;
@@ -180,8 +181,8 @@ export async function getSchemeSummary(): Promise<SchemeSummary[]> {
     for (const mutualFund of portfolio.mutual_funds) {
         for (const scheme of mutualFund.schemes) {
             let realizedProfit = 0;
-            const purchaseTransactions = scheme.transactions.filter(t => t.type === 'PURCHASE_SIP' || t.type === 'PURCHASE' || t.type === 'SWITCH_IN');
-            const redemptionTransactions = scheme.transactions.filter(t => t.type === 'REDEMPTION' || t.type === 'SWITCH_OUT');
+            const purchaseTransactions = scheme.transactions.filter(t => t.type === TransactionType.PurchaseSIP || t.type === TransactionType.Purchase || t.type === TransactionType.SwitchIn);
+            const redemptionTransactions = scheme.transactions.filter(t => t.type === TransactionType.Redemption || t.type === TransactionType.SwitchOut);
 
             let totalUnitsPurchased = 0;
             let totalCost = 0;
@@ -215,6 +216,7 @@ export async function getSchemeSummary(): Promise<SchemeSummary[]> {
             summary.push({
                 amc: mutualFund.amc,
                 schemeName: scheme.name,
+                isin: scheme.isin,
                 investedValue,
                 marketValue,
                 absoluteGainLoss,
@@ -225,4 +227,15 @@ export async function getSchemeSummary(): Promise<SchemeSummary[]> {
     }
     
     return summary;
+}
+
+export async function getTransactionsByIsin(isin: string): Promise<Transaction[]> {
+    const portfolio = await getPortfolio();
+    for (const mf of portfolio.mutual_funds) {
+        const foundScheme = mf.schemes.find(s => s.isin === isin);
+        if (foundScheme) {
+            return foundScheme.transactions;
+        }
+    }
+    return [];
 }

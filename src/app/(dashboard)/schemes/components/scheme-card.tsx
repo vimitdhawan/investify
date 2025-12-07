@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { SchemeSummary } from "@/lib/types/summary";
+import Link from "next/link";
 
 interface SchemeCardProps {
   summary: SchemeSummary;
@@ -20,6 +21,7 @@ export function SchemeCard({ summary }: SchemeCardProps) {
     const Icon = isGain ? IconTrendingUp : IconTrendingDown;
 
   return (
+    <Link href={`/schemes/${summary.isin}/transactions`}>
     <Card className="@container/card">
       <CardHeader>
         <CardDescription>{summary.schemeName}</CardDescription>
@@ -66,5 +68,6 @@ export function SchemeCard({ summary }: SchemeCardProps) {
         </div>
       </CardFooter>
     </Card>
+    </Link>
   );
 }

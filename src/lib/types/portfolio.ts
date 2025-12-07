@@ -1,3 +1,4 @@
+import { TransactionType, MutualFundType } from "@/lib/types/enums";
 
 export interface Investor {
   address: string;
@@ -38,13 +39,14 @@ export interface Gain {
 }
 
 export interface Transaction {
+  id: string;
   amount: number;
   balance: number | null;
   date: string;
   description: string;
   dividend_rate: number | null;
   nav: number | null;
-  type: string;
+  type: TransactionType;
   units: number | null;
 }
 
@@ -57,7 +59,7 @@ export interface Scheme {
   nav: number;
   nominees: string[];
   transactions: Transaction[];
-  type: string;
+  type: MutualFundType;
   units: number;
   value: number;
   avgNav?: number;
@@ -107,4 +109,19 @@ export interface PortfolioSummary {
   absoluteGainLoss: number;
   absoluteGainLossPercentage: number;
   realizedProfit: number;
+}
+
+export interface TransactionView {
+  date: string;
+  description: string;
+  type: TransactionType;
+  nav: number | null;
+  units: number | null;
+  balance: number | null;
+  investedAmount?: number;
+  actualInvestment?: number;
+  stampDuty?: number;
+  withdrawAmount?: number;
+  sttTax?: number;
+  ltcgStcgTax?: number;
 }
