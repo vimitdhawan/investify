@@ -11,6 +11,7 @@ export async function getPortfolio(): Promise<Portfolio> {
   return JSON.parse(fileContent);
 }
 
+
 export async function getUpdatedPortfolio(): Promise<Portfolio> {
   const portfolio = await getPortfolio();
   const allSchemes = await getAllMutualFundSchemes();
@@ -39,7 +40,7 @@ export async function getUpdatedPortfolio(): Promise<Portfolio> {
             continue;
         }
       }
-
+      
       try {
         const navData = await getSchemeNav(schemeCode);
         if (navData.data && navData.data.length > 0) {
@@ -176,7 +177,8 @@ export async function getFundHouseSummary(): Promise<FundHouseSummary[]> {
 
 export async function getSchemeSummary(): Promise<SchemeSummary[]> {
     const portfolio = await getUpdatedPortfolio();
-    const summary: SchemeSummary[] = [];
+    
+    const summaries: SchemeSummary[] = [];
 
     for (const mutualFund of portfolio.mutual_funds) {
         for (const scheme of mutualFund.schemes) {
@@ -213,8 +215,9 @@ export async function getSchemeSummary(): Promise<SchemeSummary[]> {
                 absoluteGainLossPercentage = (realizedProfit / investedValue) * 100;
             }
 
-            summary.push({
+            const summary: SchemeSummary = {
                 amc: mutualFund.amc,
+                folio_number: mutualFund.folio_number,
                 schemeName: scheme.name,
                 isin: scheme.isin,
                 investedValue,
@@ -222,17 +225,19 @@ export async function getSchemeSummary(): Promise<SchemeSummary[]> {
                 absoluteGainLoss,
                 absoluteGainLossPercentage,
                 realizedProfit: realizedProfit,
-            });
+            };
+            summaries.push(summary);
         }
     }
     
-    return summary;
+    return summaries;
 }
 
-export async function getTransactionsByIsin(isin: string): Promise<Transaction[]> {
+export async function getTransactionsByIsinAndFolio(isin: string, folio_number: string): Promise<Transaction[]> {
     const portfolio = await getPortfolio();
-    for (const mf of portfolio.mutual_funds) {
-        const foundScheme = mf.schemes.find(s => s.isin === isin);
+    const mutualFund = portfolio.mutual_funds.find(mf => mf.folio_number === folio_number);
+    if (mutualFund) {
+        const foundScheme = mutualFund.schemes.find(s => s.isin === isin);
         if (foundScheme) {
             return foundScheme.transactions;
         }

@@ -1,5 +1,5 @@
 import { DataTable } from "@/components/transactions/data-table";
-import { getTransactionsByIsin } from "@/lib/repository/portfolio";
+import { getTransactionsByIsinAndFolio } from "@/lib/repository/portfolio";
 import { Transaction, TransactionView } from "@/lib/types/portfolio";
 import { TransactionType } from "@/lib/types/enums";
 
@@ -96,11 +96,24 @@ function createTransactionViews(transactions: Transaction[]): TransactionView[] 
   return views.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
-export default async function SchemeTransactionsPage(props: {
-  params: Promise<{ isin: string }>;
+export default async function SchemeTransactionsPage({
+    params,
+    searchParams
+}: {
+    params: { isin: string } | Promise<{ isin: string }>,
+    searchParams: { folio: string } | Promise<{ folio: string }>
 }) {
-  const { isin } = await props.params;
-  const transactions = await getTransactionsByIsin(isin);
+  const resolvedParams = await Promise.resolve(params);
+  const { isin } = resolvedParams;
+
+  const resolvedSearchParams = await Promise.resolve(searchParams);
+  const { folio } = resolvedSearchParams;
+
+  if (!folio) {
+    return <div className="p-4">Folio number is required to view transactions.</div>;
+  }
+
+  const transactions = await getTransactionsByIsinAndFolio(isin, folio);
   const transactionViews = createTransactionViews(transactions);
 
   return <DataTable data={transactionViews} />;

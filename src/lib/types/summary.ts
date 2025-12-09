@@ -16,4 +16,5 @@ export interface SchemeSummary {
   absoluteGainLoss: number;
   absoluteGainLossPercentage: number;
   realizedProfit: number;
+  folio_number: string;
 }

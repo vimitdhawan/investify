@@ -27,6 +27,7 @@ let isinSchemeCodeCache: Map<string, string> | null = null;
 let lastFetchedIsinMapTime: Date | null = null;
 const ISIN_MAP_CACHE_DURATION_MS = 12 * 60 * 60 * 1000; // 12 hours
 
+
 export async function fetchAndCacheAllSchemesMap(): Promise<Map<string, string>> {
   if (isinSchemeCodeCache && lastFetchedIsinMapTime && (new Date().getTime() - lastFetchedIsinMapTime.getTime() < ISIN_MAP_CACHE_DURATION_MS)) {
     console.log("Using cached ISIN to SchemeCode map.");
