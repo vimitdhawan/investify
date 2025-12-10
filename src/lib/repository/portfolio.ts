@@ -168,6 +168,7 @@ export async function getSchemeSummary(): Promise<SchemeSummary[]> {
 
             let totalUnitsPurchased = 0;
             let totalCost = 0;
+            let withdrawalAmount = 0;
 
             for (const t of purchaseTransactions) {
                 if (t.units && t.nav) {
@@ -182,6 +183,7 @@ export async function getSchemeSummary(): Promise<SchemeSummary[]> {
                 if (t.units && t.nav) {
                     realizedProfit += (t.nav - scheme.avgNav) * Math.abs(t.units);
                 }
+                withdrawalAmount += t.amount;
             }
             
             const investedValue = scheme.cost;
@@ -208,6 +210,7 @@ export async function getSchemeSummary(): Promise<SchemeSummary[]> {
                 latestNavDate: scheme.latestNavDate,
                 navValue: scheme.nav,
                 totalAvailableUnits: scheme.units,
+                withdrawalAmount,
             };
             summaries.push(summary);
         }

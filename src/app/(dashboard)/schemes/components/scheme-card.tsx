@@ -2,6 +2,7 @@ import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
+  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
@@ -15,105 +16,86 @@ interface SchemeCardProps {
   summary: SchemeSummary;
 }
 
+function FinancialDetail({ label, value, valueClass, isLoss = false }: { label: string, value: string, valueClass?: string, isLoss?: boolean }) {
+    return (
+        <div className="flex items-baseline justify-between">
+            <span className="text-muted-foreground">{label}</span>
+            <span className={cn("font-medium", valueClass)}>
+                {value}
+            </span>
+        </div>
+    );
+}
+
 export function SchemeCard({ summary }: SchemeCardProps) {
-    const isGain = summary.absoluteGainLoss >= 0;
-    const gainLossColorClass = isGain ? "text-green-500" : "text-red-500";
-    const Icon = isGain ? IconTrendingUp : IconTrendingDown;
+  const isClosed = summary.marketValue === 0;
+  const isGain = isClosed ? summary.realizedProfit >= 0 : summary.absoluteGainLoss >= 0;
+  const gainLossColorClass = isGain ? "text-green-500" : "text-red-500";
+
+  const primaryValue = isClosed ? summary.withdrawalAmount : summary.marketValue;
+  const primaryLabel = isClosed ? "Withdrawn" : "Market Value";
 
   return (
-    <Link href={`/schemes/${summary.isin}/transactions?folio=${summary.folio_number}`}>
-      <Card className="@container/card">
+    <Link href={`/schemes/${summary.isin}/transactions?folio=${summary.folio_number}`} className="flex">
+      <Card className="flex flex-col w-full @container/card">
         <CardHeader className="flex flex-col gap-2">
-          <CardDescription className="text-base font-semibold">
-            {summary.schemeName}
-          </CardDescription>
-          <div className="text-sm text-muted-foreground">{`Folio: ${summary.folio_number}`}</div>
-
-          <div className="flex items-baseline justify-between pt-2">
-            <CardTitle className="text-2xl font-bold tabular-nums @[250px]/card:text-3xl">
-                {summary.marketValue.toLocaleString("en-IN", {
-                    style: "currency",
-                    currency: "INR",
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                })}
-            </CardTitle>
+          <div className="flex justify-between items-start">
+            <div className="flex-grow">
+              <CardTitle className="text-base font-semibold leading-snug">
+                {summary.schemeName}
+              </CardTitle>
+              <CardDescription className="text-xs pt-1">{`Folio: ${summary.folio_number}`}</CardDescription>
+            </div>
+            <Badge variant={isClosed ? "destructive" : "default"} className="ml-2 whitespace-nowrap">
+              {isClosed ? "Closed" : "Active"}
+            </Badge>
           </div>
-
-          <div className="flex items-baseline justify-between text-sm">
-            <span className="text-muted-foreground">Invested:</span>
-            <span className="font-medium">
-                {summary.investedValue.toLocaleString("en-IN", {
-                    style: "currency",
-                    currency: "INR",
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                })}
-            </span>
-          </div>
-          
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className={cn("flex items-baseline justify-between w-full text-base", gainLossColorClass)}>
-            <div className="flex items-center gap-1">
-                <Icon className="size-4" />
-                <span className="text-muted-foreground">Abs. Gain/Loss:</span>
-            </div>
-            <span className="font-medium">
-                {summary.absoluteGainLoss.toLocaleString("en-IN", {
-                    style: "currency",
-                    currency: "INR",
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                })}
-                 {` (${summary.absoluteGainLossPercentage?.toFixed(2)}%)`}
-            </span>
-          </div>
 
-          {summary.realizedProfit !== 0 && (
-            <div className="flex items-baseline justify-between w-full">
-                <span className="text-muted-foreground">Realized Profit:</span>
-                <span className="font-medium">
-                    {summary.realizedProfit.toLocaleString("en-IN", {
-                        style: "currency",
-                        currency: "INR",
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
+        <CardContent className="flex flex-col gap-2 text-sm flex-grow">
+            <FinancialDetail 
+                label={primaryLabel}
+                value={primaryValue?.toLocaleString("en-IN", {
+                    style: "currency", currency: "INR", minimumFractionDigits: 2, maximumFractionDigits: 2,
+                }) ?? "N/A"}
+            />
+            <FinancialDetail 
+                label="Invested"
+                value={summary.investedValue.toLocaleString("en-IN", {
+                    style: "currency", currency: "INR", minimumFractionDigits: 2, maximumFractionDigits: 2,
+                })}
+            />
+            {!isClosed && (
+                <FinancialDetail 
+                    label="Abs. Gain/Loss"
+                    value={`${summary.absoluteGainLoss.toLocaleString("en-IN", {
+                        style: "currency", currency: "INR", minimumFractionDigits: 2, maximumFractionDigits: 2,
+                    })} (${summary.absoluteGainLossPercentage?.toFixed(2)}%)`}
+                    valueClass={gainLossColorClass}
+                />
+            )}
+            {summary.realizedProfit !== 0 && (
+                <FinancialDetail 
+                    label="Realized Profit"
+                    value={summary.realizedProfit.toLocaleString("en-IN", {
+                        style: "currency", currency: "INR", minimumFractionDigits: 2, maximumFractionDigits: 2,
                     })}
-                </span>
-            </div>
-          )}
+                    valueClass={gainLossColorClass}
+                />
+            )}
+        </CardContent>
+
+        <CardFooter className="flex-col items-start gap-1.5 text-xs text-muted-foreground pt-4">
+          <div className="h-px w-full bg-border mb-2" />
           
-          <div className="h-px w-full bg-border my-1" /> {/* Separator */}
-
           {summary.navValue && summary.latestNavDate && (
-            <>
-              <div className="flex items-baseline justify-between w-full">
-                <span className="text-muted-foreground">NAV:</span>
-                <span className="font-medium">
-                    {summary.navValue.toLocaleString("en-IN", {
-                        style: "currency",
-                        currency: "INR",
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                    })}
-                </span>
-              </div>
-              <div className="flex items-baseline justify-between w-full">
-                <span className="text-muted-foreground">NAV Date:</span>
-                <span className="font-medium">{summary.latestNavDate}</span>
-              </div>
-            </>
+            <div className="flex justify-between w-full">
+              <span>NAV: {summary.navValue.toFixed(2)} as on {summary.latestNavDate}</span>
+            </div>
           )}
-          {summary.totalAvailableUnits !== undefined && (
-            <div className="flex items-baseline justify-between w-full">
-              <span className="text-muted-foreground">Units:</span>
-              <span className="font-medium">
-                {summary.totalAvailableUnits.toLocaleString("en-IN", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 4,
-                })}
-              </span>
+          {summary.totalAvailableUnits !== undefined && summary.totalAvailableUnits > 0 && (
+            <div className="flex justify-between w-full">
+              <span>Units: {summary.totalAvailableUnits.toFixed(4)}</span>
             </div>
           )}
         </CardFooter>

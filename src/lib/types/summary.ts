@@ -22,6 +22,7 @@ export interface SchemeSummary {
   latestNavDate?: string;
   navValue?: number;
   totalAvailableUnits?: number;
+  withdrawalAmount?: number;
 }
 
 export interface DashboardSummary extends PortfolioSummary {
