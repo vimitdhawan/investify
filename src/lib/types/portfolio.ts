@@ -63,6 +63,7 @@ export interface Scheme {
   units: number;
   value: number;
   avgNav?: number;
+  schemeCode?: string;
 }
 
 export interface SchemeAdditionalInfo {
@@ -101,6 +102,7 @@ export interface Portfolio {
   investor: Investor;
   meta: Meta;
   mutual_funds: MutualFund[];
+  latestNavDate?: string;
 }
 
 export interface PortfolioSummary {

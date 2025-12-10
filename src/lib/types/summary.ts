@@ -1,3 +1,5 @@
+import { PortfolioSummary } from "./portfolio";
+
 export interface FundHouseSummary {
   amc: string;
   investedValue: number;
@@ -17,4 +19,11 @@ export interface SchemeSummary {
   absoluteGainLossPercentage: number;
   realizedProfit: number;
   folio_number: string;
+}
+
+export interface DashboardSummary extends PortfolioSummary {
+    latestNavDate?: string;
+    prevDayValue?: number;
+    prevDayChange?: number;
+    prevDayChangePercentage?: number;
 }
