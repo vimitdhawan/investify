@@ -197,6 +197,20 @@ export async function getSchemeSummary(): Promise<SchemeSummary[]> {
                 absoluteGainLossPercentage = (realizedProfit / investedValue) * 100;
             }
 
+            let prevDayNavValue: number | undefined;
+            let prevDayChangePercentage: number | undefined;
+
+            const navHistory = historicalNavCache.get(scheme.schemeCode || "");
+            if (navHistory && navHistory.length > 1 && scheme.nav !== undefined) { // Check for undefined scheme.nav
+                const secondLatestNavEntry = navHistory[1]; // Second latest NAV entry
+                const secondLatestNav = parseFloat(secondLatestNavEntry.nav);
+                
+                if (secondLatestNav > 0) {
+                    prevDayNavValue = secondLatestNav;
+                    prevDayChangePercentage = ((scheme.nav - prevDayNavValue) / prevDayNavValue) * 100;
+                }
+            }
+
             const summary: SchemeSummary = {
                 amc: mutualFund.amc,
                 folio_number: mutualFund.folio_number,
@@ -211,6 +225,8 @@ export async function getSchemeSummary(): Promise<SchemeSummary[]> {
                 navValue: scheme.nav,
                 totalAvailableUnits: scheme.units,
                 withdrawalAmount,
+                prevDayNavValue,
+                prevDayChangePercentage,
             };
             summaries.push(summary);
         }

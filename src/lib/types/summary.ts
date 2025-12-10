@@ -23,6 +23,8 @@ export interface SchemeSummary {
   navValue?: number;
   totalAvailableUnits?: number;
   withdrawalAmount?: number;
+  prevDayNavValue?: number;
+  prevDayChangePercentage?: number;
 }
 
 export interface DashboardSummary extends PortfolioSummary {

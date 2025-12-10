@@ -66,13 +66,24 @@ export function SchemeCard({ summary }: SchemeCardProps) {
                 })}
             />
             {!isClosed && (
-                <FinancialDetail 
-                    label="Abs. Gain/Loss"
-                    value={`${summary.absoluteGainLoss.toLocaleString("en-IN", {
-                        style: "currency", currency: "INR", minimumFractionDigits: 2, maximumFractionDigits: 2,
-                    })} (${summary.absoluteGainLossPercentage?.toFixed(2)}%)`}
-                    valueClass={gainLossColorClass}
-                />
+                <>
+                    <FinancialDetail 
+                        label="Abs. Gain/Loss"
+                        value={`${summary.absoluteGainLoss.toLocaleString("en-IN", {
+                            style: "currency", currency: "INR", minimumFractionDigits: 2, maximumFractionDigits: 2,
+                        })} (${summary.absoluteGainLossPercentage?.toFixed(2)}%)`}
+                        valueClass={gainLossColorClass}
+                    />
+                    {summary.prevDayChangePercentage !== undefined && (
+                        <div className="flex items-baseline justify-between">
+                            <span className="text-muted-foreground">Day's Change:</span>
+                            <span className={cn("font-medium flex items-center gap-1", summary.prevDayChangePercentage >= 0 ? "text-green-500" : "text-red-500")}>
+                                {summary.prevDayChangePercentage >= 0 ? <IconTrendingUp className="size-4" /> : <IconTrendingDown className="size-4" />}
+                                {`${summary.prevDayChangePercentage.toFixed(2)}%`}
+                            </span>
+                        </div>
+                    )}
+                </>
             )}
             {summary.realizedProfit !== 0 && (
                 <FinancialDetail 
