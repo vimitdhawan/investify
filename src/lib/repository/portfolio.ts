@@ -217,6 +217,77 @@ export async function getSchemeSummary(): Promise<SchemeSummary[]> {
     return summaries;
 }
 
+export async function getFundHouseSummary(): Promise<FundHouseSummary[]> {
+    const portfolio = await getUpdatedPortfolio();
+    const fundHouseMap = new Map<string, FundHouseSummary>();
+
+    for (const mutualFund of portfolio.mutual_funds) {
+        const amc = mutualFund.amc;
+        let fundHouseSummary = fundHouseMap.get(amc);
+
+        if (!fundHouseSummary) {
+            fundHouseSummary = {
+                amc,
+                investedValue: 0,
+                marketValue: 0,
+                absoluteGainLoss: 0,
+                absoluteGainLossPercentage: 0, // This will be recalculated later
+                realizedProfit: 0,
+            };
+            fundHouseMap.set(amc, fundHouseSummary);
+        }
+
+        for (const scheme of mutualFund.schemes) {
+            let realizedProfit = 0;
+            const purchaseTransactions = scheme.transactions.filter(t => t.type === TransactionType.PurchaseSIP || t.type === TransactionType.Purchase || t.type === TransactionType.SwitchIn);
+            const redemptionTransactions = scheme.transactions.filter(t => t.type === TransactionType.Redemption || t.type === TransactionType.SwitchOut);
+
+            let totalUnitsPurchased = 0;
+            let totalCost = 0;
+
+            for (const t of purchaseTransactions) {
+                if (t.units && t.nav) {
+                    totalUnitsPurchased += t.units;
+                    totalCost += t.units * t.nav;
+                }
+            }
+            
+            scheme.avgNav = totalUnitsPurchased > 0 ? totalCost / totalUnitsPurchased : 0;
+
+            for (const t of redemptionTransactions) {
+                if (t.units && t.nav) {
+                    realizedProfit += (t.nav - scheme.avgNav) * Math.abs(t.units);
+                }
+            }
+            
+            const investedValue = scheme.cost;
+            let marketValue = scheme.value;
+            let absoluteGainLoss = scheme.gain.absolute;
+
+            if (scheme.additional_info.close_units === 0) {
+                marketValue = 0;
+                absoluteGainLoss = 0;
+            }
+
+            fundHouseSummary.investedValue += investedValue;
+            fundHouseSummary.marketValue += marketValue;
+            fundHouseSummary.absoluteGainLoss += absoluteGainLoss;
+            fundHouseSummary.realizedProfit += realizedProfit;
+        }
+    }
+
+    // Recalculate percentage for each fund house summary
+    fundHouseMap.forEach(summary => {
+        if (summary.investedValue > 0) {
+            summary.absoluteGainLossPercentage = (summary.absoluteGainLoss / summary.investedValue) * 100;
+        } else {
+            summary.absoluteGainLossPercentage = 0;
+        }
+    });
+
+    return Array.from(fundHouseMap.values());
+}
+
 export async function getHistoricalPortfolioValue(portfolio: Portfolio, date: string): Promise<number> {
     let totalHistoricalValue = 0;
 
