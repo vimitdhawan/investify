@@ -1,7 +1,7 @@
 import { Portfolio, PortfolioSummary, Transaction, Scheme } from "@/lib/types/portfolio";
 import { getAllMutualFundSchemes } from "@/lib/repository/mf";
 import { DashboardSummary, FundHouseSummary, SchemeSummary } from "@/lib/types/summary";
-import { fetchLatestNavData, getSchemeNavOnDate } from "@/lib/mfapi";
+import { fetchLatestNavData, getSchemeNavOnDate, historicalNavCache } from "@/lib/mfapi";
 import { TransactionType } from "@/lib/types/enums";
 import fs from "fs/promises";
 import path from "path";
@@ -58,6 +58,7 @@ export async function getUpdatedPortfolio(): Promise<Portfolio> {
           const latestNavEntry = navData.data[0];
           const latestNav = parseFloat(latestNavEntry.nav);
           const navDate = parseDateString(latestNavEntry.date); // Use the helper
+          scheme.latestNavDate = latestNavEntry.date;
 
           if (!mostRecentNavDate || navDate > mostRecentNavDate) {
               mostRecentNavDate = navDate;
@@ -133,16 +134,11 @@ export async function getPortfolioSummaryWithPrevDay(): Promise<DashboardSummary
     let prevDayChange: number | undefined = undefined;
     let prevDayChangePercentage: number | undefined = undefined;
 
-    if (portfolio.latestNavDate) {
-        const prevDay = new Date(portfolio.latestNavDate);
-        prevDay.setDate(prevDay.getDate() - 1);
-        
-        prevDayValue = await getHistoricalPortfolioValue(portfolio, prevDay.toISOString().split('T')[0]);
-        
-        if (prevDayValue) {
-            prevDayChange = marketValue - prevDayValue;
-            prevDayChangePercentage = prevDayValue > 0 ? (prevDayChange / prevDayValue) * 100 : 0;
-        }
+    const prevValueData = await getPreviousHistoricalPortfolioValue(portfolio);
+    if (prevValueData) {
+        prevDayValue = prevValueData.value;
+        prevDayChange = marketValue - prevDayValue;
+        prevDayChangePercentage = prevDayValue > 0 ? (prevDayChange / prevDayValue) * 100 : 0;
     }
 
     return {
@@ -209,6 +205,9 @@ export async function getSchemeSummary(): Promise<SchemeSummary[]> {
                 absoluteGainLoss,
                 absoluteGainLossPercentage,
                 realizedProfit: realizedProfit,
+                latestNavDate: scheme.latestNavDate,
+                navValue: scheme.nav,
+                totalAvailableUnits: scheme.units,
             };
             summaries.push(summary);
         }
@@ -303,6 +302,32 @@ export async function getHistoricalPortfolioValue(portfolio: Portfolio, date: st
     }
 
     return totalHistoricalValue;
+}
+
+export async function getPreviousHistoricalPortfolioValue(portfolio: Portfolio): Promise<{value: number, date: string} | null> {
+    let totalHistoricalValue = 0;
+    let prevNavDate: Date | null = null;
+
+    for (const mutualFund of portfolio.mutual_funds) {
+        for (const scheme of mutualFund.schemes) {
+            if (scheme.schemeCode) {
+                const navHistory = historicalNavCache.get(scheme.schemeCode);
+                if (navHistory && navHistory.length > 1) {
+                    const prevNavEntry = navHistory[1];
+                    totalHistoricalValue += parseFloat(prevNavEntry.nav) * scheme.units;
+
+                    const entryDate = parseDateString(prevNavEntry.date);
+                    if (!prevNavDate || entryDate > prevNavDate) {
+                        prevNavDate = entryDate;
+                    }
+                }
+            }
+        }
+    }
+    if (prevNavDate) {
+      return { value: totalHistoricalValue, date: prevNavDate.toISOString().split('T')[0] };
+    }
+    return null;
 }
 
 export async function getTransactionsByIsinAndFolio(isin: string, folio_number: string): Promise<Transaction[]> {

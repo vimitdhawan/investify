@@ -34,7 +34,7 @@ let lastFetchedIsinMapTime: Date | null = null;
 const ISIN_MAP_CACHE_DURATION_MS = 12 * 60 * 60 * 1000; // 12 hours
 
 // In-memory cache for historical NAV data
-const historicalNavCache: Map<string, MfApiResponse['data']> = new Map();
+export const historicalNavCache: Map<string, MfApiResponse['data']> = new Map();
 
 
 export async function fetchAndCacheAllSchemesMap(): Promise<Map<string, string>> {

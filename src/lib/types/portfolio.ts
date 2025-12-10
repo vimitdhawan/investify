@@ -64,6 +64,7 @@ export interface Scheme {
   value: number;
   avgNav?: number;
   schemeCode?: string;
+  latestNavDate?: string;
 }
 
 export interface SchemeAdditionalInfo {

@@ -19,6 +19,9 @@ export interface SchemeSummary {
   absoluteGainLossPercentage: number;
   realizedProfit: number;
   folio_number: string;
+  latestNavDate?: string;
+  navValue?: number;
+  totalAvailableUnits?: number;
 }
 
 export interface DashboardSummary extends PortfolioSummary {
