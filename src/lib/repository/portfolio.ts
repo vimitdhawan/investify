@@ -1,4 +1,4 @@
-import { Portfolio, PortfolioSummary, Transaction, Scheme, TransactionView } from "@/lib/types/portfolio";
+import { PortfolioDTO, PortfolioSummary, TransactionDTO, SchemeDTO, TransactionView } from "@/lib/types/portfolio";
 import { getAllMutualFundSchemes } from "@/lib/repository/mf";
 import { DashboardSummary, FundHouseSummary, SchemeSummary } from "@/lib/types/summary";
 import { fetchLatestNavData, getSchemeNavOnDate, historicalNavCache } from "@/lib/mfapi";
@@ -12,14 +12,14 @@ function parseDateString(dateStr: string): Date {
   return new Date(year, month - 1, day);
 }
 
-export async function getPortfolio(): Promise<Portfolio> {
+export async function getPortfolio(): Promise<PortfolioDTO> {
   const filePath = path.join(process.cwd(), "mf_details.json");
   const fileContent = await fs.readFile(filePath, "utf-8");
   return JSON.parse(fileContent);
 }
 
 
-export async function getUpdatedPortfolio(): Promise<Portfolio> {
+export async function getUpdatedPortfolio(): Promise<PortfolioDTO> {
   const portfolio = await getPortfolio();
   const allSchemes = await getAllMutualFundSchemes();
 
@@ -306,7 +306,7 @@ export async function getFundHouseSummary(): Promise<FundHouseSummary[]> {
     return Array.from(fundHouseMap.values());
 }
 
-export async function getHistoricalPortfolioValue(portfolio: Portfolio, date: string): Promise<number> {
+export async function getHistoricalPortfolioValue(portfolio: PortfolioDTO, date: string): Promise<number> {
     let totalHistoricalValue = 0;
 
     for (const mutualFund of portfolio.mutual_funds) {
@@ -323,7 +323,7 @@ export async function getHistoricalPortfolioValue(portfolio: Portfolio, date: st
     return totalHistoricalValue;
 }
 
-export async function getPreviousHistoricalPortfolioValue(portfolio: Portfolio): Promise<{value: number, date: string} | null> {
+export async function getPreviousHistoricalPortfolioValue(portfolio: PortfolioDTO): Promise<{value: number, date: string} | null> {
     let totalHistoricalValue = 0;
     let prevNavDate: Date | null = null;
 
@@ -349,7 +349,7 @@ export async function getPreviousHistoricalPortfolioValue(portfolio: Portfolio):
     return null;
 }
 
-export async function getTransactionsByIsinAndFolio(isin: string, folio_number: string): Promise<Transaction[]> {
+export async function getTransactionsByIsinAndFolio(isin: string, folio_number: string): Promise<TransactionDTO[]> {
     const portfolio = await getPortfolio();
     const mutualFund = portfolio.mutual_funds.find(mf => mf.folio_number === folio_number);
     if (mutualFund) {
@@ -367,7 +367,7 @@ export async function getTransactionViewsByIsinAndFolio(isin: string, folio_numb
     return getTransactionViews(transactions);
 }
 
-export function getTransactionViews(transactions: Transaction[]): TransactionView[] {
+export function getTransactionViews(transactions: TransactionDTO[]): TransactionView[] {
   // Group transactions by date
   const groupedByDate = transactions.reduce((acc, tx) => {
     if (!acc[tx.date]) {
@@ -375,7 +375,7 @@ export function getTransactionViews(transactions: Transaction[]): TransactionVie
     }
     acc[tx.date].push(tx);
     return acc;
-  }, {} as Record<string, Transaction[]>);
+  }, {} as Record<string, TransactionDTO[]>);
 
   const views: TransactionView[] = [];
 

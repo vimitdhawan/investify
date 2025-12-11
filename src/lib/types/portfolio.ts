@@ -1,6 +1,6 @@
 import { TransactionType, MutualFundType } from "@/lib/types/enums";
 
-export interface Investor {
+export interface InvestorDTO {
   address: string;
   cas_id: string | null;
   email: string;
@@ -10,35 +10,35 @@ export interface Investor {
   pincode: string | null;
 }
 
-export interface StatementPeriod {
+export interface StatementPeriodDTO {
   from: string;
   to: string;
 }
 
-export interface Meta {
+export interface MetaDTO {
   cas_type: string;
   generated_at: string;
-  statement_period: StatementPeriod;
+  statement_period: StatementPeriodDTO;
 }
 
-export interface AdditionalInfo {
+export interface AdditionalInfoDTO {
   kyc: string;
   name: string;
   pan: string;
   pankyc: string;
 }
 
-export interface LinkedHolder {
+export interface LinkedHolderDTO {
   name: string;
   pan: string;
 }
 
-export interface Gain {
+export interface GainDTO {
   absolute: number;
   percentage: number;
 }
 
-export interface Transaction {
+export interface TransactionDTO {
   id: string;
   amount: number;
   balance: number | null;
@@ -50,15 +50,15 @@ export interface Transaction {
   units: number | null;
 }
 
-export interface Scheme {
-  additional_info: SchemeAdditionalInfo;
+export interface SchemeDTO {
+  additional_info: SchemeAdditionalInfoDTO;
   cost: number;
-  gain: Gain;
+  gain: GainDTO;
   isin: string;
   name: string;
   nav: number;
   nominees: string[];
-  transactions: Transaction[];
+  transactions: TransactionDTO[];
   type: MutualFundType;
   units: number;
   value: number;
@@ -67,7 +67,7 @@ export interface Scheme {
   latestNavDate?: string;
 }
 
-export interface SchemeAdditionalInfo {
+export interface SchemeAdditionalInfoDTO {
     advisor: string;
     amfi: string;
     close_units: number;
@@ -76,33 +76,33 @@ export interface SchemeAdditionalInfo {
     rta_code: string;
 }
 
-export interface MutualFund {
-  additional_info: AdditionalInfo;
+export interface MutualFundDTO {
+  additional_info: AdditionalInfoDTO;
   amc: string;
   folio_number: string;
-  linked_holders: LinkedHolder[];
+  linked_holders: LinkedHolderDTO[];
   registrar: string;
-  schemes: Scheme[];
+  schemes: SchemeDTO[];
 }
 
-export interface DematAccount {
+export interface DematAccountDTO {
     // Define properties for DematAccount if any
 }
 
-export interface LifeInsurancePolicy {
+export interface LifeInsurancePolicyDTO {
     // Define properties for LifeInsurancePolicy if any
 }
 
-export interface Insurance {
-    life_insurance_policies: LifeInsurancePolicy[];
+export interface InsuranceDTO {
+    life_insurance_policies: LifeInsurancePolicyDTO[];
 }
 
-export interface Portfolio {
-  demat_accounts: DematAccount[];
-  insurance: Insurance;
-  investor: Investor;
-  meta: Meta;
-  mutual_funds: MutualFund[];
+export interface PortfolioDTO {
+  demat_accounts: DematAccountDTO[];
+  insurance: InsuranceDTO;
+  investor: InvestorDTO;
+  meta: MetaDTO;
+  mutual_funds: MutualFundDTO[];
   latestNavDate?: string;
 }
 
