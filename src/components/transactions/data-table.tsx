@@ -18,9 +18,9 @@ import { TableHeader } from "./table-headers";
 import { TablePagination } from "./table-pagination";
 import { columns } from "./columns";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { TransactionDTO, TransactionView } from "@/lib/types/portfolio";
+import { Transaction } from "@/lib/types/transaction";
 
-export function DataTable({ data: initialData }: { data: TransactionView[] }) {
+export function DataTable({ data: initialData }: { data: Transaction[] }) {
  const [data, setData] = React.useState(() => initialData);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);

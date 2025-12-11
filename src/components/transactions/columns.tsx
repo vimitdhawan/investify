@@ -1,9 +1,9 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
-import { TransactionView } from "@/lib/types/portfolio";
+import { Transaction } from "@/lib/types/transaction";
 import { formatCurrency } from "@/lib/utils";
 
-export const columns: ColumnDef<TransactionView>[] = [
+export const columns: ColumnDef<Transaction>[] = [
   {
     accessorKey: "date",
     header: "Date",
@@ -44,7 +44,7 @@ export const columns: ColumnDef<TransactionView>[] = [
   {
     accessorKey: "ltcgStcgTax",
     header: "LTCG/STCG Tax",
-    cell: ({ row }) => <div>{formatCurrency(row.original.ltcgStcgTax)}</div>,
+    cell: ({ row }) => <div>{formatCurrency(row.original.capitalGainTax)}</div>,
   },
   {
     accessorKey: "nav",

@@ -1,8 +1,9 @@
-import { PortfolioDTO, PortfolioSummary, TransactionDTO, SchemeDTO, TransactionView } from "@/lib/types/portfolio";
+import { PortfolioDTO } from "@/lib/types/portfolio";
+import {  Transaction } from "@/lib/types/transaction";
 import { getAllMutualFundSchemes } from "@/lib/repository/mf";
 import { DashboardSummary, FundHouseSummary, SchemeSummary } from "@/lib/types/summary";
 import { fetchLatestNavData, getSchemeNavOnDate, historicalNavCache } from "@/lib/mfapi";
-import { TransactionType } from "@/lib/types/enums";
+import { TransactionType, TransactionDTO } from "@/lib/types/transaction";
 import fs from "fs/promises";
 import path from "path";
 
@@ -362,12 +363,12 @@ export async function getTransactionsByIsinAndFolio(isin: string, folio_number: 
 }
 
 
-export async function getTransactionViewsByIsinAndFolio(isin: string, folio_number: string): Promise<TransactionView[]> {
+export async function getTransactionViewsByIsinAndFolio(isin: string, folio_number: string): Promise<Transaction[]> {
     const transactions = await getTransactionsByIsinAndFolio(isin, folio_number);
     return getTransactionViews(transactions);
 }
 
-export function getTransactionViews(transactions: TransactionDTO[]): TransactionView[] {
+export function getTransactionViews(transactions: TransactionDTO[]): Transaction[] {
   // Group transactions by date
   const groupedByDate = transactions.reduce((acc, tx) => {
     if (!acc[tx.date]) {
@@ -377,7 +378,7 @@ export function getTransactionViews(transactions: TransactionDTO[]): Transaction
     return acc;
   }, {} as Record<string, TransactionDTO[]>);
 
-  const views: TransactionView[] = [];
+  const views: Transaction[] = [];
 
   // Process each date group
   for (const date in groupedByDate) {
@@ -388,13 +389,16 @@ export function getTransactionViews(transactions: TransactionDTO[]): Transaction
     let k = 0;
     while (k < dailyTxs.length) {
       const currentTx = dailyTxs[k];
-      let view: TransactionView = {
+      let view: Transaction = {
+        id: "",
+        schemeId: "",
+        mutualFundId: "",
         date: currentTx.date,
         description: currentTx.description,
         type: currentTx.type,
-        nav: currentTx.nav,
-        units: currentTx.units,
-        balance: currentTx.balance,
+        nav: currentTx.nav || 0,
+        units: currentTx.units || 0,
+        balanceUnits: currentTx.balance,
       };
 
       if (
@@ -436,7 +440,7 @@ export function getTransactionViews(transactions: TransactionDTO[]): Transaction
             view.sttTax = nextTx.amount;
             nextK++;
           } else if (nextTx.date === currentTx.date && nextTx.type === TransactionType.TdsTax) {
-            view.ltcgStcgTax = nextTx.amount;
+            view.capitalGainTax = nextTx.amount;
             nextK++;
           } else {
             break;
