@@ -22,6 +22,7 @@ export interface MutualFundDTO {
 }
 
 export interface MutualFund {
+  id: string;
   name: string;
   folioNumber: string;
   investedAmount: number;
@@ -29,5 +30,12 @@ export interface MutualFund {
   absoluteGainLoss?: number;
   absoluteGainLossPercentage?: number;
   realizedGainLoss?: number;
+  schemes: Scheme[];
+}
 
+export function generateMutualFundId(dto: MutualFundDTO): string {
+  // Sanitize the inputs to create a consistent and unique ID
+  const sanitizedFolio = dto.folio_number.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  const sanitizedAmc = dto.amc.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  return `${sanitizedAmc}-${sanitizedFolio}`;
 }

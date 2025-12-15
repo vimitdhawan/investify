@@ -41,9 +41,9 @@ export interface Scheme {
     id: string;
     name: string;
     amfi: string;
-    isin: number;
+    isin: string;
+    folioNumber: string;
     mutualFundId: string;
-    schemeCode: string;
     units?: number;
     investedAmount: number;
     marketValue?: number;
@@ -53,6 +53,15 @@ export interface Scheme {
     date?: string; 
     realizedGainLoss?: number;
     xirrGainLoss?: number;
-    avgNav?: number;
+    withdrawAmount?: number;
+    transactions: Transaction[];
+}
+
+export function generateSchemeId(mutualFundId: string, dto: SchemeDTO) {
+     // Sanitize the inputs to create a consistent and unique ID
+  const sanitizedIsin = (dto.isin ?? '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  const sanitizedAmfi = (dto.additional_info?.amfi ?? '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  return `${mutualFundId}-${sanitizedIsin}-${sanitizedAmfi}`;
+
 }
 

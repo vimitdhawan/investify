@@ -1,34 +1,34 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { SchemeSummary } from "@/lib/types/summary";
+import { Scheme } from "@/lib/types/scheme";
 import { SchemeCard } from "./scheme-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
-export function SchemeList({ summaries }: { summaries: SchemeSummary[] }) {
+export function SchemeList({ schemes, dayChanges }: { schemes: Scheme[], dayChanges: Map<string, number> }) {
   const [selectedFolio, setSelectedFolio] = useState("All");
   const [balanceFilter, setBalanceFilter] = useState("All");
 
   const folios = useMemo(() => {
     const folioMap = new Map<string, string>();
-    summaries.forEach(s => {
-      if (!folioMap.has(s.folio_number)) {
-        folioMap.set(s.folio_number, s.amc);
+    schemes.forEach(s => {
+      if (!folioMap.has(s.folioNumber)) {
+        folioMap.set(s.folioNumber, s.name);
       }
     });
     return Array.from(folioMap.entries()).map(([folio, amc]) => ({ folio, amc })).sort((a, b) => a.amc.localeCompare(b.amc));
-  }, [summaries]);
+  }, [schemes]);
 
-  const filteredSummaries = useMemo(() => {
-    return summaries.filter(summary => {
-      const folioMatch = selectedFolio === "All" || summary.folio_number === selectedFolio;
+  const filteredSchemes = useMemo(() => {
+    return schemes.filter(scheme => {
+      const folioMatch = selectedFolio === "All" || scheme.folioNumber === selectedFolio;
       const balanceMatch = balanceFilter === "All" ||
-        (balanceFilter === "Active" && summary.marketValue > 0) ||
-        (balanceFilter === "Closed" && summary.marketValue === 0);
+        (balanceFilter === "Active" && (scheme.marketValue ?? 0 > 0)) ||
+        (balanceFilter === "Closed" && (scheme.marketValue ?? 0 === 0));
       return folioMatch && balanceMatch;
     });
-  }, [summaries, selectedFolio, balanceFilter]);
+  }, [schemes, selectedFolio, balanceFilter]);
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -58,8 +58,8 @@ export function SchemeList({ summaries }: { summaries: SchemeSummary[] }) {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredSummaries.map((summary) => (
-          <SchemeCard key={`${summary.isin}-${summary.folio_number}`} summary={summary} />
+        {filteredSchemes.map((scheme) => (
+          <SchemeCard key={`${scheme.id}`} scheme={scheme} previousDayChangePercentage={dayChanges.get(scheme.id) ?? 0} />
         ))}
       </div>
     </div>

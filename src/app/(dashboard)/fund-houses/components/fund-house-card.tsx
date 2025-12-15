@@ -8,23 +8,23 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { FundHouseSummary } from "@/lib/types/summary";
+import { MutualFund } from "@/lib/types/mutual-fund";
 
 interface FundHouseCardProps {
-  summary: FundHouseSummary;
+  mutualFund: MutualFund;
 }
 
-export function FundHouseCard({ summary }: FundHouseCardProps) {
-    const isGain = summary.absoluteGainLoss >= 0;
+export function FundHouseCard({ mutualFund }: FundHouseCardProps) {
+    const isGain = (mutualFund?.absoluteGainLoss ?? 0) >= 0;
     const gainLossColorClass = isGain ? "text-green-500" : "text-red-500";
     const Icon = isGain ? IconTrendingUp : IconTrendingDown;
 
   return (
     <Card className="@container/card">
       <CardHeader>
-        <CardDescription>{summary.amc}</CardDescription>
+        <CardDescription>{mutualFund.name}</CardDescription>
         <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {summary.marketValue.toLocaleString("en-IN", {
+            {mutualFund.marketValue && mutualFund.marketValue.toLocaleString("en-IN", {
                 style: "currency",
                 currency: "INR",
                 minimumFractionDigits: 2,
@@ -33,12 +33,12 @@ export function FundHouseCard({ summary }: FundHouseCardProps) {
         </CardTitle>
         <div className={cn("flex gap-1", gainLossColorClass)}>
             <Icon className="size-4" />
-            {`${summary.absoluteGainLossPercentage.toFixed(2)}%`}
+            {mutualFund.absoluteGainLossPercentage && `${mutualFund.absoluteGainLossPercentage.toFixed(2)}%`}
           </div>
       </CardHeader>
       <CardFooter className="flex-col items-start gap-1.5 text-sm">
         <div className="text-muted-foreground">
-          Invested: {summary.investedValue.toLocaleString("en-IN", {
+          Invested: {mutualFund.investedAmount.toLocaleString("en-IN", {
                 style: "currency",
                 currency: "INR",
                 minimumFractionDigits: 2,
@@ -46,7 +46,7 @@ export function FundHouseCard({ summary }: FundHouseCardProps) {
             })}
         </div>
         <div className={cn("line-clamp-1 flex gap-2 font-medium", gainLossColorClass)}>
-            {summary.absoluteGainLoss.toLocaleString("en-IN", {
+            {mutualFund.absoluteGainLoss && mutualFund.absoluteGainLoss.toLocaleString("en-IN", {
                 style: "currency",
                 currency: "INR",
                 minimumFractionDigits: 2,
@@ -57,7 +57,7 @@ export function FundHouseCard({ summary }: FundHouseCardProps) {
           Absolute Gain/Loss
         </div>
         <div className="text-muted-foreground">
-          Realized Profit: {summary.realizedProfit.toLocaleString("en-IN", {
+          Realized Profit: {mutualFund.realizedGainLoss && mutualFund.realizedGainLoss.toLocaleString("en-IN", {
                 style: "currency",
                 currency: "INR",
                 minimumFractionDigits: 2,

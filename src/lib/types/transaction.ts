@@ -31,7 +31,6 @@ export interface Transaction {
   id: string;
   date: string;
   schemeId: string;
-  mutualFundId: string;
   description: string;
   type: TransactionType;
   nav: number;

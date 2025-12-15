@@ -9,14 +9,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { SchemeSummary } from "@/lib/types/summary";
+import { Scheme } from "@/lib/types/scheme";
 import Link from "next/link";
 
 interface SchemeCardProps {
-  summary: SchemeSummary;
+  scheme: Scheme;
+  previousDayChangePercentage: number;
 }
 
-function FinancialDetail({ label, value, valueClass, isLoss = false }: { label: string, value: string, valueClass?: string, isLoss?: boolean }) {
+function FinancialDetail({ label, value, valueClass }: { label: string, value: string, valueClass?: string }) {
     return (
         <div className="flex items-baseline justify-between">
             <span className="text-muted-foreground">{label}</span>
@@ -27,24 +28,24 @@ function FinancialDetail({ label, value, valueClass, isLoss = false }: { label: 
     );
 }
 
-export function SchemeCard({ summary }: SchemeCardProps) {
-  const isClosed = summary.marketValue === 0;
-  const isGain = isClosed ? summary.realizedProfit >= 0 : summary.absoluteGainLoss >= 0;
+export function SchemeCard({ scheme, previousDayChangePercentage }: SchemeCardProps) {
+  const isClosed = scheme.units === 0;
+  const isGain = isClosed ? (scheme.realizedGainLoss ?? 0) >= 0 : (scheme.absoluteGainLoss ?? 0) >= 0;
   const gainLossColorClass = isGain ? "text-green-500" : "text-red-500";
 
-  const primaryValue = isClosed ? summary.withdrawalAmount : summary.marketValue;
+  const primaryValue = isClosed ? scheme.withdrawAmount : scheme.marketValue;
   const primaryLabel = isClosed ? "Withdrawn" : "Market Value";
 
   return (
-    <Link href={`/schemes/${summary.isin}/transactions?folio=${summary.folio_number}`} className="flex">
+    <Link href={`/schemes/${scheme.id}/transactions`} className="flex">
       <Card className="flex flex-col w-full @container/card">
         <CardHeader className="flex flex-col gap-2">
           <div className="flex justify-between items-start">
             <div className="flex-grow">
               <CardTitle className="text-base font-semibold leading-snug">
-                {summary.schemeName}
+                {scheme.name}
               </CardTitle>
-              <CardDescription className="text-xs pt-1">{`Folio: ${summary.folio_number}`}</CardDescription>
+              <CardDescription className="text-xs pt-1">{`Folio: ${scheme.folioNumber}`}</CardDescription>
             </div>
             <Badge variant={isClosed ? "destructive" : "default"} className="ml-2 whitespace-nowrap">
               {isClosed ? "Closed" : "Active"}
@@ -61,7 +62,7 @@ export function SchemeCard({ summary }: SchemeCardProps) {
             />
             <FinancialDetail 
                 label="Invested"
-                value={summary.investedValue.toLocaleString("en-IN", {
+                value={scheme.investedAmount.toLocaleString("en-IN", {
                     style: "currency", currency: "INR", minimumFractionDigits: 2, maximumFractionDigits: 2,
                 })}
             />
@@ -69,26 +70,26 @@ export function SchemeCard({ summary }: SchemeCardProps) {
                 <>
                     <FinancialDetail 
                         label="Abs. Gain/Loss"
-                        value={`${summary.absoluteGainLoss.toLocaleString("en-IN", {
+                        value={`${scheme.absoluteGainLoss?.toLocaleString("en-IN", {
                             style: "currency", currency: "INR", minimumFractionDigits: 2, maximumFractionDigits: 2,
-                        })} (${summary.absoluteGainLossPercentage?.toFixed(2)}%)`}
+                        })} (${scheme.absoluteGainLossPercentage?.toFixed(2)}%)`}
                         valueClass={gainLossColorClass}
                     />
-                    {summary.prevDayChangePercentage !== undefined && (
+                    {previousDayChangePercentage !== undefined && (
                         <div className="flex items-baseline justify-between">
                             <span className="text-muted-foreground">Day's Change:</span>
-                            <span className={cn("font-medium flex items-center gap-1", summary.prevDayChangePercentage >= 0 ? "text-green-500" : "text-red-500")}>
-                                {summary.prevDayChangePercentage >= 0 ? <IconTrendingUp className="size-4" /> : <IconTrendingDown className="size-4" />}
-                                {`${summary.prevDayChangePercentage.toFixed(2)}%`}
+                            <span className={cn("font-medium flex items-center gap-1", previousDayChangePercentage >= 0 ? "text-green-500" : "text-red-500")}>
+                                {previousDayChangePercentage >= 0 ? <IconTrendingUp className="size-4" /> : <IconTrendingDown className="size-4" />}
+                                {`${previousDayChangePercentage.toFixed(2)}%`}
                             </span>
                         </div>
                     )}
                 </>
             )}
-            {summary.realizedProfit !== 0 && (
+            {scheme.realizedGainLoss && scheme.realizedGainLoss !== 0 && (
                 <FinancialDetail 
                     label="Realized Profit"
-                    value={summary.realizedProfit.toLocaleString("en-IN", {
+                    value={scheme.realizedGainLoss.toLocaleString("en-IN", {
                         style: "currency", currency: "INR", minimumFractionDigits: 2, maximumFractionDigits: 2,
                     })}
                     valueClass={gainLossColorClass}
@@ -98,15 +99,14 @@ export function SchemeCard({ summary }: SchemeCardProps) {
 
         <CardFooter className="flex-col items-start gap-1.5 text-xs text-muted-foreground pt-4">
           <div className="h-px w-full bg-border mb-2" />
-          
-          {summary.navValue && summary.latestNavDate && (
+          {scheme.nav && scheme.date && (
             <div className="flex justify-between w-full">
-              <span>NAV: {summary.navValue.toFixed(2)} as on {summary.latestNavDate}</span>
+              <span>NAV: {scheme.nav.toFixed(2)} as on {scheme.date}</span>
             </div>
           )}
-          {summary.totalAvailableUnits !== undefined && summary.totalAvailableUnits > 0 && (
+          {scheme.units !== undefined && scheme.units  > 0 && (
             <div className="flex justify-between w-full">
-              <span>Units: {summary.totalAvailableUnits.toFixed(4)}</span>
+              <span>Units: {scheme.units .toFixed(4)}</span>
             </div>
           )}
         </CardFooter>

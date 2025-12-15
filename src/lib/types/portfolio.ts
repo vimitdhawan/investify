@@ -51,8 +51,14 @@ export interface PortfolioSummary {
 
 export interface Portfolio {
   investor: Investor;
-  mutualFunds: MutualFund[];
   statementPeriod: StatementPeriod;
+  investedValue: number;
+  marketValue: number;
+  absoluteGainLoss: number;
+  absoluteGainLossPercentage: number;
+  realizedGainLoss: number;
+  mutualFunds: MutualFund[]
+  date: string;
 }
 
 export interface Investor {
