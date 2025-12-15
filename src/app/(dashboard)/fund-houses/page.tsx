@@ -1,14 +1,10 @@
 import { populatePortfolioCache } from "@/lib/repository/portfolio";
-import { FundHouseCard } from "./components/fund-house-card";
+import { FundHousesClient } from "./components/fund-houses-client"; // Import the new client component
 
 export default async function FundHousesPage() {
   const portfolio = await populatePortfolioCache();
 
   return (
-    <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3">
-      {portfolio.mutualFunds.map((mutualFund) => (
-        <FundHouseCard key={mutualFund.id} mutualFund={mutualFund} />
-      ))}
-    </div>
+    <FundHousesClient mutualFunds={portfolio.mutualFunds} />
   );
 }

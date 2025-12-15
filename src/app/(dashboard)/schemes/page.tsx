@@ -1,4 +1,4 @@
-import { populatePortfolioCache, schemeBySchemeId, processNAVDate, mostRecentNavDate } from "@/lib/repository/portfolio";
+import { populatePortfolioCache, processNAVDate, mostRecentNavDate } from "@/lib/repository/portfolio";
 import { SchemeList } from "./components/scheme-list";
 import { Scheme } from "@/lib/types/scheme";
 

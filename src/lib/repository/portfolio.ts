@@ -10,6 +10,7 @@ import path from "path";
 
 const investmentTypes = [TransactionType.Purchase, TransactionType.PurchaseSIP, TransactionType.SwitchIn, TransactionType.SwitchInMerger, TransactionType.DividendReinvestment ];
 const withdrawalTypes = [TransactionType.Redemption, TransactionType.SwitchOut, TransactionType.SwitchOutMerger, TransactionType.REVERSAL, TransactionType.DividendPayout];
+const realizedProfitWithdrawTypes = [TransactionType.Redemption, TransactionType.SwitchOut, TransactionType.SwitchOutMerger, TransactionType.DividendPayout];
 export let mostRecentNavDate: Date | null = null;
 
 async function getPortfolio(): Promise<PortfolioDTO> {
@@ -123,7 +124,7 @@ async function populateSchemeCache(mfId: string, folioNumer: string, scheme: Sch
     const schemeId = generateSchemeId(mfId, scheme)
     const transactions = await populateTransactionsCache(schemeId, scheme.transactions)
     const withdrawAmount = [...transactions.values()]
-        .filter(tx => withdrawalTypes.includes(tx.type))
+        .filter(tx => realizedProfitWithdrawTypes.includes(tx.type))
         .reduce((sum, tx) => sum + (tx.withdrawAmount ?? 0), 0);
     
     const navByDate = await processNAVDate(scheme.additional_info.amfi, scheme.isin, reqDate)
@@ -135,7 +136,36 @@ async function populateSchemeCache(mfId: string, folioNumer: string, scheme: Sch
     let realizedGainLoss = 0
     if (scheme.units == 0) {
       realizedGainLoss = Math.abs(withdrawAmount) - scheme.cost
+    } else {
+        const purchases = transactions.filter(t => investmentTypes.includes(t.type) && t.units > 0)
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            .map(p => {
+                const cost = p.investedAmount ?? (p.nav * p.units);
+                return { 
+                    ...p, 
+                    costPerUnit: cost / p.units!, 
+                    remainingUnits: p.units 
+                };
+            });
+
+        const sales = transactions.filter(t => realizedProfitWithdrawTypes.includes(t.type))
+              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        for (const sale of sales) {
+            let unitsToSell = Math.abs(sale.units);
+            const salePricePerUnit = sale.nav;
+            for (const purchase of purchases) {
+                if (unitsToSell === 0) break;
+                if (purchase.remainingUnits! > 0) {
+                    const unitsToProcess = Math.min(unitsToSell, purchase.remainingUnits!);
+                    realizedGainLoss += unitsToProcess * (salePricePerUnit - purchase.costPerUnit);
+                    purchase.remainingUnits! -= unitsToProcess;
+                    unitsToSell -= unitsToProcess;
+                }
+            }
+        }
     }
+
     const res: Scheme =  {
     id: schemeId,
     name: scheme.name,
@@ -184,13 +214,13 @@ export async function processNAVDate(amfiCode: string, isin: string, date?: Date
     throw new Error("NAV not found for given date");
 }
 
-async function populateTransactionsCache(schemId: string, transactions: TransactionDTO[]): Promise<Map<string, Transaction>> {
-    let transactionByTransactionId = new Map<string, Transaction>();
+async function populateTransactionsCache(schemId: string, transactions: TransactionDTO[]): Promise<Transaction[]> {
+    let transformTransactions: Transaction[] = [];
     const processedTransactions = processSchemeTransactions(transactions, schemId);
     for (const tx of processedTransactions) {
-        transactionByTransactionId.set(tx.id, tx);
+        transformTransactions.push(tx);
     }
-    return transactionByTransactionId
+    return transformTransactions
 }
 
 export async function getTransactionsByScemeId(schemeId: string): Promise<Transaction[]> {
@@ -232,7 +262,10 @@ function processWithdrawal(currentTx: TransactionDTO, allTxs: TransactionDTO[], 
         } else if (nextTx.date === currentTx.date && nextTx.type === TransactionType.TdsTax) {
             view.capitalGainTax = nextTx.amount;
             nextIndex++;
-        } else {
+        } else if (nextTx.date === currentTx.date && nextTx.type === TransactionType.StampDutyTax) {
+            view.stampDuty = nextTx.amount;
+            nextIndex++;
+        }else {
             break;
         }
     }

@@ -11,6 +11,11 @@ export const columns: ColumnDef<Transaction>[] = [
     enableSorting: true,
   },
   {
+    accessorKey: "type",
+    header: "Transaction Type",
+    cell: ({ row }) => <div>{row.original.type}</div>,
+  },
+  {
     accessorKey: "investedAmount",
     header: "Invested Amount",
     cell: ({ row }) => (

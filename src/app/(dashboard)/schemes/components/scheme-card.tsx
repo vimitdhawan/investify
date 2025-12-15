@@ -30,8 +30,12 @@ function FinancialDetail({ label, value, valueClass }: { label: string, value: s
 
 export function SchemeCard({ scheme, previousDayChangePercentage }: SchemeCardProps) {
   const isClosed = scheme.units === 0;
-  const isGain = isClosed ? (scheme.realizedGainLoss ?? 0) >= 0 : (scheme.absoluteGainLoss ?? 0) >= 0;
-  const gainLossColorClass = isGain ? "text-green-500" : "text-red-500";
+  
+  const isAbsoluteGain = (scheme.absoluteGainLoss ?? 0) >= 0;
+  const absoluteGainLossColorClass = isAbsoluteGain ? "text-green-500" : "text-red-500";
+
+  const isRealizedGain = (scheme.realizedGainLoss ?? 0) >= 0;
+  const realizedGainLossColorClass = isRealizedGain ? "text-green-500" : "text-red-500";
 
   const primaryValue = isClosed ? scheme.withdrawAmount : scheme.marketValue;
   const primaryLabel = isClosed ? "Withdrawn" : "Market Value";
@@ -66,6 +70,14 @@ export function SchemeCard({ scheme, previousDayChangePercentage }: SchemeCardPr
                     style: "currency", currency: "INR", minimumFractionDigits: 2, maximumFractionDigits: 2,
                 })}
             />
+            {!isClosed && scheme.units !== undefined && scheme.units > 0 && ( // Only for active schemes with units
+                <FinancialDetail 
+                    label="Avg. NAV"
+                    value={(scheme.investedAmount / scheme.units).toLocaleString("en-IN", {
+                        style: "currency", currency: "INR", minimumFractionDigits: 2, maximumFractionDigits: 2,
+                    })}
+                />
+            )}
             {!isClosed && (
                 <>
                     <FinancialDetail 
@@ -73,7 +85,7 @@ export function SchemeCard({ scheme, previousDayChangePercentage }: SchemeCardPr
                         value={`${scheme.absoluteGainLoss?.toLocaleString("en-IN", {
                             style: "currency", currency: "INR", minimumFractionDigits: 2, maximumFractionDigits: 2,
                         })} (${scheme.absoluteGainLossPercentage?.toFixed(2)}%)`}
-                        valueClass={gainLossColorClass}
+                        valueClass={absoluteGainLossColorClass}
                     />
                     {previousDayChangePercentage !== undefined && (
                         <div className="flex items-baseline justify-between">
@@ -86,13 +98,13 @@ export function SchemeCard({ scheme, previousDayChangePercentage }: SchemeCardPr
                     )}
                 </>
             )}
-            {scheme.realizedGainLoss && scheme.realizedGainLoss !== 0 && (
+            {scheme.realizedGainLoss !== undefined && (
                 <FinancialDetail 
                     label="Realized Profit"
                     value={scheme.realizedGainLoss.toLocaleString("en-IN", {
                         style: "currency", currency: "INR", minimumFractionDigits: 2, maximumFractionDigits: 2,
                     })}
-                    valueClass={gainLossColorClass}
+                    valueClass={realizedGainLossColorClass}
                 />
             )}
         </CardContent>
