@@ -1,7 +1,7 @@
 import * as z from "zod";
 import { PasswordInputValidation } from "@/lib/schema/pasword";
 
-export const signupFormBaseSchema = z.object({
+const signupFormBaseSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: PasswordInputValidation,
   confirmPassword: z.string().min(1, "Confirm password can't be empty"),

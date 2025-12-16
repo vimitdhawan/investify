@@ -1,13 +1,13 @@
 import {SchemeDTO, Scheme} from "@/lib/types/scheme"
 
-export interface MutualFundInfoDTO {
+interface MutualFundInfoDTO {
   kyc: string;
   name: string;
   pan: string;
   pankyc: string;
 }
 
-export interface LinkedHolderDTO {
+interface LinkedHolderDTO {
   name: string;
   pan: string;
 }

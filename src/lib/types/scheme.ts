@@ -1,12 +1,12 @@
 import { Transaction, TransactionDTO } from "@/lib/types/transaction";
 
-export enum SchemeType {
+enum SchemeType {
   Equity = "EQUITY",
   Debt = "DEBT",
   Hybrid = "HYBRID",
 }
 
-export interface GainDTO {
+interface GainDTO {
   absolute: number;
   percentage: number;
 }
@@ -28,7 +28,7 @@ export interface SchemeDTO {
   latestNavDate?: string;
 }
 
-export interface SchemeAdditionalInfoDTO {
+interface SchemeAdditionalInfoDTO {
     advisor: string;
     amfi: string;
     close_units: number;

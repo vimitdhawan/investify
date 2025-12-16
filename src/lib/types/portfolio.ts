@@ -8,7 +8,7 @@ export interface PortfolioDTO {
   latestNavDate?: string;
 }
 
-export interface InvestorDTO {
+interface InvestorDTO {
   address: string;
   cas_id: string | null;
   email: string;
@@ -18,35 +18,27 @@ export interface InvestorDTO {
   pincode: string | null;
 }
 
-export interface StatementPeriodDTO {
+interface StatementPeriodDTO {
   from: string;
   to: string;
 }
 
-export interface MetaDTO {
+interface MetaDTO {
   cas_type: string;
   generated_at: string;
   statement_period: StatementPeriodDTO;
 }
 
-export interface DematAccountDTO {
+interface DematAccountDTO {
     // Define properties for DematAccount if any
 }
 
-export interface LifeInsurancePolicyDTO {
+interface LifeInsurancePolicyDTO {
     // Define properties for LifeInsurancePolicy if any
 }
 
-export interface InsuranceDTO {
+interface InsuranceDTO {
     life_insurance_policies: LifeInsurancePolicyDTO[];
-}
-
-export interface PortfolioSummary {
-  investedValue: number;
-  marketValue: number;
-  absoluteGainLoss: number;
-  absoluteGainLossPercentage: number;
-  realizedProfit: number;
 }
 
 export interface Portfolio {
@@ -61,7 +53,7 @@ export interface Portfolio {
   date: string;
 }
 
-export interface Investor {
+interface Investor {
   address: string;
   email: string;
   mobile: string;
@@ -69,7 +61,7 @@ export interface Investor {
   pan: string;
 }
 
-export interface StatementPeriod {
+interface StatementPeriod {
   from: string;
   to: string;
 }
