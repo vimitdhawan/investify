@@ -5,6 +5,14 @@ import { SectionCard } from "./section-card";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Portfolio } from "@/lib/types/portfolio";
 
+// Helper to format Date object to YYYY-MM-DD string
+function formatDateToYYYYMMDD(date: Date): string {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 
 export function DashboardClient({ portfolio, mostRecentNavDate }: { portfolio: Portfolio, mostRecentNavDate: Date | null }) {
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>();
@@ -17,7 +25,7 @@ export function DashboardClient({ portfolio, mostRecentNavDate }: { portfolio: P
         if (mostRecentNavDate) {
             const previousDayDate = new Date(mostRecentNavDate);
             previousDayDate.setDate(previousDayDate.getDate() - 1);
-            const dateString = previousDayDate.toISOString().split('T')[0];
+            const dateString = formatDateToYYYYMMDD(previousDayDate);
             
             try {
                 const res = await fetch(`/api/portfolio?date=${dateString}`);
@@ -34,7 +42,9 @@ export function DashboardClient({ portfolio, mostRecentNavDate }: { portfolio: P
   React.useEffect(() => {
     if (selectedDate) {
       setIsLoading(true);
-      const dateString = selectedDate.toISOString().split('T')[0];
+      const dateString = formatDateToYYYYMMDD(selectedDate);
+      console.log(selectedDate)
+      console.log(dateString)
       fetch(`/api/portfolio?date=${dateString}`)
         .then(res => res.json())
         .then(data => {

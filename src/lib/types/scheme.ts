@@ -41,6 +41,7 @@ export interface Scheme {
     id: string;
     name: string;
     amfi: string;
+    amc: string;
     isin: string;
     folioNumber: string;
     mutualFundId: string;

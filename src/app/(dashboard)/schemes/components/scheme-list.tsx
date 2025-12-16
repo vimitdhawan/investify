@@ -15,7 +15,7 @@ export function SchemeList({ schemes, dayChanges }: { schemes: Scheme[], dayChan
     const folioMap = new Map<string, string>();
     schemes.forEach(s => {
       if (!folioMap.has(s.folioNumber)) {
-        folioMap.set(s.folioNumber, s.name);
+        folioMap.set(s.folioNumber, s.amc);
       }
     });
     return Array.from(folioMap.entries()).map(([folio, amc]) => ({ folio, amc })).sort((a, b) => a.amc.localeCompare(b.amc));

@@ -26,6 +26,14 @@ function parseDateString(dateStr: string): Date {
   return new Date(year, month - 1, day);
 }
 
+// Helper to format Date object to YYYY-MM-DD string
+export function formatDateToYYYYMMDD(date: Date): string {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 
 function generateTransactionId(schemeId: string, index: number): string {
     return `${schemeId}-${index}`;
@@ -45,7 +53,7 @@ function mapTransaction(dto: TransactionDTO, schemeId: string, index: number): T
     };
 }
 
-export async function populatePortfolioCache(date?: Date): Promise<Portfolio> {
+export async function processPortfolio(date?: Date): Promise<Portfolio> {
     let pf: PortfolioDTO = await getPortfolio(); 
     const mutualFunds: MutualFund[] = [];
     let investedAmount = 0;
@@ -53,7 +61,7 @@ export async function populatePortfolioCache(date?: Date): Promise<Portfolio> {
     let absoluteGainLoss = 0;
     let realizedGainLoss = 0;
     for (const mf of pf.mutual_funds) { 
-        const mfRes = await populateMutualFundsCache(mf, date);
+        const mfRes = await processMutualFunds(mf, date);
         mutualFunds.push(mfRes);
         investedAmount += mfRes.investedAmount;
         marketValue += mfRes.marketValue ?? 0;
@@ -83,12 +91,12 @@ export async function populatePortfolioCache(date?: Date): Promise<Portfolio> {
         absoluteGainLoss: absoluteGainLoss,
         absoluteGainLossPercentage: gainLossPercentage,
         realizedGainLoss: realizedGainLoss,
-        date: portfolioDate?.toISOString() ?? "",
+        date: portfolioDate ? formatDateToYYYYMMDD(portfolioDate) : "",
    }
    return portfolio
 }
 
-async function populateMutualFundsCache(mutualFund: MutualFundDTO, date?: Date): Promise<MutualFund> {
+async function processMutualFunds(mutualFund: MutualFundDTO, date?: Date): Promise<MutualFund> {
     const mfId = generateMutualFundId(mutualFund)
     let investedAmount = 0 
     let marketValue = 0;
@@ -96,8 +104,7 @@ async function populateMutualFundsCache(mutualFund: MutualFundDTO, date?: Date):
     let absoluteGainLoss = 0;
     const schemes: Scheme[] = [];
     for (const scheme of mutualFund.schemes) {
-        const schemeId = generateSchemeId(mfId, scheme);
-        const schemeRes = await populateSchemeCache(mfId, mutualFund.folio_number, scheme, date);
+        const schemeRes = await processSchemes(mfId, mutualFund.amc, mutualFund.folio_number, scheme, date);
         schemes.push(schemeRes);
         if (schemeRes.units != 0) {
             investedAmount += schemeRes.investedAmount
@@ -120,9 +127,9 @@ async function populateMutualFundsCache(mutualFund: MutualFundDTO, date?: Date):
     }
 }
 
-async function populateSchemeCache(mfId: string, folioNumer: string, scheme: SchemeDTO, reqDate?: Date): Promise<Scheme> {
+async function processSchemes(mfId: string, amc: string, folioNumer: string, scheme: SchemeDTO, reqDate?: Date): Promise<Scheme> {
     const schemeId = generateSchemeId(mfId, scheme)
-    const transactions = await populateTransactionsCache(schemeId, scheme.transactions)
+    const transactions = processTransactions(scheme.transactions, schemeId)
     const withdrawAmount = [...transactions.values()]
         .filter(tx => realizedProfitWithdrawTypes.includes(tx.type))
         .reduce((sum, tx) => sum + (tx.withdrawAmount ?? 0), 0);
@@ -169,6 +176,7 @@ async function populateSchemeCache(mfId: string, folioNumer: string, scheme: Sch
     const res: Scheme =  {
     id: schemeId,
     name: scheme.name,
+    amc: amc,
     amfi: scheme.additional_info.amfi,
     isin: scheme.isin,
     mutualFundId: mfId,
@@ -183,7 +191,7 @@ async function populateSchemeCache(mfId: string, folioNumer: string, scheme: Sch
     xirrGainLoss: 0,
     withdrawAmount: withdrawAmount,
     folioNumber: folioNumer,
-    transactions: Array.from(transactions.values())
+    transactions:transactions,
     }
     return res
 } 
@@ -194,12 +202,13 @@ export async function processNAVDate(amfiCode: string, isin: string, date?: Date
     }
     if(date) {
         const navs = await getHistoricalNavBySchemeId(amfiCode)
+        const requestedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
         for(const nav of navs) {
             const navDate = parseDateString(nav.date);
-            if (navDate.toDateString() === date.toDateString()) {
+            if (navDate.getTime() === requestedDate.getTime()) {
                 return nav
             }
-            if(navDate < date) {
+            if(navDate < requestedDate) {
                 return nav
             }
         }
@@ -214,17 +223,8 @@ export async function processNAVDate(amfiCode: string, isin: string, date?: Date
     throw new Error("NAV not found for given date");
 }
 
-async function populateTransactionsCache(schemId: string, transactions: TransactionDTO[]): Promise<Transaction[]> {
-    let transformTransactions: Transaction[] = [];
-    const processedTransactions = processSchemeTransactions(transactions, schemId);
-    for (const tx of processedTransactions) {
-        transformTransactions.push(tx);
-    }
-    return transformTransactions
-}
-
 export async function getTransactionsByScemeId(schemeId: string): Promise<Transaction[]> {
-    const portfolio = await populatePortfolioCache()
+    const portfolio = await processPortfolio()
     let scheme = portfolio.mutualFunds.flatMap(mutualFund => mutualFund.schemes).find(scheme => scheme.id == schemeId);
     if (!scheme) {
         return []
@@ -272,7 +272,7 @@ function processWithdrawal(currentTx: TransactionDTO, allTxs: TransactionDTO[], 
     return nextIndex;
 }
 
-function processSchemeTransactions(transactionDTOs: TransactionDTO[], schemeId: string): Transaction[] {
+function processTransactions(transactionDTOs: TransactionDTO[], schemeId: string): Transaction[] {
   const transactions: Transaction[] = [];
   let i = 0;
   while (i < transactionDTOs.length) {

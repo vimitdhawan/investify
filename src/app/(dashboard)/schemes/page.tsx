@@ -1,10 +1,10 @@
-import { populatePortfolioCache, processNAVDate, mostRecentNavDate } from "@/lib/repository/portfolio";
+import { processPortfolio, processNAVDate, mostRecentNavDate } from "@/lib/repository/portfolio";
 import { SchemeList } from "./components/scheme-list";
 import { Scheme } from "@/lib/types/scheme";
 
 // Server Component to fetch data
 export default async function SchemesPage() {
-    const portfolio = await populatePortfolioCache();
+    const portfolio = await processPortfolio();
     const schemes = portfolio.mutualFunds.flatMap(mf => mf.schemes);
 
     const dayChanges = new Map<string, number>();
