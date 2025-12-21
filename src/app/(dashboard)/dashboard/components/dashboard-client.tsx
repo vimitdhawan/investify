@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { SectionCard } from "./section-card";
+import { PortfolioOverviewCard } from "./portfolio-overview-card";
 import { Portfolio } from "@/lib/types/portfolio";
 
 // Helper to format Date object to YYYY-MM-DD string
@@ -40,39 +40,21 @@ export function DashboardClient({ portfolio, mostRecentNavDate }: { portfolio: P
   const previousDayChangePercentage = previousDayPortfolio?.marketValue ? (previousDayChange / previousDayPortfolio.marketValue) * 100 : 0 ;
 
   return (
-    <div className="flex flex-1 flex-col gap-4 md:gap-6">
-      <div className="flex justify-between items-center px-4 lg:px-6">
-        <h2 className="text-lg font-semibold">Portfolio Overview</h2>
-        {portfolio.date && (
-          <p className="text-sm text-muted-foreground">
-            Latest NAV as of: {portfolio.date}
+    <div className="flex flex-col md:flex-row gap-4 md:gap-6 px-4 lg:px-6">
+      <div className="md:w-2/5">
+        <PortfolioOverviewCard
+          portfolio={portfolio}
+          previousDayChange={previousDayChange}
+          previousDayChangePercentage={previousDayChangePercentage}
+        />
+      </div>
+      <div className="md:w-3/5">
+        <div className="h-full rounded-lg border bg-card text-card-foreground shadow-sm flex items-center justify-center p-4">
+          <p className="text-muted-foreground text-center">
+            Placeholder for 1-month Market Value and Invested Value Graph
           </p>
-        )}
+        </div>
       </div>
-
-      <div className="grid grid-cols-1 gap-4 px-4 sm:grid-cols-2 lg:grid-cols-4 lg:px-6">
-        <SectionCard
-          title="Market Value"
-          value={portfolio.marketValue}
-          change={previousDayChange}
-          changePercentage={previousDayChangePercentage}
-          description="vs. Previous Day"
-        />
-        <SectionCard
-          title="Invested Amount"
-          value={portfolio.investedValue}
-        />
-        <SectionCard
-          title="Absolute Gain/Loss"
-          value={portfolio.absoluteGainLoss}
-          changePercentage={portfolio.absoluteGainLossPercentage}
-        />
-        <SectionCard
-          title="Realized Profit"
-          value={portfolio.realizedGainLoss}
-        />
-      </div>
-
     </div>
   );
 }
