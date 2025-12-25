@@ -13,7 +13,7 @@ const withdrawalTypes = [TransactionType.Redemption, TransactionType.SwitchOut, 
 const realizedProfitWithdrawTypes = [TransactionType.Redemption, TransactionType.SwitchOut, TransactionType.SwitchOutMerger, TransactionType.DividendPayout];
 export let mostRecentNavDate: Date | null = null;
 
-async function getPortfolio(): Promise<PortfolioDTO> {
+async function getRawPortfolio(): Promise<PortfolioDTO> {
   const filePath = path.join(process.cwd(), "mf_details.json");
   const fileContent = await fs.readFile(filePath, "utf-8");
   return JSON.parse(fileContent);
@@ -21,8 +21,14 @@ async function getPortfolio(): Promise<PortfolioDTO> {
 
 
 // Helper to parse DD-MM-YYYY date strings
-function parseDateString(dateStr: string): Date {
+function parseDDMMYYYYString(dateStr: string): Date {
   const [day, month, year] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+// Helper to parse YYYY-MM-DD date strings
+function parseYYYYMMDDString(dateStr: string): Date {
+  const [year, month, day ] = dateStr.split('-').map(Number);
   return new Date(year, month - 1, day);
 }
 
@@ -53,8 +59,103 @@ function mapTransaction(dto: TransactionDTO, schemeId: string, index: number): T
     };
 }
 
+interface HistoricalData {
+    units: number;
+    investedAmount: number;
+}
+
+function calculateTransactionsUnitCost(
+    transactions: Transaction[],
+    targetDate: Date
+): HistoricalData {
+    let unitsHeld = 0;
+    let totalCost = 0;
+    const purchaseUnits: { units: number; costPerUnit: number }[] = [];
+
+    // Sort transactions by date in ascending order
+    const sortedTransactions = [...transactions].sort((a, b) => parseYYYYMMDDString(a.date).getTime() - parseYYYYMMDDString(b.date).getTime());
+
+    for (const tx of sortedTransactions) {
+        const txDate = parseYYYYMMDDString(tx.date);
+
+        if (txDate > targetDate) {
+            break; // Only consider transactions up to the target date
+        }
+
+        if (investmentTypes.includes(tx.type)) {
+            const units = tx.units;
+            const cost = tx.investedAmount!;
+            unitsHeld += units; // Always add investment units
+            totalCost += cost; // Always add investment cost
+            if (units > 0) {
+              purchaseUnits.push({ units, costPerUnit: cost / units });
+            }
+        } else if (realizedProfitWithdrawTypes.includes(tx.type)) {
+            let unitsToWithdraw = Math.abs(tx.units); // Withdrawal units are usually positive, but amount is negative
+            while (unitsToWithdraw > 0 && purchaseUnits.length > 0) {
+                const firstPurchase = purchaseUnits[0];
+                const unitsToProcess = Math.min(unitsToWithdraw, firstPurchase.units);
+                unitsHeld -= unitsToProcess;
+                totalCost = totalCost - (unitsToProcess * firstPurchase.costPerUnit);
+                firstPurchase.units -= unitsToProcess;
+                unitsToWithdraw -= unitsToProcess;
+                if (firstPurchase.units <= 0) { // Use <= to handle potential floating point inaccuracies
+                    purchaseUnits.shift(); // Remove if fully utilized
+                }
+            }
+        } else if (tx.type === TransactionType.REVERSAL) {
+            totalCost += tx.withdrawAmount || 0;
+            unitsHeld += tx.units;
+        }
+    }
+    return { units: parseFloat(unitsHeld.toFixed(3)), investedAmount: parseFloat(totalCost.toFixed(2)) };
+}
+
+export async function getPortfolio() : Promise<Portfolio> {
+    return processPortfolio();
+}
+
+export async function getLastNDaysPortfolio(days: number): Promise<Portfolio[]> {
+  if (!mostRecentNavDate) {
+    await processPortfolio(); // Ensure mostRecentNavDate is set
+  }
+
+  const promises: Promise<Portfolio>[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const targetDate = new Date(mostRecentNavDate!);
+    targetDate.setDate(targetDate.getDate() - i);
+    promises.push(processPortfolio(targetDate));
+  }
+  
+  const results = await Promise.all(promises);
+  return results;
+}
+
+
+export async function getPortfolioForLastYearByMonth(): Promise<Portfolio[]> {
+    if (!mostRecentNavDate) {
+        await processPortfolio(); // Ensure mostRecentNavDate is set
+    }
+
+    const promises: Promise<Portfolio>[] = [];
+    const today = new Date(mostRecentNavDate!);
+
+    for (let i = 0; i < 12; i++) {
+        const targetDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        promises.push(processPortfolio(targetDate));
+    }
+
+    const results = await Promise.all(promises);
+    return results.sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime()); // sort ascending
+}
+
+export async function getLast30DaysPortfolio(): Promise<Portfolio[]> {
+  return getLastNDaysPortfolio(30);
+}
+
+
 export async function processPortfolio(date?: Date): Promise<Portfolio> {
-    let pf: PortfolioDTO = await getPortfolio(); 
+    let pf: PortfolioDTO = await getRawPortfolio(); 
     const mutualFunds: MutualFund[] = [];
     let investedAmount = 0;
     let marketValue = 0;
@@ -128,11 +229,24 @@ async function processMutualFunds(mutualFund: MutualFundDTO, date?: Date): Promi
 }
 
 async function processSchemes(mfId: string, amc: string, folioNumer: string, scheme: SchemeDTO, reqDate?: Date): Promise<Scheme> {
-    const schemeId = generateSchemeId(mfId, scheme)
+    const schemeId = generateSchemeId(mfId, scheme)  
     const transactions = processTransactions(scheme.transactions, schemeId)
-    const withdrawAmount = [...transactions.values()]
+    let withdrawAmount = transactions
         .filter(tx => realizedProfitWithdrawTypes.includes(tx.type))
-        .reduce((sum, tx) => sum + (tx.withdrawAmount ?? 0), 0);
+        .reduce((sum, tx) => sum + (tx.withdrawAmount ?? 0), 0);   
+    if(reqDate && scheme.units > 0) {
+        const filteredTransactionByDate = transactions.filter(t => parseYYYYMMDDString(t.date) <= reqDate)
+        const historicalData = calculateTransactionsUnitCost(filteredTransactionByDate, reqDate)
+        withdrawAmount = filteredTransactionByDate
+            .filter(tx => realizedProfitWithdrawTypes.includes(tx.type))
+            .reduce((sum, tx) => sum + (tx.withdrawAmount ?? 0), 0);
+        if (scheme.units != historicalData.units || Math.trunc(scheme.cost) != Math.trunc(historicalData.investedAmount)) {
+            console.log("Historical Data for Scheme:", scheme.name, "Historical Data:", historicalData, "Current Data:", { units: scheme.units, cost: scheme.cost }); 
+        }        
+        scheme.units = historicalData.units
+        scheme.cost = historicalData.investedAmount
+
+    }   
     
     const navByDate = await processNAVDate(scheme.additional_info.amfi, scheme.isin, reqDate)
     const nav = Number(navByDate.nav)
@@ -204,7 +318,7 @@ export async function processNAVDate(amfiCode: string, isin: string, date?: Date
         const navs = await getHistoricalNavBySchemeId(amfiCode)
         const requestedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
         for(const nav of navs) {
-            const navDate = parseDateString(nav.date);
+            const navDate = parseDDMMYYYYString(nav.date);
             if (navDate.getTime() === requestedDate.getTime()) {
                 return nav
             }
@@ -214,7 +328,7 @@ export async function processNAVDate(amfiCode: string, isin: string, date?: Date
         }
     } else {
         const latestNav = await getLatestNavBySchemeId(amfiCode)
-        const navDate = parseDateString(latestNav.date); // Use the helper
+        const navDate = parseDDMMYYYYString(latestNav.date); // Use the helper
         if (!mostRecentNavDate || navDate > mostRecentNavDate) {
               mostRecentNavDate = navDate;
           }

@@ -14,3 +14,15 @@ export function formatCurrency(amount?: number | null) {
     currency: "INR",
   });
 }
+
+export function formatCurrencyCompact(amount?: number | null) {
+  if (amount === null || amount === undefined) {
+    return "";
+  }
+  return amount.toLocaleString("en-IN", {
+    style: "currency",
+    currency: "INR",
+    notation: "compact",
+    compactDisplay: "short",
+  });
+}

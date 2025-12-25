@@ -12814,7 +12814,7 @@
               "description": "Purchase- SystematicPayment not received from investor bank - Instalment\t\tNo 31",
               "dividend_rate": null,
               "nav": 34.5136,
-              "type": "REDEMPTION",
+              "type": "REVERSAL",
               "units": -57.948
             },
             {
