@@ -49,7 +49,7 @@ export function PortfolioChart({ historicalData }: PortfolioChartProps) {
       <CardContent>
         <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
           <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={chartData} margin={{ left: 20, right: 30, bottom: 60 }}>
+            <AreaChart data={chartData} margin={{ right: 5 }}>
               <CartesianGrid vertical={false} />
               <XAxis
                 dataKey="date"
