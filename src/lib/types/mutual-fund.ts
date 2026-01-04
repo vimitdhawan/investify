@@ -1,41 +1,19 @@
-import {SchemeDTO, Scheme} from "@/lib/types/scheme"
+import { SchemeView } from '@/lib/types/scheme';
 
-interface MutualFundInfoDTO {
-  kyc: string;
+export interface MutualFundView {
   name: string;
-  pan: string;
-  pankyc: string;
-}
-
-interface LinkedHolderDTO {
-  name: string;
-  pan: string;
-}
-
-export interface MutualFundDTO {
-  additional_info: MutualFundInfoDTO;
-  amc: string;
-  folio_number: string;
-  linked_holders: LinkedHolderDTO[];
-  registrar: string;
-  schemes: SchemeDTO[];
-}
-
-export interface MutualFund {
-  id: string;
-  name: string;
-  folioNumber: string;
+  folioNumbers: string[];
   investedAmount: number;
   marketValue?: number;
   absoluteGainLoss?: number;
   absoluteGainLossPercentage?: number;
   realizedGainLoss?: number;
-  schemes: Scheme[];
+  schemes: SchemeView[];
 }
 
-export function generateMutualFundId(dto: MutualFundDTO): string {
+export function generateMutualFundId(folioNumber: string, amc: string): string {
   // Sanitize the inputs to create a consistent and unique ID
-  const sanitizedFolio = dto.folio_number.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-  const sanitizedAmc = dto.amc.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  const sanitizedFolio = folioNumber.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  const sanitizedAmc = amc.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
   return `${sanitizedAmc}-${sanitizedFolio}`;
 }

@@ -1,7 +1,7 @@
 // components/DataTable.tsx
-"use client";
+'use client';
 
-import * as React from "react";
+import * as React from 'react';
 import {
   ColumnFiltersState,
   SortingState,
@@ -10,19 +10,21 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table";
+} from '@tanstack/react-table';
 
-import { TableBody } from "./table-body";
-import { TableFilters } from "./filter";
-import { TableHeader } from "./table-headers";
-import { TablePagination } from "./table-pagination";
-import { columns } from "./columns";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Transaction } from "@/lib/types/transaction";
+import { TableBody } from './table-body';
+import { TableFilters } from './filter';
+import { TableHeader } from './table-headers';
+import { TablePagination } from './table-pagination';
+import { columns } from './columns';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { TransactionView } from '@/lib/types/transaction';
 
-export function DataTable({ data: initialData }: { data: Transaction[] }) {
- const [data, setData] = React.useState(() => initialData);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+export function DataTable({ data: initialData }: { data: TransactionView[] }) {
+  const [data, setData] = React.useState(() => initialData);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,

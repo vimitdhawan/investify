@@ -1,10 +1,8 @@
-import { processPortfolio } from "@/lib/repository/portfolio";
-import { FundHousesClient } from "./components/fund-houses-client"; // Import the new client component
+import { processPortfolio } from '@/lib/repository/portfolio';
+import { FundHousesClient } from './components/fund-houses-client'; // Import the new client component
 
 export default async function FundHousesPage() {
-  const portfolio = await processPortfolio();
+  const portfolio = await processPortfolio('test-user-id');
 
-  return (
-    <FundHousesClient mutualFunds={portfolio.mutualFunds} />
-  );
+  return <FundHousesClient mutualFunds={portfolio.mutualFunds} />;
 }

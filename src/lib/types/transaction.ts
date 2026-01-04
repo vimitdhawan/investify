@@ -1,30 +1,49 @@
 export enum TransactionType {
-  Purchase = "PURCHASE",
-  PurchaseSIP = "PURCHASE_SIP",
-  Redemption = "REDEMPTION",
-  SwitchIn = "SWITCH_IN",
-  SwitchInMerger = "SWITCH_IN_MERGER",
-  SwitchOut = "SWITCH_OUT",
-  SwitchOutMerger = "SWITCH_OUT_MERGER",
-  DividendPayout = "DIVIDEND_PAYOUT",
-  DividendReinvestment = "DIVIDEND_REINVESTMENT",
-  Segregation = "SEGREGATION",
-  StampDutyTax = "STAMP_DUTY_TAX",
-  TdsTax = "TDS_TAX",
-  SttTax = "STT_TAX",
-  Misc = "MISC",
-  REVERSAL = "REVERSAL",
+  Purchase = 'PURCHASE',
+  PurchaseSIP = 'PURCHASE_SIP',
+  Redemption = 'REDEMPTION',
+  SwitchIn = 'SWITCH_IN',
+  SwitchInMerger = 'SWITCH_IN_MERGER',
+  SwitchOut = 'SWITCH_OUT',
+  SwitchOutMerger = 'SWITCH_OUT_MERGER',
+  DividendPayout = 'DIVIDEND_PAYOUT',
+  DividendReinvestment = 'DIVIDEND_REINVESTMENT',
+  Segregation = 'SEGREGATION',
+  StampDutyTax = 'STAMP_DUTY_TAX',
+  TdsTax = 'TDS_TAX',
+  SttTax = 'STT_TAX',
+  Misc = 'MISC',
+  REVERSAL = 'REVERSAL',
 }
 
-export interface TransactionDTO {
-  amount: number;
-  balance: number | null;
+export const investmentTypes = [
+  TransactionType.Purchase,
+  TransactionType.PurchaseSIP,
+  TransactionType.SwitchIn,
+  TransactionType.SwitchInMerger,
+  TransactionType.DividendReinvestment,
+];
+export const withdrawTypes = [
+  TransactionType.Redemption,
+  TransactionType.SwitchOut,
+  TransactionType.SwitchOutMerger,
+  TransactionType.DividendPayout,
+];
+
+export interface TransactionView {
+  id: string;
   date: string;
+  schemeId: string;
   description: string;
-  dividend_rate: number | null;
-  nav: number | null;
   type: TransactionType;
-  units: number | null;
+  nav: number;
+  units: number;
+  investedAmount?: number;
+  actualInvestment?: number;
+  stampDuty?: number;
+  withdrawAmount?: number;
+  sttTax?: number;
+  capitalGainTax?: number;
 }
 
 export interface Transaction {
@@ -35,11 +54,8 @@ export interface Transaction {
   type: TransactionType;
   nav: number;
   units: number;
-  balanceUnits: number | null;
-  investedAmount?: number;
-  actualInvestment?: number;
+  amount: number;
   stampDuty?: number;
-  withdrawAmount?: number;
   sttTax?: number;
   capitalGainTax?: number;
 }
