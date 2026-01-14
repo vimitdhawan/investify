@@ -165,7 +165,9 @@ async function ingestPortfolioData(
 
     // Add each transaction to a 'transactions' subcollection
     for (const transaction of transactions) {
-      const transactionRef = schemeRef.collection('transactions').doc(transaction.id);
+      const transactionRef = schemeRef
+        .collection('transactions')
+        .doc(transaction.id);
       batch.set(transactionRef, transaction);
     }
   }
@@ -295,7 +297,10 @@ function processTransactions(
     const transaction = mapTransaction(currentTxDto, schemeId, i);
     if (investmentTypes.includes(currentTxDto.type)) {
       i = processInvestment(currentTxDto, transactionDTOs, i, transaction);
-    } else if (withdrawTypes.includes(currentTxDto.type)) {
+    } else if (
+      withdrawTypes.includes(currentTxDto.type) ||
+      currentTxDto.type == TransactionType.REVERSAL
+    ) {
       i = processWithdrawal(currentTxDto, transactionDTOs, i, transaction);
     } else {
       i++;
@@ -328,11 +333,16 @@ async function getSchemeIdAndAmfi(
 
   const sanitizedAmfi = (amfi ?? '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
   const sanitizedFolio = mutualFund.folio_number.replace(/\//g, '');
-  const schemeId = `${mutualFund.amc}-${sanitizedFolio}-${sanitizedAmfi}`;
+  const sanitizedAmc = mutualFund.amc.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  const schemeId = `${sanitizedAmc}-${sanitizedFolio}-${sanitizedAmfi}`;
   return { schemeId, amfi: amfi ?? '' };
 }
 
-function mapTransaction(dto: TransactionDTO, schemeId: string, index: number): Transaction {
+function mapTransaction(
+  dto: TransactionDTO,
+  schemeId: string,
+  index: number
+): Transaction {
   return {
     id: `${schemeId}-${dto.date}-${index}`,
     schemeId,

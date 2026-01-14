@@ -41,7 +41,19 @@ This document provides a comprehensive overview of the Investify project, its ar
 
 ---
 
-## 2. Tech Stack
+## 2. Developer Guidelines
+
+This project follows a set of established best practices to ensure code quality, consistency, and maintainability. For detailed information, please refer to the following documents in the `/docs` directory:
+
+*   **[Architecture Guide](./docs/ARCHITECTURE.md)**: Detailed patterns for data fetching, state management, and component design.
+*   **[Data Model Guide](./docs/DATA_MODEL.md)**: A comprehensive overview of the core data structures and types.
+*   **[Styling Guide](./docs/STYLING.md)**: Guidelines for using Tailwind CSS and `shadcn/ui`.
+*   **[Linting Guide](./docs/LINTING.md)**: Rules and scripts for maintaining a consistent and error-free codebase.
+*   **[Testing Guide](./docs/TESTING.md)**: Strategy and examples for writing unit, integration, and E2E tests.
+
+---
+
+## 3. Tech Stack
 
 * **Framework:** Next.js (App Router)
 * **Authentication & Database:** Firebase (Auth, Firestore, Storage)

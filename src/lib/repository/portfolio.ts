@@ -408,9 +408,9 @@ export async function processNAVDate(
 }
 
 export async function getTransactionsByScemeId(
-  userId: string = 'test-user-id',
   schemeId: string
 ): Promise<TransactionView[]> {
+  let userId = 'test-user-id';
   try {
     const transactionsRef = firestore
       .collection('users')

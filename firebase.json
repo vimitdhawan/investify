@@ -7,7 +7,7 @@
       "port": 8083
     },
     "firestore": {
-      "port": 8084
+      "port": 8086
     },
     "storage": {
       "port": 8082
