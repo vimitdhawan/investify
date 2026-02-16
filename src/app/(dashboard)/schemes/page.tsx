@@ -8,7 +8,7 @@ import { SchemeView } from '@/lib/types/scheme';
 
 // Server Component to fetch data
 export default async function SchemesPage() {
-  const portfolio = await processPortfolio('test-user-id');
+  const portfolio = await processPortfolio('OHo9Mhp3K63nZrs6arMMizh0tXe3');
   const schemes = portfolio.mutualFunds.flatMap((mf) => mf.schemes);
 
   const dayChanges = new Map<string, number>();

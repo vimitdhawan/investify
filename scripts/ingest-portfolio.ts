@@ -333,7 +333,9 @@ async function getSchemeIdAndAmfi(
 
   const sanitizedAmfi = (amfi ?? '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
   const sanitizedFolio = mutualFund.folio_number.replace(/\//g, '');
-  const sanitizedAmc = mutualFund.amc.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  const sanitizedAmc = mutualFund.amc
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toLowerCase();
   const schemeId = `${sanitizedAmc}-${sanitizedFolio}-${sanitizedAmfi}`;
   return { schemeId, amfi: amfi ?? '' };
 }
@@ -357,7 +359,7 @@ function mapTransaction(
 
 // --- Main script execution ---
 
-const USER_ID = 'test-user-id';
+const USER_ID = 'OHo9Mhp3K63nZrs6arMMizh0tXe3';
 
 async function main() {
   console.log('Starting portfolio data ingestion...');

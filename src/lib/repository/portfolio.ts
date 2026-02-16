@@ -159,21 +159,21 @@ function calculatePortfolioXIRR(
 }
 
 export async function getPortfolio(): Promise<PortfolioView> {
-  return processPortfolio('test-user-id');
+  return processPortfolio('OHo9Mhp3K63nZrs6arMMizh0tXe3');
 }
 
 export async function getLastNDaysPortfolio(
   days: number
 ): Promise<PortfolioView[]> {
   if (!mostRecentNavDate) {
-    await processPortfolio('test-user-id'); // Ensure mostRecentNavDate is set
+    await processPortfolio('OHo9Mhp3K63nZrs6arMMizh0tXe3'); // Ensure mostRecentNavDate is set
   }
 
   const promises: Promise<PortfolioView>[] = [];
   for (let i = days - 1; i >= 0; i--) {
     const targetDate = new Date(mostRecentNavDate!);
     targetDate.setDate(targetDate.getDate() - i);
-    promises.push(processPortfolio('test-user-id', targetDate));
+    promises.push(processPortfolio('OHo9Mhp3K63nZrs6arMMizh0tXe3', targetDate));
   }
 
   const results = await Promise.all(promises);
@@ -184,7 +184,7 @@ export async function getPortfolioForLastYearByMonth(): Promise<
   PortfolioView[]
 > {
   if (!mostRecentNavDate) {
-    await processPortfolio('test-user-id'); // Ensure mostRecentNavDate is set
+    await processPortfolio('OHo9Mhp3K63nZrs6arMMizh0tXe3'); // Ensure mostRecentNavDate is set
   }
 
   const promises: Promise<PortfolioView>[] = [];
@@ -192,7 +192,7 @@ export async function getPortfolioForLastYearByMonth(): Promise<
 
   for (let i = 0; i < 12; i++) {
     const targetDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
-    promises.push(processPortfolio('test-user-id', targetDate));
+    promises.push(processPortfolio('OHo9Mhp3K63nZrs6arMMizh0tXe3', targetDate));
   }
 
   const results = await Promise.all(promises);
@@ -329,7 +329,7 @@ async function processSchemes(
   return mutualFundViews;
 }
 
-async function processScheme(
+export async function processScheme(
   scheme: Scheme,
   reqDate?: Date
 ): Promise<SchemeView> {
@@ -410,7 +410,7 @@ export async function processNAVDate(
 export async function getTransactionsByScemeId(
   schemeId: string
 ): Promise<TransactionView[]> {
-  let userId = 'test-user-id';
+  let userId = 'OHo9Mhp3K63nZrs6arMMizh0tXe3';
   try {
     const transactionsRef = firestore
       .collection('users')

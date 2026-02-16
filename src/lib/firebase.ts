@@ -41,3 +41,4 @@ if (!global._firebaseAdminInstance) {
 export const firestore = global._firebaseAdminInstance.firestore();
 export const auth = global._firebaseAdminInstance.auth();
 export const bucket = global._firebaseAdminInstance.storage().bucket();
+export { admin };

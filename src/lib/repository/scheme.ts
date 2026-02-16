@@ -1,4 +1,5 @@
 import { firestore } from '@/lib/firebase';
+import { Scheme } from '@/lib/types/scheme'; // Assuming Scheme type is defined here or imported
 
 export interface SchemeData {
   amc: string;
@@ -40,6 +41,29 @@ export async function getAllSchemeData(): Promise<SchemeData[]> {
     return schemes;
   } catch (error) {
     console.error('Error fetching schemes from Firestore:', error);
+    return [];
+  }
+}
+
+export async function getSchemesByUserId(userId: string): Promise<Scheme[]> {
+  try {
+    const schemesRef = firestore
+      .collection('users')
+      .doc(userId)
+      .collection('schemes');
+    const snapshot = await schemesRef.get();
+
+    if (snapshot.empty) {
+      return [];
+    }
+
+    const schemes: Scheme[] = [];
+    snapshot.forEach((doc) => {
+      schemes.push({ id: doc.id, ...doc.data() } as Scheme);
+    });
+    return schemes;
+  } catch (error) {
+    console.error(`Error fetching schemes for user ${userId}:`, error);
     return [];
   }
 }

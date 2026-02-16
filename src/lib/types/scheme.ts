@@ -44,6 +44,7 @@ export interface Scheme {
   stampDuty?: number;
   sttTax?: number;
   capitalGainTax?: number;
+  goalId?: string; // Optional reference to a Goal ID
 }
 
 export function generateSchemeId(mutualFundId: string, scheme: Scheme) {

@@ -79,3 +79,24 @@ export async function deleteSession() {
   const cookieStore = await cookies();
   cookieStore.delete("session");
 }
+
+export async function getSessionUserId(): Promise<string | null> {
+  console.log("Attempting to get session user ID...");
+  const session = (await cookies()).get("session")?.value;
+  if (!session) {
+    console.log("No session cookie found.");
+    return null;
+  }
+  console.log("Session cookie found:", session);
+
+  const payload = await decrypt(session);
+  console.log("Decrypted payload:", payload);
+
+  if (payload && typeof payload.userId === 'string') {
+    console.log("User ID found in payload:", payload.userId);
+    return payload.userId;
+  }
+  
+  console.log("User ID not found or not a string in payload.");
+  return null;
+}

@@ -167,7 +167,12 @@ export function PortfolioChart({ historicalData }: PortfolioChartProps) {
                 stroke="var(--color-marketValue)"
               />
               <ChartLegend
-                content={<ChartLegendContent className="mt-4 gap-8" />}
+                content={({ payload }) => (
+                  <ChartLegendContent
+                    payload={payload}
+                    className="mt-4 gap-8"
+                  />
+                )}
               />
             </AreaChart>
           </ResponsiveContainer>

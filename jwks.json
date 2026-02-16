@@ -1,0 +1,12 @@
+{
+  "keys": [
+    {
+      "kty": "RSA",
+      "use": "sig",
+      "kid": "firebase-auth-test-key",
+      "alg": "RS256",
+      "n": "ljgwfHShEUErI_XIkTu5oarsnld2t90_glESBFQm_GT95qtUJbJyY9mtfIRmIRoTODuASSgaUaYvmWIVgb313esbSsYLUxHqb2rdQTn3b7v_SF6oj3bQlVNzY8VeFGMIYVJwi5AGLzyuPfEBMVOiEnxetytViwmbqW67J_fqsyQ9ZSxUe37vhJnW8CVsNsnUHNFNBqZ8AUUVgszgA6peMPwDTjgwIS5LhRAKcvL-4iJfgMKNqmoK-nME0HWRillNyhO96NuD0rwo_o69Pt8tbVUE7R4huJOlHCBw56zB-kNialwpQI1aaThR89TJKBESFK5vF43gNJfOIBlbtzu99Q",
+      "e": "AQAB"
+    }
+  ]
+}

@@ -39,6 +39,12 @@ export const data: SideMenuItem[] = [
     description: "View performance by scheme",
   },
   {
+    title: "Goals",
+    url: "/goals",
+    icon: Award,
+    description: "Track your financial goals",
+  },
+  {
     title: "Settings",
     url: "/setting",
     icon: Settings,

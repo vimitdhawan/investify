@@ -16,6 +16,21 @@ Represents the user's entire investment portfolio at a specific point in time.
 
 ---
 
+### `Goal`
+
+Represents a single financial goal for a user, allowing them to track progress towards a specific financial objective.
+
+-   **`id: string`**: A unique identifier for the goal.
+-   **`name: string`**: The user-defined name for the goal (e.g., "Retirement Fund").
+-   **`targetAmount: number`**: The monetary target for the goal.
+-   **`targetDate: Date`**: The user's desired completion date for the goal.
+-   **`currentAmount: number`**: A calculated field representing the sum of the market values of all schemes currently assigned to this goal.
+-   **`userId: string`**: The ID of the user who owns this goal.
+-   **`schemeIds: string[]`**: An array of `Scheme` IDs that are assigned to this goal.
+-   **`projectedDate?: Date`**: A calculated, estimated date of when the goal will be reached based on the historical performance (XIRR) of the assigned schemes. This is `undefined` if a projection is not possible (e.g., due to negative returns).
+
+---
+
 ### `Scheme`
 
 Represents a single mutual fund scheme holding. This is a central entity in our data model.
@@ -33,6 +48,7 @@ Represents a single mutual fund scheme holding. This is a central entity in our 
 -   **`realizedGainLoss: number`**: The total profit or loss realized from selling units.
 -   **`unrealizedGainLoss: number`**: The notional profit or loss on the current holdings (`marketValue - investedAmount`).
 -   **`transactions: Transaction[]`**: A list of all transactions associated with this scheme.
+-   **`goalId?: string`**: An optional reference to the ID of a `Goal` this scheme is assigned to.
 
 ---
 
@@ -67,6 +83,6 @@ This is a **view model**, not a core entity. It is used for display purposes on 
 ## 2. Data Flow & Transformation
 
 1.  **Ingestion**: Raw portfolio data (from a `.json` file) is ingested by the `ingest-portfolio.ts` script. This script transforms the raw DTOs (Data Transfer Objects) into our core `Scheme` and `Transaction` entities.
-2.  **Storage**: The transformed data is stored in Firestore. User data is stored under `/users/{userId}`, with schemes and transactions in sub-collections.
+2.  **Storage**: The transformed data is stored in Firestore. User data is stored under `/users/{userId}`, with schemes, goals, and transactions in sub-collections.
 3.  **Repository Layer**: The `/lib/repository` layer is responsible for fetching data from Firestore and transforming it into the data models defined here. For example, `getPortfolioFromFirestore` assembles the complete `Portfolio` object.
 4.  **View Models**: For display, the repository layer may further process the core entities into "view models" (like `MutualFundView` or `SchemeView`) that are tailored for a specific UI component. These view models might contain calculated fields like `marketValue` or aggregated data.
