@@ -1,5 +1,5 @@
 import { GoalForm } from '@/features/goal/components/goal-form';
-import { getGoal } from '@/lib/repository/goal';
+import { getGoal } from '@/features/goal/repository';
 import { getSchemesByUserId } from '@/lib/repository/scheme';
 import { getSessionUserId } from '@/lib/session';
 import { redirect } from 'next/navigation';

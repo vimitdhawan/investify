@@ -1,4 +1,4 @@
-import { getGoals } from '@/lib/repository/goal';
+import { getGoals } from '@/features/goal/repository';
 import { GoalList } from '@/features/goal/components/goal-list';
 import { getSessionUserId } from '@/lib/session';
 import { redirect } from 'next/navigation';

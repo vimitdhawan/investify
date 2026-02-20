@@ -5,7 +5,7 @@ import {
   createGoal,
   updateGoal,
   deleteGoal as deleteGoalRepo,
-} from '@/lib/repository/goal';
+} from '@/features/goal/repository';
 import { getSessionUserId } from '@/lib/session';
 import { goalFormSchema, GoalFormData } from '@/lib/schema/goal';
 
