@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { MutualFundView } from '@/lib/types/mutual-fund';
+import { MutualFundView } from '@/features/fund-houses/type';
 
 // FinancialDetail component (copied from scheme-card.tsx)
 function FinancialDetail({

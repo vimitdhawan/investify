@@ -1,13 +1,13 @@
 // scripts/ingest-portfolio.ts
 import { firestore, bucket } from '@/lib/firebase';
-import { Scheme, SchemeType } from '@/lib/types/scheme';
+import { Scheme, SchemeType } from '@/features/schemes/type';
 import {
   Transaction,
   TransactionType,
   investmentTypes,
   withdrawTypes,
-} from '@/lib/types/transaction';
-import { Investor, Statement, Portfolio } from '@/lib/types/portfolio';
+} from '@/features/transactions/type';
+import { Investor, Statement, Portfolio } from '@/features/portfolio/type';
 import { getAllSchemeData } from '@/lib/repository/scheme';
 
 export interface PortfolioDTO {

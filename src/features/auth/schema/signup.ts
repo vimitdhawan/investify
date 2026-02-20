@@ -1,8 +1,8 @@
-import * as z from "zod";
-import { PasswordInputValidation } from "@/lib/schema/pasword";
+import * as z from 'zod';
+import { PasswordInputValidation } from '@/features/auth/schema/pasword';
 
 const signupFormBaseSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
+  email: z.string().email({ message: 'Please enter a valid email address' }),
   password: PasswordInputValidation,
   confirmPassword: z.string().min(1, "Confirm password can't be empty"),
 });
@@ -11,8 +11,8 @@ const signupFormBaseSchema = z.object({
 export const signupFormSchema = signupFormBaseSchema.refine(
   (data) => data.password === data.confirmPassword,
   {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
   }
 );
 

@@ -1,4 +1,4 @@
-import { TransactionView, Transaction } from '@/lib/types/transaction';
+import { TransactionView, Transaction } from '@/features/transactions/type';
 
 export enum SchemeType {
   Equity = 'EQUITY',

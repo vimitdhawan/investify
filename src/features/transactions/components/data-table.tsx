@@ -18,7 +18,7 @@ import { TableHeader } from './table-headers';
 import { TablePagination } from './table-pagination';
 import { columns } from './columns';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { TransactionView } from '@/lib/types/transaction';
+import { TransactionView } from '@/features/transactions/type';
 
 export function DataTable({ data: initialData }: { data: TransactionView[] }) {
   const [data, setData] = React.useState(() => initialData);

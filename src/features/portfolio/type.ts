@@ -1,5 +1,5 @@
-import { MutualFundView } from '@/lib/types/mutual-fund';
-import { Scheme } from '@/lib/types/scheme';
+import { MutualFundView } from '@/features/fund-houses/type';
+import { Scheme } from '@/features/schemes/type';
 
 export interface PortfolioView {
   investor: InvestorView;

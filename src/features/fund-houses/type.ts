@@ -1,4 +1,4 @@
-import { SchemeView } from '@/lib/types/scheme';
+import { SchemeView } from '@/features/schemes/type';
 
 export interface MutualFundView {
   name: string;

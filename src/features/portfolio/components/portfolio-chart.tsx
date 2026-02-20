@@ -24,7 +24,7 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from '@/components/ui/chart';
-import { PortfolioView } from '@/lib/types/portfolio';
+import { PortfolioView } from '@/features/portfolio/type';
 import { formatCurrency, formatCurrencyCompact } from '@/lib/utils';
 
 const chartConfig = {

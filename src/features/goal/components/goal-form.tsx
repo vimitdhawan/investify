@@ -32,9 +32,9 @@ import {
   handleCreateGoal,
   handleUpdateGoal,
 } from '@/features/goal/action';
-import { goalFormSchema, GoalFormData } from '@/lib/schema/goal'; // Updated import
-import { Goal } from '@/lib/types/goal';
-import { Scheme } from '@/lib/types/scheme';
+import { goalFormSchema, GoalFormData } from '@/features/goal/schema'; // Updated import
+import { Goal } from '@/features/goal/type';
+import { Scheme } from '@/features/schemes/type';
 import { MultiSelect } from '@/components/ui/multi-select'; // Assuming this component exists or will be created
 
 interface GoalFormProps {

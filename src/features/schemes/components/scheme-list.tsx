@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { SchemeView } from '@/lib/types/scheme';
+import { SchemeView } from '@/features/schemes/type';
 import { SchemeCard } from '@/features/schemes/components/scheme-card';
 import {
   Select,

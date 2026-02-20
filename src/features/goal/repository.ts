@@ -1,7 +1,7 @@
 import { firestore, admin } from '@/lib/firebase';
-import { Goal } from '@/lib/types/goal';
-import { Scheme } from '@/lib/types/scheme';
-import { Transaction } from '@/lib/types/transaction';
+import { Goal } from '@/features/goal/type';
+import { Scheme } from '@/features/schemes/type';
+import { Transaction } from '@/features/transactions/type';
 import {
   calculateXIRRForTransactions,
   projectCompletionDate,

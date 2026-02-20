@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { SchemeView } from '@/lib/types/scheme';
+import { SchemeView } from '@/features/schemes/type';
 import Link from 'next/link';
 
 interface SchemeCardProps {

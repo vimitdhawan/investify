@@ -17,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { PortfolioView } from '@/lib/types/portfolio';
+import { PortfolioView } from '@/features/portfolio/type';
 
 interface FinancialDetailProps {
   label: string;

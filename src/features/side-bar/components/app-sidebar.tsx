@@ -1,7 +1,7 @@
-import { IconInnerShadowTop } from "@tabler/icons-react";
+import { IconInnerShadowTop } from '@tabler/icons-react';
 
-import { NavMain } from "@/components/side-bar/nav-main";
-import { NavUser } from "@/components/side-bar/nav-user";
+import { NavMain } from '@/features/side-bar/components/nav-main';
+import { NavUser } from '@/features/side-bar/components/nav-user';
 import {
   Sidebar,
   SidebarContent,
@@ -10,7 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (

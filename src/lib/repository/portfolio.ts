@@ -4,21 +4,21 @@ import {
   TransactionType,
   investmentTypes,
   withdrawTypes,
-} from '@/lib/types/transaction';
-import { MutualFundView } from '@/lib/types/mutual-fund';
-import { SchemeView, Scheme } from '@/lib/types/scheme';
+} from '@/features/transactions/type';
+import { MutualFundView } from '@/features/fund-houses/type';
+import { SchemeView, Scheme } from '@/features/schemes/type';
 import {
   PortfolioView,
   Portfolio,
   Investor,
   Statement,
-} from '@/lib/types/portfolio';
+} from '@/features/portfolio/type';
 import {
   getAmficCodeByIsin,
   getHistoricalNavBySchemeId,
   getLatestNavBySchemeId,
 } from '@/lib/clients/mf';
-import { SchemeNav } from '@/lib/types/mf';
+import { SchemeNav } from '@/lib/clients/mf';
 import { firestore } from '@/lib/firebase';
 import xirr from 'xirr';
 

@@ -8,7 +8,7 @@ import {
   SignupActionState,
   signupFormSchema,
   SignupFormData,
-} from '@/lib/schema/signup';
+} from '@/features/auth/schema/signup';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {

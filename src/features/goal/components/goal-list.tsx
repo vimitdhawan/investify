@@ -1,6 +1,6 @@
 'use client';
 
-import { Goal } from '@/lib/types/goal';
+import { Goal } from '@/features/goal/type';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Award, Edit, Trash2 } from 'lucide-react';

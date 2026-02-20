@@ -8,7 +8,7 @@ import {
   LoginActionState,
   loginFormSchema,
   LoginFormData,
-} from '@/lib/schema/login';
+} from '@/features/auth/schema/login';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';

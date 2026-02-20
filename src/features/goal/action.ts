@@ -7,7 +7,7 @@ import {
   deleteGoal as deleteGoalRepo,
 } from '@/features/goal/repository';
 import { getSessionUserId } from '@/lib/session';
-import { goalFormSchema, GoalFormData } from '@/lib/schema/goal';
+import { goalFormSchema, GoalFormData } from '@/features/goal/schema';
 
 export interface GoalActionState {
   errors?: {

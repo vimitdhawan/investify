@@ -1,6 +1,6 @@
-import { AppSidebar } from '@/components/side-bar/app-sidebar';
+import { AppSidebar } from '@/features/side-bar/components/app-sidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { SiteHeader } from '@/components/side-bar/site-header';
+import { SiteHeader } from '@/features/side-bar/components/site-header';
 
 export default async function DashboardLayout({
   children,

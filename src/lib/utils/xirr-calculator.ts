@@ -1,5 +1,10 @@
 import xirr from 'xirr';
-import { Transaction, TransactionType, investmentTypes, withdrawTypes } from '@/lib/types/transaction';
+import {
+  Transaction,
+  TransactionType,
+  investmentTypes,
+  withdrawTypes,
+} from '@/features/transactions/type';
 
 // Helper to parse YYYY-MM-DD date strings
 function parseYYYYMMDDString(dateStr: string): Date {
@@ -98,15 +103,21 @@ export function projectCompletionDate(
   // N * log(1 + Rate) = log(FV / PV)
   // N = log(FV / PV) / log(1 + Rate)
 
-  const yearsToTarget = Math.log(targetAmount / currentAmount) / Math.log(1 + rate);
+  const yearsToTarget =
+    Math.log(targetAmount / currentAmount) / Math.log(1 + rate);
 
   if (!isFinite(yearsToTarget) || yearsToTarget < 0) {
     return null; // Should not happen with above checks, but good for safety
   }
 
   const projectedDate = new Date(currentDate);
-  projectedDate.setFullYear(currentDate.getFullYear() + Math.floor(yearsToTarget));
-  projectedDate.setMonth(currentDate.getMonth() + Math.round((yearsToTarget - Math.floor(yearsToTarget)) * 12));
+  projectedDate.setFullYear(
+    currentDate.getFullYear() + Math.floor(yearsToTarget)
+  );
+  projectedDate.setMonth(
+    currentDate.getMonth() +
+      Math.round((yearsToTarget - Math.floor(yearsToTarget)) * 12)
+  );
 
   return projectedDate;
 }

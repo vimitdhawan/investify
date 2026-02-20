@@ -1,6 +1,9 @@
 'use server';
 
-import { LoginActionState, loginFormSchema } from '@/lib/schema/login';
+import {
+  LoginActionState,
+  loginFormSchema,
+} from '@/features/auth/schema/login';
 import { createSession } from '@/lib/session';
 
 export async function handleLogin(

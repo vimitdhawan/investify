@@ -1,5 +1,5 @@
 import { firestore } from '@/lib/firebase';
-import { Scheme } from '@/lib/types/scheme'; // Assuming Scheme type is defined here or imported
+import { Scheme } from '@/features/schemes/type'; // Assuming Scheme type is defined here or imported
 
 export interface SchemeData {
   amc: string;

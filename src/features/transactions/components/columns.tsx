@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
-import { TransactionView } from '@/lib/types/transaction';
+import { TransactionView } from '@/features/transactions/type';
 import { formatCurrency } from '@/lib/utils';
 
 export const columns: ColumnDef<TransactionView>[] = [

@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Separator } from '@/components/ui/separator';
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
-import { usePathname } from "next/navigation";
-import { data } from "@/lib/types/sidebar-menu";
+import { usePathname } from 'next/navigation';
+import { data } from '@/features/side-bar/type';
 
 export function SiteHeader() {
   const pathname: string = usePathname();

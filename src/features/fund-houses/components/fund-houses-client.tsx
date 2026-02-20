@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { MutualFundView } from '@/lib/types/mutual-fund';
+import { MutualFundView } from '@/features/fund-houses/type';
 import { FundHouseCard } from './fund-house-card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
