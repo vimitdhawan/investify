@@ -3,7 +3,7 @@ import {
   processNAVDate,
   mostRecentNavDate,
 } from '@/lib/repository/portfolio';
-import { SchemeList } from './components/scheme-list';
+import { SchemeList } from '@/components/schemes/scheme-list';
 import { getSessionUserId } from '@/lib/session';
 import { redirect } from 'next/navigation';
 

@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { SchemeView } from '@/lib/types/scheme';
-import { SchemeCard } from './scheme-card';
+import { SchemeCard } from '@/components/schemes/scheme-card';
 import {
   Select,
   SelectContent,

@@ -1,4 +1,4 @@
-import { GoalForm } from '../../components/goal-form';
+import { GoalForm } from '@/components/goal/goal-form';
 import { getGoal } from '@/lib/repository/goal';
 import { getSchemesByUserId } from '@/lib/repository/scheme';
 import { getSessionUserId } from '@/lib/session';
@@ -32,7 +32,10 @@ export default async function EditGoalPage({
             <CardTitle>Edit Goal: {initialGoal.name}</CardTitle>
           </CardHeader>
           <CardContent>
-            <GoalForm initialGoal={initialGoal} availableSchemes={availableSchemes} />
+            <GoalForm
+              initialGoal={initialGoal}
+              availableSchemes={availableSchemes}
+            />
           </CardContent>
         </Card>
       </div>
