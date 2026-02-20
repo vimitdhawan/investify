@@ -47,6 +47,7 @@ export function formatDateToYYYYMMDD(date: Date): string {
 async function getPortfolioFromFirestore(
   userId: string
 ): Promise<Portfolio | null> {
+  console.log('user id', userId);
   const userRef = firestore.collection('users').doc(userId);
   const userDoc = await userRef.get();
 
@@ -89,11 +90,6 @@ async function getPortfolioFromFirestore(
     statements,
     schemes,
   };
-}
-
-interface HistoricalData {
-  units: number;
-  investedAmount: number;
 }
 
 function calculateXIRR(
@@ -158,33 +154,34 @@ function calculatePortfolioXIRR(
   return calculateXIRR(filteredTransactions, marketValue, date);
 }
 
-export async function getPortfolio(): Promise<PortfolioView> {
-  return processPortfolio('OHo9Mhp3K63nZrs6arMMizh0tXe3');
+export async function getPortfolio(userId: string): Promise<PortfolioView> {
+  return processPortfolio(userId);
 }
 
 export async function getLastNDaysPortfolio(
+  userId: string,
   days: number
 ): Promise<PortfolioView[]> {
   if (!mostRecentNavDate) {
-    await processPortfolio('OHo9Mhp3K63nZrs6arMMizh0tXe3'); // Ensure mostRecentNavDate is set
+    await processPortfolio(userId); // Ensure mostRecentNavDate is set
   }
 
   const promises: Promise<PortfolioView>[] = [];
   for (let i = days - 1; i >= 0; i--) {
     const targetDate = new Date(mostRecentNavDate!);
     targetDate.setDate(targetDate.getDate() - i);
-    promises.push(processPortfolio('OHo9Mhp3K63nZrs6arMMizh0tXe3', targetDate));
+    promises.push(processPortfolio(userId, targetDate));
   }
 
   const results = await Promise.all(promises);
   return results;
 }
 
-export async function getPortfolioForLastYearByMonth(): Promise<
-  PortfolioView[]
-> {
+export async function getPortfolioForLastYearByMonth(
+  userId: string
+): Promise<PortfolioView[]> {
   if (!mostRecentNavDate) {
-    await processPortfolio('OHo9Mhp3K63nZrs6arMMizh0tXe3'); // Ensure mostRecentNavDate is set
+    await processPortfolio(userId); // Ensure mostRecentNavDate is set
   }
 
   const promises: Promise<PortfolioView>[] = [];
@@ -192,7 +189,7 @@ export async function getPortfolioForLastYearByMonth(): Promise<
 
   for (let i = 0; i < 12; i++) {
     const targetDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
-    promises.push(processPortfolio('OHo9Mhp3K63nZrs6arMMizh0tXe3', targetDate));
+    promises.push(processPortfolio(userId, targetDate));
   }
 
   const results = await Promise.all(promises);
@@ -201,8 +198,10 @@ export async function getPortfolioForLastYearByMonth(): Promise<
   ); // sort ascending
 }
 
-export async function getLast30DaysPortfolio(): Promise<PortfolioView[]> {
-  return getLastNDaysPortfolio(30);
+export async function getLast30DaysPortfolio(
+  userId: string
+): Promise<PortfolioView[]> {
+  return getLastNDaysPortfolio(userId, 30);
 }
 
 export async function processPortfolio(
@@ -408,9 +407,9 @@ export async function processNAVDate(
 }
 
 export async function getTransactionsByScemeId(
+  userId: string,
   schemeId: string
 ): Promise<TransactionView[]> {
-  let userId = 'OHo9Mhp3K63nZrs6arMMizh0tXe3';
   try {
     const transactionsRef = firestore
       .collection('users')

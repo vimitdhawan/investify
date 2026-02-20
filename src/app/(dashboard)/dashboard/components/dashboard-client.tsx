@@ -1,16 +1,45 @@
-import { PortfolioOverviewCard } from './portfolio-overview-card';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import {
   getLastNDaysPortfolio,
   getPortfolioForLastYearByMonth,
 } from '@/lib/repository/portfolio';
 import { PortfolioChart } from './portfolio-chart';
+import { PortfolioOverviewCard } from './portfolio-overview-card';
+import { Button } from '@/components/ui/button';
+import { getSessionUserId } from '@/lib/session';
 
 export async function DashboardClient() {
-  const dailyPortfolios = await getLastNDaysPortfolio(2);
-  const portfolio = dailyPortfolios[1];
-  const previousDayPortfolio = dailyPortfolios[0];
+  const userId = await getSessionUserId();
+  if (!userId) {
+    redirect('/login');
+  }
 
-  const yearlyPortfolios = await getPortfolioForLastYearByMonth();
+  const dailyPortfolios = await getLastNDaysPortfolio(userId, 2);
+
+  if (dailyPortfolios.length === 0) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center rounded-lg border border-dashed shadow-sm h-full min-h-[400px]">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <h3 className="text-2xl font-bold tracking-tight">
+            No Portfolio Found
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            You have not uploaded a portfolio yet.
+          </p>
+          <Button asChild className="mt-4">
+            <Link href="/settings">Upload Portfolio</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const portfolio = dailyPortfolios[dailyPortfolios.length - 1];
+  const previousDayPortfolio =
+    dailyPortfolios.length > 1 ? dailyPortfolios[0] : null;
+
+  const yearlyPortfolios = await getPortfolioForLastYearByMonth(userId);
 
   const previousDayChange = previousDayPortfolio
     ? portfolio.marketValue - previousDayPortfolio.marketValue

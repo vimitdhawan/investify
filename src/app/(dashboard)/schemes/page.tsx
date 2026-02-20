@@ -4,11 +4,16 @@ import {
   mostRecentNavDate,
 } from '@/lib/repository/portfolio';
 import { SchemeList } from './components/scheme-list';
-import { SchemeView } from '@/lib/types/scheme';
+import { getSessionUserId } from '@/lib/session';
+import { redirect } from 'next/navigation';
 
 // Server Component to fetch data
 export default async function SchemesPage() {
-  const portfolio = await processPortfolio('OHo9Mhp3K63nZrs6arMMizh0tXe3');
+  const userId = await getSessionUserId();
+  if (!userId) {
+    redirect('/login');
+  }
+  const portfolio = await processPortfolio(userId);
   const schemes = portfolio.mutualFunds.flatMap((mf) => mf.schemes);
 
   const dayChanges = new Map<string, number>();

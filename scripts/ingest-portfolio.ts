@@ -359,7 +359,7 @@ function mapTransaction(
 
 // --- Main script execution ---
 
-const USER_ID = 'OHo9Mhp3K63nZrs6arMMizh0tXe3';
+const USER_ID = 'O5ChLBJpFDeWd74VMnDL32tjmCI3';
 
 async function main() {
   console.log('Starting portfolio data ingestion...');

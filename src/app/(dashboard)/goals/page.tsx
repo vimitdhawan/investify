@@ -1,9 +1,14 @@
 import { getGoals } from '@/lib/repository/goal';
 import { GoalList } from './components/goal-list';
+import { getSessionUserId } from '@/lib/session';
+import { redirect } from 'next/navigation';
 
 // Server Component to fetch data
 export default async function GoalsPage() {
-  const userId = 'OHo9Mhp3K63nZrs6arMMizh0tXe3'; // TODO: Replace with actual user ID
+  const userId = await getSessionUserId();
+  if (!userId) {
+    redirect('/login');
+  }
   const goals = await getGoals(userId);
 
   return <GoalList goals={goals} />;
