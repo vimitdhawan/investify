@@ -17,7 +17,7 @@ import {
   getAmficCodeByIsin,
   getHistoricalNavBySchemeId,
   getLatestNavBySchemeId,
-} from '@/lib/repository/mf';
+} from '@/lib/clients/mf';
 import { SchemeNav } from '@/lib/types/mf';
 import { firestore } from '@/lib/firebase';
 import xirr from 'xirr';

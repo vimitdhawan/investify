@@ -1,5 +1,5 @@
 import { processPortfolio } from '@/lib/repository/portfolio';
-import { FundHousesClient } from '../../../components/fund-house/fund-houses-client';
+import { FundHousesClient } from '../../../features/fund-houses/components/fund-houses-client';
 import { getSessionUserId } from '@/lib/session';
 import { redirect } from 'next/navigation'; // Import the new client component
 

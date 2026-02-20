@@ -1,5 +1,5 @@
 import { getGoals } from '@/lib/repository/goal';
-import { GoalList } from '@/components/goal/goal-list';
+import { GoalList } from '@/features/goal/components/goal-list';
 import { getSessionUserId } from '@/lib/session';
 import { redirect } from 'next/navigation';
 

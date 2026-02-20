@@ -1,4 +1,4 @@
-import { GoalForm } from '@/components/goal/goal-form';
+import { GoalForm } from '@/features/goal/components/goal-form';
 import { getSchemesByUserId } from '@/lib/repository/scheme';
 import { getSessionUserId } from '@/lib/session';
 import { redirect } from 'next/navigation';

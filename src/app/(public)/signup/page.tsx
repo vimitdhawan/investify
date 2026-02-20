@@ -1,11 +1,11 @@
-import { SignupForm } from "@/components/auth/signup-form";
+import { SignupForm } from '@/features/auth/components/signup-form';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 
 export default function Page() {
   return (

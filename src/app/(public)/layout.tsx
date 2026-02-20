@@ -1,6 +1,6 @@
-import type React from "react";
-import Navbar from "@/components/landing-page/navbar";
-import Footer from "@/components/landing-page/footer";
+import type React from 'react';
+import Navbar from '@/features/landing-page/components/navbar';
+import Footer from '@/features/landing-page/components/footer';
 
 export default function PublicLayout({
   children,

@@ -4,8 +4,8 @@ import {
   getLastNDaysPortfolio,
   getPortfolioForLastYearByMonth,
 } from '@/lib/repository/portfolio';
-import { PortfolioChart } from '@/components/dashboard/portfolio-chart';
-import { PortfolioOverviewCard } from '@/components/dashboard/portfolio-overview-card';
+import { PortfolioChart } from '@/features/portfolio/components/portfolio-chart';
+import { PortfolioOverviewCard } from '@/features/portfolio/components/portfolio-overview-card';
 import { Button } from '@/components/ui/button';
 import { getSessionUserId } from '@/lib/session';
 

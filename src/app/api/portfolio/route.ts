@@ -11,10 +11,15 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const date = searchParams.get('date');
-    const portfolio = await processPortfolio(userId, date ? new Date(date) : undefined);
+    const portfolio = await processPortfolio(
+      userId,
+      date ? new Date(date) : undefined
+    );
     return NextResponse.json(portfolio);
   } catch (error) {
-    console.error('Error populating portfolio cache:', error);
-    return NextResponse.json({ error: 'Failed to populate portfolio cache' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to populate portfolio cache' },
+      { status: 500 }
+    );
   }
 }

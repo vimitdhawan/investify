@@ -1,4 +1,4 @@
-import { DataTable } from '@/components/transactions/data-table';
+import { DataTable } from '@/features/transactions/components/data-table';
 import { getTransactionsByScemeId } from '@/lib/repository/portfolio';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
