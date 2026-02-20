@@ -1,7 +1,11 @@
-"use server";
+'use server';
 
 import { redirect } from 'next/navigation';
-import { createGoal, updateGoal, deleteGoal as deleteGoalRepo } from '@/lib/repository/goal';
+import {
+  createGoal,
+  updateGoal,
+  deleteGoal as deleteGoalRepo,
+} from '@/lib/repository/goal';
 import { getSessionUserId } from '@/lib/session';
 import { goalFormSchema, GoalFormData } from '@/lib/schema/goal';
 
@@ -73,7 +77,9 @@ export async function handleCreateGoal(
     });
   } catch (error: any) {
     return {
-      errorMessage: error.message || 'An unexpected error occurred while creating the goal.',
+      errorMessage:
+        error.message ||
+        'An unexpected error occurred while creating the goal.',
     };
   }
   redirect('/goals');
@@ -110,7 +116,8 @@ export async function handleUpdateGoal(
     };
   }
 
-  const { id, name, targetAmount, targetDate, schemeIds } = validationResult.data;
+  const { id, name, targetAmount, targetDate, schemeIds } =
+    validationResult.data;
 
   if (!id) {
     return {
@@ -142,13 +149,17 @@ export async function handleUpdateGoal(
     });
   } catch (error: any) {
     return {
-      errorMessage: error.message || 'An unexpected error occurred while updating the goal.',
+      errorMessage:
+        error.message ||
+        'An unexpected error occurred while updating the goal.',
     };
   }
   redirect('/goals');
 }
 
-export async function handleDeleteGoal(goalId: string): Promise<GoalActionState> {
+export async function handleDeleteGoal(
+  goalId: string
+): Promise<GoalActionState> {
   const userId = await getSessionUserId();
   if (!userId) {
     return {
@@ -166,7 +177,9 @@ export async function handleDeleteGoal(goalId: string): Promise<GoalActionState>
     await deleteGoalRepo(userId, goalId);
   } catch (error: any) {
     return {
-      errorMessage: error.message || 'An unexpected error occurred while deleting the goal.',
+      errorMessage:
+        error.message ||
+        'An unexpected error occurred while deleting the goal.',
     };
   }
   redirect('/goals');

@@ -1,14 +1,14 @@
-"use server";
+'use server';
 
-import { redirect } from "next/navigation";
-import { deleteSession } from "@/lib/session";
+import { redirect } from 'next/navigation';
+import { deleteSession } from '@/lib/session';
 
 export async function handleLogout(callbackUrl?: string) {
   await deleteSession();
   const safeRedirect =
-    callbackUrl && callbackUrl !== "/login"
+    callbackUrl && callbackUrl !== '/login'
       ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
-      : "/login";
+      : '/login';
 
   redirect(safeRedirect);
 }

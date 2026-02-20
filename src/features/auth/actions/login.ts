@@ -1,7 +1,7 @@
-"use server";
+'use server';
 
-import { LoginActionState, loginFormSchema } from "@/lib/schema/login";
-import { createSession } from "@/lib/session";
+import { LoginActionState, loginFormSchema } from '@/lib/schema/login';
+import { createSession } from '@/lib/session';
 
 export async function handleLogin(
   _prev: LoginActionState,
@@ -21,14 +21,14 @@ export async function handleLogin(
     // 2. Verify password using Firebase Auth REST API
     const apiKey = process.env.FIREBASE_WEB_API_KEY;
     if (!apiKey) {
-      throw new Error("Firebase Web API Key is not configured.");
+      throw new Error('Firebase Web API Key is not configured.');
     }
     const firebaseLoginUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`;
 
     const response = await fetch(firebaseLoginUrl, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         email,
@@ -44,15 +44,15 @@ export async function handleLogin(
     if (!response.ok) {
       const errorCode = result?.error?.message;
 
-      if (errorCode == "INVALID_LOGIN_CREDENTIALS") {
+      if (errorCode == 'INVALID_LOGIN_CREDENTIALS') {
         return {
           errors: {
-            password: ["Invalid email or password."],
+            password: ['Invalid email or password.'],
           },
         };
       }
       return {
-        errorMessage: "Authentication failed. Please try again.",
+        errorMessage: 'Authentication failed. Please try again.',
       };
     }
     await createSession(result.localId);
@@ -62,7 +62,7 @@ export async function handleLogin(
   } catch (error: any) {
     console.log(error);
     return {
-      errorMessage: "Unexpected error occurred. Please try again later.",
+      errorMessage: 'Unexpected error occurred. Please try again later.',
     };
   }
 }

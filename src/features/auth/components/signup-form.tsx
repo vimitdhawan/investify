@@ -1,16 +1,16 @@
-"use client";
-import { useActionState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import Link from "next/link";
-import { handleSignup } from "@/lib/actions/signup";
+'use client';
+import { useActionState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { handleSignup } from '@/features/auth/actions/signup';
 import {
   SignupActionState,
   signupFormSchema,
   SignupFormData,
-} from "@/lib/schema/signup";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+} from '@/lib/schema/signup';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Form,
   FormControl,
@@ -18,9 +18,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
 export function SignupForm() {
   const [state, formAction, isPending] = useActionState(handleSignup, {
@@ -30,19 +30,19 @@ export function SignupForm() {
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupFormSchema),
     defaultValues: {
-      email: "",
-      password: "",
-      confirmPassword: "",
+      email: '',
+      password: '',
+      confirmPassword: '',
     },
-    mode: "onBlur",
+    mode: 'onBlur',
   });
 
   useEffect(() => {
     if (state?.errors) {
       Object.entries(state.errors).forEach(([key, messages]) => {
         form.setError(key as keyof SignupFormData, {
-          type: "manual",
-          message: Array.isArray(messages) ? messages.join("\n") : messages,
+          type: 'manual',
+          message: Array.isArray(messages) ? messages.join('\n') : messages,
         });
       });
     }
@@ -67,7 +67,7 @@ export function SignupForm() {
                   placeholder="m@example.com"
                   onChange={(e) => {
                     field.onChange(e);
-                    form.clearErrors("email");
+                    form.clearErrors('email');
                   }}
                 />
               </FormControl>
@@ -87,7 +87,7 @@ export function SignupForm() {
                   type="password"
                   onChange={(e) => {
                     field.onChange(e);
-                    form.clearErrors("password");
+                    form.clearErrors('password');
                   }}
                 />
               </FormControl>
@@ -107,7 +107,7 @@ export function SignupForm() {
                   type="password"
                   onChange={(e) => {
                     field.onChange(e);
-                    form.clearErrors("confirmPassword");
+                    form.clearErrors('confirmPassword');
                   }}
                 />
               </FormControl>
@@ -122,7 +122,7 @@ export function SignupForm() {
           </Button>
         </div>
         <div className="mt-4 text-center text-sm">
-          Already have an account?{" "}
+          Already have an account?{' '}
           <Link href="/login" className="underline underline-offset-4">
             Login
           </Link>

@@ -1,9 +1,9 @@
-"use server";
+'use server';
 
-import { redirect } from "next/navigation";
-import { SignupActionState, signupFormSchema } from "@/lib/schema/signup";
-import { createSession } from "@/lib/session";
-import { auth } from "@/lib/firebase";
+import { redirect } from 'next/navigation';
+import { SignupActionState, signupFormSchema } from '@/lib/schema/signup';
+import { createSession } from '@/lib/session';
+import { auth } from '@/lib/firebase';
 
 export async function handleSignup(
   _prev: SignupActionState,
@@ -28,7 +28,7 @@ export async function handleSignup(
 
     if (!userRecord.uid) {
       return {
-        errorMessage: "An error occurred while creating your account.",
+        errorMessage: 'An error occurred while creating your account.',
       };
     }
     // Create a new session for the user
@@ -37,8 +37,8 @@ export async function handleSignup(
   } catch (error: any) {
     // Handle potential errors, e.g., email already exists
     return {
-      errorMessage: error.message || "An unexpected error occurred.",
+      errorMessage: error.message || 'An unexpected error occurred.',
     };
   }
-  redirect("/dashboard");
+  redirect('/dashboard');
 }

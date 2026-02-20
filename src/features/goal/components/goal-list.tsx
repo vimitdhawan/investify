@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { Goal } from '@/lib/types/goal';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { handleDeleteGoal } from '@/lib/actions/goal';
+import { handleDeleteGoal } from '@/features/goal/action';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
@@ -49,7 +49,9 @@ export function GoalList({ goals }: GoalListProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {goals.length === 0 ? (
-          <p className="col-span-full text-center text-muted-foreground">No goals defined yet. Start by creating one!</p>
+          <p className="col-span-full text-center text-muted-foreground">
+            No goals defined yet. Start by creating one!
+          </p>
         ) : (
           goals.map((goal) => (
             <Card key={goal.id}>
@@ -70,16 +72,21 @@ export function GoalList({ goals }: GoalListProps) {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogTitle>
+                            Are you absolutely sure?
+                          </AlertDialogTitle>
                           <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete your
+                            This action cannot be undone. This will permanently
+                            delete your
                             {/* TODO: Add goal name here */}
                             goal and unlink all associated schemes.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(goal.id)}>
+                          <AlertDialogAction
+                            onClick={() => handleDelete(goal.id)}
+                          >
                             Continue
                           </AlertDialogAction>
                         </AlertDialogFooter>
@@ -89,9 +96,18 @@ export function GoalList({ goals }: GoalListProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">Target: ₹{goal.targetAmount.toLocaleString()}</p>
-                <p className="text-sm">Current: ₹{goal.currentAmount.toLocaleString()}</p>
-                <p className="text-sm">Projected Date: {goal.projectedDate ? new Date(goal.projectedDate).toLocaleDateString() : 'N/A'}</p>
+                <p className="text-sm text-muted-foreground">
+                  Target: ₹{goal.targetAmount.toLocaleString()}
+                </p>
+                <p className="text-sm">
+                  Current: ₹{goal.currentAmount.toLocaleString()}
+                </p>
+                <p className="text-sm">
+                  Projected Date:{' '}
+                  {goal.projectedDate
+                    ? new Date(goal.projectedDate).toLocaleDateString()
+                    : 'N/A'}
+                </p>
                 {/* More details to be added later */}
               </CardContent>
             </Card>

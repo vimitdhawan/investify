@@ -1,17 +1,17 @@
-"use client";
-import { useActionState, useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { handleLogin } from "@/lib/actions/login";
-import { useRouter } from "next/navigation";
+'use client';
+import { useActionState, useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
+import { handleLogin } from '@/features/auth/actions/login';
+import { useRouter } from 'next/navigation';
 import {
   LoginActionState,
   loginFormSchema,
   LoginFormData,
-} from "@/lib/schema/login";
-import Link from "next/link";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+} from '@/lib/schema/login';
+import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Form,
   FormControl,
@@ -19,29 +19,29 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
 export function LoginForm() {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(handleLogin, {
     errors: {},
   } as LoginActionState);
-  const [callbackUrl, setCallbackUrl] = useState("/dashboard");
+  const [callbackUrl, setCallbackUrl] = useState('/dashboard');
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: '',
+      password: '',
     },
-    mode: "onBlur",
+    mode: 'onBlur',
   });
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const value = params.get("callbackUrl") || "/dashboard";
+    const value = params.get('callbackUrl') || '/dashboard';
     setCallbackUrl(value);
   }, []);
 
@@ -50,8 +50,8 @@ export function LoginForm() {
     if (state?.errors) {
       Object.entries(state.errors).forEach(([key, messages]) => {
         form.setError(key as keyof LoginFormData, {
-          type: "manual",
-          message: Array.isArray(messages) ? messages.join("\n") : messages,
+          type: 'manual',
+          message: Array.isArray(messages) ? messages.join('\n') : messages,
         });
       });
     }
@@ -80,7 +80,7 @@ export function LoginForm() {
                   placeholder="m@example.com"
                   onChange={(e) => {
                     field.onChange(e);
-                    form.clearErrors("email");
+                    form.clearErrors('email');
                   }}
                 />
               </FormControl>
@@ -108,7 +108,7 @@ export function LoginForm() {
                   type="password"
                   onChange={(e) => {
                     field.onChange(e);
-                    form.clearErrors("password");
+                    form.clearErrors('password');
                   }}
                 />
               </FormControl>
@@ -124,7 +124,7 @@ export function LoginForm() {
           </Button>
         </div>
         <div className="mt-4 text-center text-sm">
-          Don&apos;t have an account?{" "}
+          Don&apos;t have an account?{' '}
           <Link href="/signup" className="underline underline-offset-4">
             Sign up
           </Link>
