@@ -123,6 +123,15 @@ export function SchemeCard({
                 valueClass={absoluteGainLossColorClass}
               />
               <FinancialDetail
+                label="Stamp Duty"
+                value={`${scheme.stampDuty?.toLocaleString('en-IN', {
+                  style: 'currency',
+                  currency: 'INR',
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}`}
+              />
+              <FinancialDetail
                 label="XIRR"
                 value={`${scheme.xirrGainLoss?.toFixed(2)}%`}
                 valueClass={
@@ -153,18 +162,19 @@ export function SchemeCard({
               )}
             </>
           )}
-          {scheme.realizedGainLoss !== undefined && (
-            <FinancialDetail
-              label="Realized Profit"
-              value={scheme.realizedGainLoss.toLocaleString('en-IN', {
-                style: 'currency',
-                currency: 'INR',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-              valueClass={realizedGainLossColorClass}
-            />
-          )}
+          {scheme.realizedGainLoss !== undefined &&
+            scheme.realizedGainLoss != 0 && (
+              <FinancialDetail
+                label="Realized Profit"
+                value={scheme.realizedGainLoss.toLocaleString('en-IN', {
+                  style: 'currency',
+                  currency: 'INR',
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+                valueClass={realizedGainLossColorClass}
+              />
+            )}
         </CardContent>
 
         <CardFooter className="flex-col items-start gap-1.5 text-xs text-muted-foreground pt-4">

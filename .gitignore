@@ -44,3 +44,6 @@ firebase-debug.log
 firebase-data/
 firebase-export-*/
 
+
+# Sentry Config File
+.env.sentry-build-plugin

@@ -1,10 +1,10 @@
 import { DataTable } from '@/features/transactions/components/data-table';
-import { getTransactionsByScemeId } from '@/lib/repository/portfolio';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { getSessionUserId } from '@/lib/session';
 import { redirect } from 'next/navigation';
+import { getTransactionViews } from '@/features/transactions/service';
 
 export default async function SchemeTransactionsPage({
   params,
@@ -17,7 +17,7 @@ export default async function SchemeTransactionsPage({
   }
   const resolvedParams = await Promise.resolve(params);
   const { id } = resolvedParams;
-  const transactionViews = await getTransactionsByScemeId(userId, id);
+  const transactionViews = await getTransactionViews(userId, id);
   return (
     <div className="p-4">
       <div className="mb-4">

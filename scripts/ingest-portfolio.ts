@@ -8,7 +8,7 @@ import {
   withdrawTypes,
 } from '@/features/transactions/type';
 import { Investor, Statement, Portfolio } from '@/features/portfolio/type';
-import { getAllSchemeData } from '@/lib/repository/scheme';
+import { getAllSchemeData } from '@/lib/clients/scheme';
 
 export interface PortfolioDTO {
   demat_accounts: DematAccountDTO[];

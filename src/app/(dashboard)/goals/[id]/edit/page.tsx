@@ -1,6 +1,6 @@
 import { GoalForm } from '@/features/goal/components/goal-form';
 import { getGoal } from '@/features/goal/repository';
-import { getSchemesByUserId } from '@/lib/repository/scheme';
+import { getSchemesByUserId } from '@/lib/clients/scheme';
 import { getSessionUserId } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

@@ -6,11 +6,8 @@ import {
   calculateXIRRForTransactions,
   projectCompletionDate,
 } from '@/lib/utils/xirr-calculator';
-import {
-  getTransactionsByScemeId,
-  processScheme,
-} from '@/lib/repository/portfolio';
-import { mostRecentNavDate } from '@/lib/repository/portfolio';
+import { toSchemeView } from '@/features/schemes/service';
+import { getTransactionViews } from '@/features/transactions/service';
 
 const GOALS_COLLECTION = 'goals';
 const USERS_COLLECTION = 'users';
@@ -44,16 +41,10 @@ async function calculateGoalProjections(
     );
 
     for (const scheme of fetchedSchemes) {
-      const processedScheme = await processScheme(
-        scheme,
-        mostRecentNavDate || new Date()
-      ); // Use current date for processing
+      const schemeTransactions = await getTransactionViews(userId, scheme.id);
+      const processedScheme = await toSchemeView(scheme, []); // Use current date for processing
       if (processedScheme.xirrGainLoss && processedScheme.xirrGainLoss > 0) {
         totalCurrentAmount += processedScheme.marketValue ?? 0;
-        const schemeTransactions = await getTransactionsByScemeId(
-          userId,
-          scheme.id
-        );
         allTransactions = allTransactions.concat(
           schemeTransactions.map((txView) => ({
             id: txView.id,
@@ -82,7 +73,7 @@ async function calculateGoalProjections(
     const combinedXIRR = calculateXIRRForTransactions(
       allTransactions,
       totalCurrentAmount,
-      mostRecentNavDate || new Date()
+      new Date() //  mostRecentNavDate || new Date(),
     );
 
     if (combinedXIRR > 0) {
@@ -90,12 +81,12 @@ async function calculateGoalProjections(
         projectCompletionDate(
           totalCurrentAmount,
           goal.targetAmount,
-          mostRecentNavDate || new Date(),
+          new Date(), //  mostRecentNavDate || new Date(),
           combinedXIRR
         ) || undefined;
     }
   } else if (totalCurrentAmount >= goal.targetAmount) {
-    projectedDate = mostRecentNavDate || new Date(); // Goal already achieved
+    projectedDate = new Date(); //  mostRecentNavDate || new Date(),
   }
 
   return { currentAmount: totalCurrentAmount, projectedDate };

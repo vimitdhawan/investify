@@ -38,6 +38,8 @@ export function FundHouseCard({ mutualFund }: FundHouseCardProps) {
 
   const isGain = (mutualFund?.absoluteGainLoss ?? 0) >= 0;
   const gainLossColorClass = isGain ? 'text-green-500' : 'text-red-500';
+  const xirrGainLossClass =
+    (mutualFund?.xirrGainLoss ?? 0) >= 0 ? 'text-green-500' : 'text-red-500';
   const Icon = isGain ? IconTrendingUp : IconTrendingDown;
 
   // Realized Gain/Loss specific color class
@@ -101,6 +103,24 @@ export function FundHouseCard({ mutualFund }: FundHouseCardProps) {
                 maximumFractionDigits: 2,
               })}
             />
+            {mutualFund.stampDuty != null && (
+              <FinancialDetail
+                label="Stamp Duty"
+                value={mutualFund.stampDuty.toLocaleString('en-IN', {
+                  style: 'currency',
+                  currency: 'INR',
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              />
+            )}
+            {mutualFund.xirrGainLoss != null && (
+              <FinancialDetail
+                label="XIRR Gain Loss"
+                value={`${mutualFund.xirrGainLoss?.toFixed(2)}%`}
+                valueClass={xirrGainLossClass} // fix class here
+              />
+            )}
             <FinancialDetail
               label="Abs. Gain/Loss"
               value={`${mutualFund.absoluteGainLoss?.toLocaleString('en-IN', {

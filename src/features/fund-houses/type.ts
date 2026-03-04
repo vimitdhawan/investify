@@ -8,7 +8,9 @@ export interface MutualFundView {
   absoluteGainLoss?: number;
   absoluteGainLossPercentage?: number;
   realizedGainLoss?: number;
-  schemes: SchemeView[];
+  stampDuty?: number;
+  xirrGainLoss?: number;
+  schemes: SchemeView[]; // TODO: remove this later
 }
 
 export function generateMutualFundId(folioNumber: string, amc: string): string {

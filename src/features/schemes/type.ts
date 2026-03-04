@@ -1,4 +1,4 @@
-import { TransactionView, Transaction } from '@/features/transactions/type';
+import { Transaction } from '@/features/transactions/type';
 
 export enum SchemeType {
   Equity = 'EQUITY',
@@ -26,6 +26,7 @@ export interface SchemeView {
   stampDuty?: number;
   sttTax?: number;
   capitalGainLoss?: number;
+  schemdNavStatus?: SchemeNavStatus;
 }
 
 export interface Scheme {
@@ -56,4 +57,27 @@ export function generateSchemeId(mutualFundId: string, scheme: Scheme) {
     .replace(/[^a-zA-Z0-9]/g, '')
     .toLowerCase();
   return `${mutualFundId}-${sanitizedIsin}-${sanitizedAmfi}`;
+}
+
+export enum SchemeNavStatus {
+  Available = 'AVAILABLE',
+  Missing = 'MISSING',
+  Stale = 'STALE',
+}
+
+export interface DerivedScheme {
+  units?: number;
+  marketValue?: number;
+  absoluteGainLoss?: number;
+  absoluteGainLossPercentage?: number;
+  nav?: number;
+  date?: string;
+  realizedGainLoss?: number;
+  xirrGainLoss?: number;
+  withdrawAmount?: number;
+  stampDuty?: number;
+  sttTax?: number;
+  capitalGainLoss?: number;
+  inestedAmount?: number;
+  navStatus: SchemeNavStatus;
 }

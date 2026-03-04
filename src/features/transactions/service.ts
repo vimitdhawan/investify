@@ -1,0 +1,224 @@
+import {
+  TransactionView,
+  investmentTypes,
+  withdrawTypes,
+  Transaction,
+  TransactionType,
+} from '@/features/transactions/type';
+import { getTransactionsByScheme } from '@/features/transactions/repository';
+import { parseYYYYMMDDString } from '@/lib/utils/date';
+import xirr from 'xirr';
+import { logger } from '@/lib/logger';
+
+export async function getTransactionViews(
+  userId: string,
+  schemeId: string
+): Promise<TransactionView[]> {
+  const transactions = await getTransactionsByScheme(userId, schemeId);
+  let transactionViews: TransactionView[] = [];
+  for (const t of transactions) {
+    let transactionView: TransactionView = {
+      id: t.id,
+      date: t.date,
+      schemeId: t.schemeId,
+      description: t.description,
+      type: t.type,
+      nav: t.nav,
+      units: t.units,
+      stampDuty: t.stampDuty,
+      sttTax: t.sttTax,
+      capitalGainTax: t.capitalGainTax,
+      actualInvestment: t.amount,
+    };
+    if (investmentTypes.includes(t.type)) {
+      transactionView.investedAmount = t.amount + (t.stampDuty ?? 0);
+    } else {
+      transactionView.withdrawAmount = t.amount;
+    }
+    transactionViews.push(transactionView);
+  }
+  return transactionViews.sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+}
+
+export async function getTransactions(
+  userId: string,
+  schemeId: string
+): Promise<Transaction[]> {
+  return getTransactionsByScheme(userId, schemeId);
+}
+
+export function exludeReverseTransactions(
+  transactions: Transaction[]
+): Transaction[] {
+  const reversals = transactions.filter(
+    (tx) => tx.type === TransactionType.REVERSAL
+  );
+  const otherTxs = transactions.filter(
+    (tx) => tx.type !== TransactionType.REVERSAL
+  );
+
+  if (reversals.length === 0) {
+    return transactions; // No reversals, no change needed
+  }
+
+  const investmentIdsToCancel = new Set<string>();
+  const searchableTxs = [...otherTxs]; // A mutable copy for searching
+
+  for (const reversal of reversals) {
+    const matchIndex = searchableTxs.findIndex(
+      (tx) =>
+        investmentTypes.includes(tx.type) &&
+        tx.date === reversal.date &&
+        tx.amount === reversal.amount
+    );
+
+    if (matchIndex !== -1) {
+      // Found the original transaction to cancel
+      const matchedTx = searchableTxs[matchIndex];
+      investmentIdsToCancel.add(matchedTx.id);
+
+      // Remove it from our searchable list so it can't be matched again
+      searchableTxs.splice(matchIndex, 1);
+    }
+  }
+
+  // Filter the original non-reversal list
+  return otherTxs.filter((tx) => !investmentIdsToCancel.has(tx.id));
+}
+
+function buildCashFlows(
+  transactions: Transaction[],
+  marketValue: number,
+  valuationDate: Date
+): { amount: number; when: Date }[] {
+  const flows = transactions
+    .map((tx) => {
+      if (investmentTypes.includes(tx.type)) {
+        return {
+          amount: -Math.abs(tx.amount),
+          when: parseYYYYMMDDString(tx.date),
+        };
+      }
+
+      if (withdrawTypes.includes(tx.type)) {
+        return {
+          amount: Math.abs(tx.amount),
+          when: parseYYYYMMDDString(tx.date),
+        };
+      }
+
+      return null;
+    })
+    .filter((cf): cf is { amount: number; when: Date } => cf !== null);
+
+  if (marketValue > 0) {
+    flows.push({
+      amount: marketValue,
+      when: valuationDate,
+    });
+  }
+
+  return flows;
+}
+
+function isValidForXirr(cashFlows: { amount: number; when: Date }[]): boolean {
+  if (cashFlows.length < 2) return false;
+
+  const hasPositive = cashFlows.some((cf) => cf.amount > 0);
+  const hasNegative = cashFlows.some((cf) => cf.amount < 0);
+
+  return hasPositive && hasNegative;
+}
+
+export function calculateXIRR(
+  transactions: Transaction[],
+  marketValue: number,
+  valuationDate: Date
+): number | null {
+  const cashFlows = buildCashFlows(transactions, marketValue, valuationDate);
+
+  if (!isValidForXirr(cashFlows)) {
+    logger.debug(
+      { cashFlowCount: cashFlows.length },
+      'XIRR skipped: insufficient valid cashflows'
+    );
+    return null;
+  }
+
+  try {
+    const result = xirr(cashFlows);
+    return result * 100;
+  } catch (error: any) {
+    logger.warn(
+      {
+        error: error?.message,
+        cashFlows,
+      },
+      'XIRR calculation failed'
+    );
+
+    return null;
+  }
+}
+
+export function aggregateTransactions(transactions: Transaction[]) {
+  let unitsHeld = 0;
+  let totalCost = 0;
+  let realizedGainLoss = 0;
+  let stampDuty = 0;
+  let sttTax = 0;
+  let capitalGainTax = 0;
+  //TODO: update logic for closed schemes
+  let withdrawAmount: number = transactions // Declared withdrawAmount
+    .filter((tx) => withdrawTypes.includes(tx.type))
+    .reduce((sum, tx) => sum + tx.amount, 0); // Assuming tx.amount is correct for withdrawal
+  const purchases = transactions
+    .filter((t) => investmentTypes.includes(t.type) && t.units > 0)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .map((p) => {
+      return {
+        ...p,
+        remainingUnits: p.units,
+      };
+    });
+  unitsHeld = purchases.reduce((sum, tx) => sum + tx.units, 0);
+  stampDuty = purchases.reduce((sum, tx) => sum + (tx.stampDuty ?? 0), 0);
+
+  totalCost = purchases.reduce((sum, tx) => sum + tx.amount, 0) + stampDuty;
+
+  const sales = transactions
+    .filter((t) => withdrawTypes.includes(t.type))
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  sttTax = sales.reduce((sum, tx) => sum + (tx.sttTax ?? 0), 0);
+  capitalGainTax = sales.reduce((sum, tx) => sum + (tx.capitalGainTax ?? 0), 0);
+
+  for (const sale of sales) {
+    let unitsToSell = Math.abs(sale.units);
+    const salePricePerUnit = sale.nav;
+    for (const purchase of purchases) {
+      if (unitsToSell === 0) break;
+      if (purchase.remainingUnits! > 0) {
+        const unitsToProcess = Math.min(unitsToSell, purchase.remainingUnits!);
+        unitsHeld -= unitsToProcess;
+        totalCost -= unitsToProcess * purchase.nav;
+        realizedGainLoss += unitsToProcess * (salePricePerUnit - purchase.nav);
+        purchase.remainingUnits! -= unitsToProcess;
+        unitsToSell -= unitsToProcess;
+      } else {
+        purchases.shift();
+      }
+    }
+  }
+  return {
+    unitsHeld,
+    totalCost,
+    realizedGainLoss,
+    withdrawAmount,
+    capitalGainTax,
+    stampDuty,
+    sttTax,
+  };
+}

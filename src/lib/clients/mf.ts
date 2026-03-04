@@ -1,4 +1,5 @@
 import { config } from '@/lib/config';
+import { logger } from '@/lib/logger';
 
 export interface SchemeListItem {
   schemeCode: number;
@@ -31,24 +32,43 @@ interface SchemeMeta {
 
 let cachedSchemeMap: Map<string, number> | null = null;
 
-async function fetchFromMF<T>(path: string): Promise<T> {
-  const response = await fetch(`${config.mfApiBaseUrl}${path}`, {
-    next: { revalidate: 60 }, // cache 60 seconds
-  });
+export async function fetchWithRetry<T>(
+  path: string,
+  retries = 2,
+  timeoutMs = 10000
+): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const url = `${config.mfApiBaseUrl}${path}`;
 
-  if (!response.ok) {
-    throw new Error(`MF API error: ${response.status} ${response.statusText}`);
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return await response.json();
+  } catch (error: any) {
+    if (retries > 0) {
+      logger.warn({ url, retriesLeft: retries }, 'NAV fetch failed, retrying');
+      return fetchWithRetry(path, retries - 1, timeoutMs);
+    }
+    logger.error({ url, error }, 'NAV fetch permanently failed');
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  return response.json();
 }
 
 export async function getLatestNavBySchemeId(
   schemeCode: string
-): Promise<SchemeNav> {
-  const res = await fetchFromMF<Scheme>(`/mf/${schemeCode}/latest`);
+): Promise<SchemeNav | null> {
+  const res = await fetchWithRetry<Scheme>(`/mf/${schemeCode}/latest`);
   if (!res.data?.[0]) {
-    throw new Error(`No NAV found for scheme ${schemeCode}`);
+    logger.error({ schemeCode }, 'empty response from latest nav api');
+    return null;
   }
   return res.data[0];
 }
@@ -56,16 +76,17 @@ export async function getLatestNavBySchemeId(
 export async function getHistoricalNavBySchemeId(
   schemeCode: string
 ): Promise<SchemeNav[]> {
-  const res = await fetchFromMF<Scheme>(`/mf/${schemeCode}`);
+  const res = await fetchWithRetry<Scheme>(`/mf/${schemeCode}`);
   if (!res.data) {
-    throw new Error(`No historical NAV found`);
+    logger.error({ schemeCode }, 'empty response from historical nav api');
+    return [];
   }
   return res.data;
 }
 
-export async function getAmficCodeByIsin(isin: string): Promise<number> {
+export async function getAmficCodeByIsin(isin: string): Promise<number | null> {
   if (!cachedSchemeMap) {
-    const schemes = await fetchFromMF<SchemeListItem[]>(`/mf`);
+    const schemes = await fetchWithRetry<SchemeListItem[]>(`/mf`);
     cachedSchemeMap = new Map();
     for (const scheme of schemes) {
       if (scheme.isinGrowth) {
@@ -78,7 +99,8 @@ export async function getAmficCodeByIsin(isin: string): Promise<number> {
 
   const schemeCode = cachedSchemeMap.get(isin);
   if (!schemeCode) {
-    throw new Error(`Scheme not found for ISIN ${isin}`);
+    logger.error({ isin }, 'scheme not found for ISIN');
+    return null;
   }
   return schemeCode;
 }

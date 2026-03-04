@@ -1,10 +1,10 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-   images: {
+  images: {
     domains: [
-      "storage.googleapis.com",
-      "firebasestorage.googleapis.com", // ← Add this
+      'storage.googleapis.com',
+      'firebasestorage.googleapis.com', // ← Add this
     ],
   },
   /* config options here */

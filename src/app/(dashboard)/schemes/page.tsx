@@ -1,11 +1,9 @@
-import {
-  processPortfolio,
-  processNAVDate,
-  mostRecentNavDate,
-} from '@/lib/repository/portfolio';
 import { SchemeList } from '@/features/schemes/components/scheme-list';
 import { getSessionUserId } from '@/lib/session';
 import { redirect } from 'next/navigation';
+import { fetchSchemes, fetchSchemeNAV } from '@/features/schemes/service';
+import { SchemeNavStatus } from '@/features/schemes/type';
+import { parseDDMMYYYYString } from '@/lib/utils/date';
 
 // Server Component to fetch data
 export default async function SchemesPage() {
@@ -13,26 +11,36 @@ export default async function SchemesPage() {
   if (!userId) {
     redirect('/login');
   }
-  const portfolio = await processPortfolio(userId);
-  const schemes = portfolio.mutualFunds.flatMap((mf) => mf.schemes);
+
+  const schemes = await fetchSchemes(userId);
 
   const dayChanges = new Map<string, number>();
 
   await Promise.all(
     schemes.map(async (scheme) => {
-      const previousDayDate = new Date(mostRecentNavDate!);
-      previousDayDate.setDate(previousDayDate.getDate() - 1);
-      const previousDayNav = await processNAVDate(
-        scheme.amfi,
-        scheme.isin,
-        previousDayDate
-      );
-      const previousDayChangePercentage = scheme.nav
-        ? ((scheme.nav - Number(previousDayNav.nav)) /
-            Number(previousDayNav.nav)) *
-          100
-        : 0;
-      dayChanges.set(scheme.id, previousDayChangePercentage);
+      if (
+        scheme.schemdNavStatus == SchemeNavStatus.Available &&
+        scheme.date != null
+      ) {
+        const date = parseDDMMYYYYString(scheme.date);
+        const previousDayDate = new Date(date);
+        previousDayDate.setDate(date.getDate() - 1);
+        const previousDayNav = await fetchSchemeNAV(
+          scheme.amfi,
+          scheme.isin,
+          previousDayDate
+        );
+        if (previousDayNav != null) {
+          const previousDayChangePercentage = scheme.nav
+            ? ((scheme.nav - Number(previousDayNav?.nav)) /
+                Number(previousDayNav?.nav)) *
+              100
+            : 0;
+          dayChanges.set(scheme.id, previousDayChangePercentage);
+        } else {
+          dayChanges.set(scheme.id, 10);
+        }
+      }
     })
   );
 
