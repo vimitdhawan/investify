@@ -179,10 +179,10 @@ export function SchemeCard({
 
         <CardFooter className="flex-col items-start gap-1.5 text-xs text-muted-foreground pt-4">
           <div className="h-px w-full bg-border mb-2" />
-          {scheme.nav && scheme.date && (
+          {scheme.nav && scheme.lastNavDate && (
             <div className="flex justify-between w-full">
               <span>
-                NAV: {scheme.nav.toFixed(2)} as on {scheme.date}
+                NAV: {scheme.nav.toFixed(2)} as on {scheme.lastNavDate}
               </span>
             </div>
           )}

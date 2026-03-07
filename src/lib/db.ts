@@ -12,6 +12,12 @@ export async function getDocument<T>(
   return snap.data() as T;
 }
 
+export async function getCollection<T>(collection: string): Promise<T[]> {
+  const snap = await firestore.collection(collection).get();
+
+  return snap.docs.map((doc) => doc.data() as T);
+}
+
 export async function getSubCollection<T>(
   collection: string,
   docId: string,

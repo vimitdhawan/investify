@@ -48,7 +48,7 @@ export interface TransactionView {
 
 export interface Transaction {
   id: string;
-  date: string;
+  date: Date;
   schemeId: string;
   description: string;
   type: TransactionType;
@@ -58,4 +58,14 @@ export interface Transaction {
   stampDuty?: number;
   sttTax?: number;
   capitalGainTax?: number;
+}
+
+export interface AggregateTransaction {
+  units: number;
+  investedAmount: number;
+  realizedGainLoss: number;
+  withdrawAmount: number;
+  capitalGainTax: number;
+  stampDuty: number;
+  sttTax: number;
 }

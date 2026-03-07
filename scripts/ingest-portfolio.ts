@@ -1,6 +1,6 @@
 // scripts/ingest-portfolio.ts
 import { firestore, bucket } from '@/lib/firebase';
-import { Scheme, SchemeType } from '@/features/schemes/type';
+import { Scheme, SchemeNavStatus, SchemeType } from '@/features/schemes/type';
 import {
   Transaction,
   TransactionType,
@@ -9,6 +9,11 @@ import {
 } from '@/features/transactions/type';
 import { Investor, Statement, Portfolio } from '@/features/portfolio/type';
 import { getAllSchemeData } from '@/lib/clients/scheme';
+import { parseYYYYMMDDString } from '@/lib/utils/date';
+
+// --- Main script execution ---
+
+const USER_ID = 'O5ChLBJpFDeWd74VMnDL32tjmCI3';
 
 export interface PortfolioDTO {
   demat_accounts: DematAccountDTO[];
@@ -16,7 +21,6 @@ export interface PortfolioDTO {
   investor: InvestorDTO;
   meta: MetaDTO;
   mutual_funds: MutualFundDTO[];
-  latestNavDate?: string;
 }
 
 export interface InvestorDTO {
@@ -101,9 +105,6 @@ export interface SchemeDTO {
   type: SchemeType;
   units: number;
   value: number;
-  avgNav?: number;
-  schemeCode?: string;
-  latestNavDate?: string;
 }
 
 interface SchemeAdditionalInfoDTO {
@@ -184,8 +185,9 @@ async function processPortfolio(portfolio: PortfolioDTO): Promise<Portfolio> {
     name: portfolio.investor.name,
     pan: portfolio.investor.pan ?? '',
   };
+  const lastesNavDate = new Date(portfolio.meta.generated_at);
   for (const mf of portfolio.mutual_funds) {
-    const schms = await processSchemes(mf);
+    const schms = await processSchemes(lastesNavDate, mf);
     schemes.push(...schms);
   }
   let pf: Portfolio = {
@@ -203,7 +205,10 @@ async function processPortfolio(portfolio: PortfolioDTO): Promise<Portfolio> {
   return pf;
 }
 
-async function processSchemes(mutualFund: MutualFundDTO): Promise<Scheme[]> {
+async function processSchemes(
+  latestNavDate: Date,
+  mutualFund: MutualFundDTO
+): Promise<Scheme[]> {
   const schemes: Scheme[] = [];
   for (const s of mutualFund.schemes) {
     const { schemeId, amfi } = await getSchemeIdAndAmfi(mutualFund, s);
@@ -219,7 +224,12 @@ async function processSchemes(mutualFund: MutualFundDTO): Promise<Scheme[]> {
       units: s.units,
       investedAmount: s.cost,
       isClosed: isClosed,
+      marketValue: s.value,
+      navStatus: SchemeNavStatus.Pending,
+      type: s.type,
       transactions: transactions,
+      nav: s.nav,
+      latestNavDate: latestNavDate,
     };
     schemes.push(scheme);
   }
@@ -348,7 +358,7 @@ function mapTransaction(
   return {
     id: `${schemeId}-${dto.date}-${index}`,
     schemeId,
-    date: dto.date,
+    date: parseYYYYMMDDString(dto.date),
     description: dto.description,
     type: dto.type,
     nav: dto.nav || 0,
@@ -356,10 +366,6 @@ function mapTransaction(
     amount: Math.abs(dto.amount),
   };
 }
-
-// --- Main script execution ---
-
-const USER_ID = 'O5ChLBJpFDeWd74VMnDL32tjmCI3';
 
 async function main() {
   console.log('Starting portfolio data ingestion...');

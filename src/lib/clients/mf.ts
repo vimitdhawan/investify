@@ -64,11 +64,11 @@ export async function fetchWithRetry<T>(
 
 export async function getLatestNavBySchemeId(
   schemeCode: string
-): Promise<SchemeNav | null> {
+): Promise<SchemeNav | undefined> {
   const res = await fetchWithRetry<Scheme>(`/mf/${schemeCode}/latest`);
   if (!res.data?.[0]) {
     logger.error({ schemeCode }, 'empty response from latest nav api');
-    return null;
+    return;
   }
   return res.data[0];
 }
@@ -84,7 +84,9 @@ export async function getHistoricalNavBySchemeId(
   return res.data;
 }
 
-export async function getAmficCodeByIsin(isin: string): Promise<number | null> {
+export async function getAmficCodeByIsin(
+  isin: string
+): Promise<number | undefined> {
   if (!cachedSchemeMap) {
     const schemes = await fetchWithRetry<SchemeListItem[]>(`/mf`);
     cachedSchemeMap = new Map();
@@ -100,7 +102,7 @@ export async function getAmficCodeByIsin(isin: string): Promise<number | null> {
   const schemeCode = cachedSchemeMap.get(isin);
   if (!schemeCode) {
     logger.error({ isin }, 'scheme not found for ISIN');
-    return null;
+    return;
   }
   return schemeCode;
 }

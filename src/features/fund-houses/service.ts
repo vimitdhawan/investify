@@ -1,19 +1,17 @@
-import { fetchSchemes } from '@/features/schemes/service';
-import { SchemeView } from '@/features/schemes/type';
+import { Scheme } from '@/features/schemes/type';
 import { MutualFundView } from '@/features/fund-houses/type';
 import {
   calculateXIRR,
-  getTransactions,
+  getTransactionsBySchemeId,
   exludeReverseTransactions,
 } from '@/features/transactions/service';
-
-import { parseYYYYMMDDString, parseDDMMYYYYString } from '@/lib/utils/date';
+import { getSchemes } from '@/features/schemes/service';
 
 export async function getFundHouses(userId: string) {
-  const schemes = await fetchSchemes(userId);
+  const schemes = await getSchemes(userId);
   const fundsMap: Map<
     string,
-    { amc: string; folioNumbers: Set<string>; schemes: SchemeView[] }
+    { amc: string; folioNumbers: Set<string>; schemes: Scheme[] }
   > = new Map();
   schemes.forEach((s) => {
     if (!fundsMap.has(s.amc)) {
@@ -53,18 +51,19 @@ export async function getFundHouses(userId: string) {
     );
 
     const transactionsPerScheme = await Promise.all(
-      fundGroup.schemes.map((scheme) => getTransactions(userId, scheme.id))
+      fundGroup.schemes.map((scheme) =>
+        getTransactionsBySchemeId(userId, scheme.id)
+      )
     );
     const transactions = transactionsPerScheme
       .map((t) => exludeReverseTransactions(t))
       .flat();
-    const date = fundGroup.schemes.find((s) => s.date != null)?.date ?? '';
+    const date =
+      fundGroup.schemes.find((s) => s.latestNavDate != null)?.latestNavDate ??
+      new Date();
 
     const xirrGainLoss =
-      date === ''
-        ? 0
-        : calculateXIRR(transactions, marketValue, parseDDMMYYYYString(date));
-
+      calculateXIRR(transactions, marketValue, new Date()) ?? 0;
     mutualFundViews.push({
       name: fundGroup.amc,
       folioNumbers: [...fundGroup.folioNumbers.keys()],
@@ -74,8 +73,8 @@ export async function getFundHouses(userId: string) {
       realizedGainLoss,
       absoluteGainLossPercentage: gainLossPercentage,
       stampDuty: stampDuty,
-      xirrGainLoss: xirrGainLoss!,
-      schemes: fundGroup.schemes,
+      xirrGainLoss: xirrGainLoss,
+      schemes: [],
     });
   }
   return mutualFundViews;

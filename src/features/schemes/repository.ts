@@ -1,35 +1,39 @@
-// features/portfolio/portfolio.repository.ts
-
-import {
-  getDocument,
-  getSubCollection,
-  getNestedSubCollection,
-} from '@/lib/db';
+import { getSubCollection, getNestedSubCollection } from '@/lib/db';
 
 import { Scheme } from '@/features/schemes/type';
-import { firestore } from '@/lib/firebase';
-
-const schemeCache = new Map<string, Scheme[]>();
+import { Transaction } from '@/features/transactions/type';
+import { toJSDate } from '@/lib/utils/date';
 
 export async function getSchemes(userId: string): Promise<Scheme[]> {
-  // 4️⃣ Get schemes
-  const schemesSnap = await firestore
-    .collection('users')
-    .doc(userId)
-    .collection('schemes')
-    .get();
+  const schemes = await getSubCollection<Scheme>('users', userId, 'schemes');
+  return schemes.map((s) => ({
+    ...s,
+    latestNavDate: toJSDate(s.latestNavDate),
+  }));
+}
 
-  const schemes = await Promise.all(
-    schemesSnap.docs.map(async (schemeDoc) => {
-      const schemeData = schemeDoc.data() as Scheme;
+export async function getSchemesWithTransactions(
+  userId: string
+): Promise<Scheme[]> {
+  const schemes = await getSchemes(userId);
+
+  const resp = await Promise.all(
+    schemes.map(async (s: Scheme) => {
+      const transactions = await getNestedSubCollection<Transaction>(
+        'users',
+        userId,
+        'schemes',
+        s.id,
+        'transactions'
+      );
       return {
-        ...schemeData,
-        id: schemeDoc.id,
+        ...s,
+        transactions: transactions.map((t) => ({
+          ...t,
+          date: toJSDate(t.date),
+        })),
       };
     })
   );
-
-  // 5️⃣ Cache it
-  schemeCache.set(userId, schemes);
-  return schemes;
+  return resp;
 }

@@ -1,9 +1,12 @@
 import { SchemeList } from '@/features/schemes/components/scheme-list';
 import { getSessionUserId } from '@/lib/session';
 import { redirect } from 'next/navigation';
-import { fetchSchemes, fetchSchemeNAV } from '@/features/schemes/service';
+import {
+  getSchemeViews,
+  fetchSchemeNAVByDate,
+} from '@/features/schemes/service';
 import { SchemeNavStatus } from '@/features/schemes/type';
-import { parseDDMMYYYYString } from '@/lib/utils/date';
+import { parseYYYYMMDDString } from '@/lib/utils/date';
 
 // Server Component to fetch data
 export default async function SchemesPage() {
@@ -12,7 +15,7 @@ export default async function SchemesPage() {
     redirect('/login');
   }
 
-  const schemes = await fetchSchemes(userId);
+  const schemes = await getSchemeViews(userId);
 
   const dayChanges = new Map<string, number>();
 
@@ -20,12 +23,13 @@ export default async function SchemesPage() {
     schemes.map(async (scheme) => {
       if (
         scheme.schemdNavStatus == SchemeNavStatus.Available &&
-        scheme.date != null
+        scheme.lastNavDate != null
       ) {
-        const date = parseDDMMYYYYString(scheme.date);
-        const previousDayDate = new Date(date);
-        previousDayDate.setDate(date.getDate() - 1);
-        const previousDayNav = await fetchSchemeNAV(
+        const previousDayDate = new Date(scheme.lastNavDate);
+        previousDayDate.setDate(
+          parseYYYYMMDDString(scheme.lastNavDate).getDate() - 1
+        );
+        const previousDayNav = await fetchSchemeNAVByDate(
           scheme.amfi,
           scheme.isin,
           previousDayDate

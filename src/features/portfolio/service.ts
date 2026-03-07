@@ -3,19 +3,28 @@
 import { getPortfolio } from '@/features/portfolio/repository';
 
 import { PortfolioView } from '@/features/portfolio/type';
-import { fetchSchemes } from '@/features/schemes/service';
-import {
-  parseYYYYMMDDString,
-  formatDateToYYYYMMDD,
-  parseDDMMYYYYString,
-} from '@/lib/utils/date';
+import { getSchemes, getSchemesByDate } from '@/features/schemes/service';
 import {
   calculateXIRR,
-  getTransactions,
+  getTransactionsBySchemeId,
   exludeReverseTransactions,
+  filterTransactionsByDate,
 } from '@/features/transactions/service';
 import { Transaction } from '@/features/transactions/type';
-import { da } from 'date-fns/locale';
+import { formatDateToYYYYMMDD } from '@/lib/utils/date';
+import { logger } from '@/lib/logger';
+
+// export async function getLatestPortfolio(
+//   userId: string
+// ): Promise<PortfolioView | undefined> {
+//   const portfolio = await getPortfolio(userId);
+//   if (!portfolio) {
+//     return;
+//   }
+//   const { investor, statements } = portfolio;
+//   const schemes = await getSchemes(userId);
+//   const date = new Date();
+// }
 
 export async function getPortfolioByDate(
   userId: string,
@@ -27,19 +36,15 @@ export async function getPortfolioByDate(
   }
   const { investor, statements } = portfolio;
 
-  const schemes = await fetchSchemes(userId, date);
+  const schemes =
+    date == null
+      ? await getSchemes(userId)
+      : await getSchemesByDate(userId, date);
   const portfolioDate =
     date != null
-      ? formatDateToYYYYMMDD(date)
-      : (schemes.find((s) => s.date != null && s.date != '')?.date ?? '');
-
-  const transactionsPerScheme = await Promise.all(
-    schemes.map((scheme) => getTransactions(userId, scheme.id))
-  );
-
-  const transactions = transactionsPerScheme
-    .map((t) => exludeReverseTransactions(t))
-    .flat();
+      ? date
+      : (schemes.find((s) => s.latestNavDate != null)?.latestNavDate ??
+        new Date());
 
   const totalInvested = schemes.reduce(
     (acc, s) => acc + (s.units! > 0 ? (s.investedAmount ?? 0) : 0),
@@ -75,15 +80,17 @@ export async function getPortfolioByDate(
     absoluteGainLossPercentage: totalGainLossPercentage,
     realizedGainLoss: totalRealizedGain,
     mutualFunds: [], // Do we need mutual funds here ?
-    date: portfolioDate,
+    date: formatDateToYYYYMMDD(portfolioDate),
   };
 
-  portfolioView.xirrGainLoss =
-    calculatePortfolioXIRR(
-      transactions,
-      totalMarketValue,
-      parseDDMMYYYYString(portfolioDate)
-    ) ?? 0; // TODO: Fix xirr value nul use case
+  const transactions = await Promise.all(
+    schemes.map((scheme) => scheme.transactions).flat()
+  );
+
+  portfolioView.xirrGainLoss = portfolioDate
+    ? (calculatePortfolioXIRR(transactions, totalMarketValue, portfolioDate) ??
+      0)
+    : 0; // TODO: Fix xirr value nul use case
   return portfolioView;
 }
 
@@ -92,5 +99,6 @@ function calculatePortfolioXIRR(
   marketValue: number,
   date: Date
 ): number | null {
-  return calculateXIRR(transactions, marketValue, date);
+  const filterTransactions = filterTransactionsByDate(transactions, date);
+  return calculateXIRR(filterTransactions, marketValue, date);
 }

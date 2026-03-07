@@ -3,159 +3,239 @@ import {
   aggregateTransactions,
   calculateXIRR,
   exludeReverseTransactions,
-  getTransactions,
+  filterTransactionsByDate,
 } from '@/features/transactions/service';
-import {
-  SchemeView,
-  Scheme,
-  SchemeNavStatus,
-  DerivedScheme,
-} from '@/features/schemes/type';
+import { SchemeView, Scheme, SchemeNavStatus } from '@/features/schemes/type';
 import {
   getAmficCodeByIsin,
   getHistoricalNavBySchemeId,
   getLatestNavBySchemeId,
 } from '@/lib/clients/mf';
 import { SchemeNav } from '@/lib/clients/mf';
-import { parseDDMMYYYYString, parseYYYYMMDDString } from '@/lib/utils/date';
-import { getSchemes } from '@/features/schemes/repository';
+import { formatDateToYYYYMMDD, parseDDMMYYYYString } from '@/lib/utils/date';
+import { getSchemesWithTransactions } from '@/features/schemes/repository';
 import { logger } from '@/lib/logger';
 
-export async function fetchSchemes(
-  userId: string,
-  reqDate?: Date
-): Promise<SchemeView[]> {
+export async function getSchemeViews(userId: string): Promise<SchemeView[]> {
   const schemes = await getSchemes(userId);
+  return schemes.map((scheme) => toSchemeView(scheme));
+}
+
+export async function fetchSchemeNAVByDate(
+  amfi: string,
+  isin: string,
+  date: Date
+): Promise<SchemeNav | undefined> {
+  const amfiCode = await resolveAmfiCode(amfi, isin);
+  if (!amfiCode) {
+    return;
+  }
+  const navs = await getHistoricalNavBySchemeId(amfiCode);
+  const requestedDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
+  for (const nav of navs) {
+    const navDate = parseDDMMYYYYString(nav.date);
+    if (navDate.getTime() === requestedDate.getTime()) {
+      return nav;
+    }
+    if (navDate < requestedDate) {
+      return nav;
+    }
+  }
+}
+
+// export async function fetchSchemeNAV(
+//   amfiCode: string,
+//   isin: string,
+//   date?: Date
+// ): Promise<SchemeNav | null> {
+//   if (!amfiCode) {
+//     const amfi = await getAmficCodeByIsin(isin);
+//     if (!amfi) {
+//       return null;
+//     }
+//     amfiCode = amfi.toString();
+//   }
+//   if (date) {
+//     const navs = await getHistoricalNavBySchemeId(amfiCode);
+//     const requestedDate = new Date(
+//       date.getFullYear(),
+//       date.getMonth(),
+//       date.getDate()
+//     );
+//     for (const nav of navs) {
+//       const navDate = parseDDMMYYYYString(nav.date);
+//       if (navDate.getTime() === requestedDate.getTime()) {
+//         return nav;
+//       }
+//       if (navDate < requestedDate) {
+//         return nav;
+//       }
+//     }
+//   } else {
+//     const latestNav = await getLatestNavBySchemeId(amfiCode);
+//     return latestNav;
+//   }
+//   return null;
+// }
+
+export async function getSchemes(userId: string): Promise<Scheme[]> {
+  const schemes = await getSchemesWithTransactions(userId);
   if (!schemes.length) return [];
-  const processedSchemes = await Promise.all(
+  return await Promise.all(
     schemes.map(async (scheme) => {
-      const transactions = await getTransactions(userId, scheme.id);
-      return toSchemeView(scheme, transactions, reqDate);
+      scheme.transactions = exludeReverseTransactions(scheme.transactions);
+      const schemeWithAggregateTx =
+        processSchemeWithAggregateTransactions(scheme);
+      if (schemeWithAggregateTx.navStatus != SchemeNavStatus.Pending) {
+        return schemeWithAggregateTx;
+      }
+      const amfiCode = await resolveAmfiCode(
+        schemeWithAggregateTx.amfi,
+        schemeWithAggregateTx.isin
+      );
+      if (!amfiCode) {
+        schemeWithAggregateTx.navStatus = SchemeNavStatus.Missing;
+        return schemeWithAggregateTx;
+      }
+      const nav = await getLatestNavBySchemeId(amfiCode);
+      if (!nav) {
+        schemeWithAggregateTx.navStatus = SchemeNavStatus.Missing;
+        return schemeWithAggregateTx;
+      }
+      const s = await processScheme(scheme, nav);
+      s.xirrGainLoss =
+        calculateXIRR(scheme.transactions, s.marketValue, new Date()) ?? 0;
+      return s;
     })
   );
-  return processedSchemes;
 }
 
-export async function fetchSchemeNAV(
-  amfiCode: string,
-  isin: string,
-  date?: Date
-): Promise<SchemeNav | null> {
-  if (!amfiCode) {
-    const amfi = await getAmficCodeByIsin(isin);
-    if (!amfi) {
-      return null;
-    }
-    amfiCode = amfi.toString();
+async function resolveAmfiCode(
+  amfiCode: string | undefined,
+  isin: string
+): Promise<string | undefined> {
+  if (amfiCode) {
+    return amfiCode;
   }
-  if (date) {
-    const navs = await getHistoricalNavBySchemeId(amfiCode);
-    const requestedDate = new Date(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate()
-    );
-    for (const nav of navs) {
-      const navDate = parseDDMMYYYYString(nav.date);
-      if (navDate.getTime() === requestedDate.getTime()) {
-        return nav;
-      }
-      if (navDate < requestedDate) {
-        return nav;
-      }
-    }
-  } else {
-    logger.info({ amfiCode, date }, 'Fetching  latest  NAV');
-    const latestNav = await getLatestNavBySchemeId(amfiCode);
-    return latestNav;
+  const amfi = await getAmficCodeByIsin(isin);
+  if (!amfi) {
+    return;
   }
-  return null;
+  return amfi.toString();
 }
 
-export async function toSchemeView(
-  scheme: Scheme,
-  transactions: Transaction[],
-  reqDate?: Date
-): Promise<SchemeView> {
-  const processedSchme = await processScheme(scheme, transactions, reqDate);
+export async function getSchemesByDate(
+  userId: string,
+  reqDate: Date
+): Promise<Scheme[]> {
+  const schemes = await getSchemesWithTransactions(userId);
+  if (!schemes.length) return [];
+  return await Promise.all(
+    schemes.map(async (scheme) => {
+      const transactions = exludeReverseTransactions(scheme.transactions);
+      scheme.transactions = filterTransactionsByDate(transactions, reqDate);
+      const schemeWithAggregateTx =
+        processSchemeWithAggregateTransactions(scheme);
+      if (schemeWithAggregateTx.navStatus != SchemeNavStatus.Pending) {
+        return schemeWithAggregateTx;
+      }
+      const nav = await fetchSchemeNAVByDate(scheme.amfi, scheme.isin, reqDate);
+      if (!nav) {
+        schemeWithAggregateTx.navStatus = SchemeNavStatus.Missing;
+        return schemeWithAggregateTx;
+      }
+      const s = processScheme(schemeWithAggregateTx, nav);
+      return s;
+    })
+  );
+}
+
+export function toSchemeView(scheme: Scheme): SchemeView {
   const res: SchemeView = {
     id: scheme.id,
     name: scheme.name,
     amc: scheme.amc,
     amfi: scheme.amfi,
     isin: scheme.isin,
-    units: processedSchme.units,
-    investedAmount: processedSchme.inestedAmount ?? 0,
-    marketValue: processedSchme.marketValue,
-    absoluteGainLoss: processedSchme.absoluteGainLoss,
-    absoluteGainLossPercentage: processedSchme.absoluteGainLossPercentage,
-    nav: processedSchme.nav,
-    date: processedSchme.date,
-    realizedGainLoss: processedSchme.realizedGainLoss,
-    xirrGainLoss: processedSchme.xirrGainLoss,
-    withdrawAmount: processedSchme.withdrawAmount,
+    units: scheme.units,
+    investedAmount: scheme.investedAmount,
+    marketValue: scheme.marketValue,
+    absoluteGainLoss: scheme.absoluteGainLoss,
+    absoluteGainLossPercentage: scheme.absoluteGainLossPercentage,
+    nav: scheme.nav,
+    lastNavDate:
+      scheme.navStatus == SchemeNavStatus.Available
+        ? formatDateToYYYYMMDD(scheme.latestNavDate)
+        : '',
+    realizedGainLoss: scheme.realizedGainLoss,
+    xirrGainLoss: scheme.xirrGainLoss,
+    withdrawAmount: scheme.withdrawAmount,
     folioNumber: scheme.folioNumber,
-    schemdNavStatus: processedSchme.navStatus,
-    stampDuty: processedSchme.stampDuty,
+    schemdNavStatus: scheme.navStatus,
+    stampDuty: scheme.stampDuty,
   };
   return res;
+}
+function processSchemeWithAggregateTransactions(scheme: Scheme): Scheme {
+  const aggregated = aggregateTransactions(scheme.transactions);
+  // Default values from aggregated transactions
+  scheme.withdrawAmount = aggregated.withdrawAmount;
+  scheme.stampDuty = aggregated.stampDuty;
+  scheme.sttTax = aggregated.sttTax;
+  scheme.capitalGainTax = aggregated.capitalGainTax;
+  if (scheme.isClosed) {
+    scheme.navStatus = SchemeNavStatus.Stale;
+    scheme.realizedGainLoss = scheme.withdrawAmount - scheme.investedAmount;
+    return scheme;
+  }
+  scheme.investedAmount = aggregated.investedAmount;
+  scheme.units = aggregated.units;
+  scheme.realizedGainLoss = aggregated.realizedGainLoss;
+  return scheme;
 }
 
 export async function processScheme(
   scheme: Scheme,
-  transactions: Transaction[],
-  reqDate?: Date
-): Promise<DerivedScheme> {
-  const filteredTransactions = exludeReverseTransactions(transactions);
-  const filteredTransactionByDate = reqDate
-    ? filteredTransactions.filter((t) => parseYYYYMMDDString(t.date) <= reqDate)
-    : filteredTransactions;
-  const aggregateValues = aggregateTransactions(filteredTransactionByDate);
-  if (scheme.isClosed) {
-    return {
-      marketValue: 0,
-      absoluteGainLoss: 0,
-      absoluteGainLossPercentage: 0,
-      inestedAmount: scheme.investedAmount,
-      navStatus: SchemeNavStatus.Stale,
-      realizedGainLoss: aggregateValues.withdrawAmount - scheme.investedAmount,
-      withdrawAmount: aggregateValues.withdrawAmount,
-      xirrGainLoss: 0,
-      units: 0,
-    };
-  }
-  const navByDate = await fetchSchemeNAV(scheme.amfi, scheme.isin, reqDate);
-  if (!navByDate) {
-    return {
-      navStatus: SchemeNavStatus.Missing,
-    };
-  }
-  const nav = Number(navByDate.nav);
-  const date = navByDate.date;
-  const marketValue = aggregateValues.unitsHeld * nav;
-  const gainLoss = marketValue - aggregateValues.totalCost; // investedAmount is total cost
-  const gainLossPercentage = (gainLoss / aggregateValues.totalCost) * 100;
-  const valuationDate = reqDate ?? parseDDMMYYYYString(date);
-  const xirrValue = calculateXIRR(
-    filteredTransactionByDate,
-    marketValue,
-    valuationDate
-  );
-  const derivedScheme: DerivedScheme = {
-    units: aggregateValues.unitsHeld,
-    marketValue: marketValue,
-    absoluteGainLossPercentage: gainLossPercentage,
-    nav: nav,
-    date: date,
-    realizedGainLoss: aggregateValues.realizedGainLoss,
-    xirrGainLoss: xirrValue!,
-    withdrawAmount: aggregateValues.withdrawAmount,
-    stampDuty: aggregateValues.stampDuty,
-    sttTax: aggregateValues.sttTax,
-    capitalGainLoss: aggregateValues.capitalGainTax,
-    inestedAmount: aggregateValues.totalCost,
-    navStatus: SchemeNavStatus.Available,
-    absoluteGainLoss: gainLoss,
-  };
-  return derivedScheme;
+  schemeNav: SchemeNav
+): Promise<Scheme> {
+  // const aggregated = aggregateTransactions(scheme.transactions);
+
+  // // Default values from aggregated transactions
+  // scheme.withdrawAmount = aggregated.withdrawAmount;
+  // scheme.stampDuty = aggregated.stampDuty;
+  // scheme.sttTax = aggregated.sttTax;
+  // scheme.capitalGainTax = aggregated.capitalGainTax;
+  // if (scheme.isClosed) {
+  //   scheme.navStatus = SchemeNavStatus.Stale;
+  //   scheme.realizedGainLoss = scheme.withdrawAmount - scheme.investedAmount;
+  //   return scheme;
+  // }
+  // scheme.investedAmount = aggregated.investedAmount;
+  // scheme.units = aggregated.units;
+  // scheme.realizedGainLoss = aggregated.realizedGainLoss;
+  // // const navByDate = await fetchSchemeNAV(scheme.amfi, scheme.isin, reqDate);
+  // // if (!navByDate) {
+  // //   scheme.navStatus = SchemeNavStatus.Missing;
+  // //   return scheme;
+  // // }
+  // // Calculate performance metrics with available NAV
+  const nav = Number(schemeNav.nav);
+  const marketValue = scheme.units * nav;
+  const gainLoss = marketValue - scheme.investedAmount;
+  const gainLossPercentage =
+    scheme.investedAmount > 0 ? (gainLoss / scheme.investedAmount) * 100 : 0;
+
+  // Update valuation specific fields
+  scheme.nav = nav;
+  scheme.marketValue = marketValue;
+  scheme.absoluteGainLoss = gainLoss;
+  scheme.absoluteGainLossPercentage = gainLossPercentage;
+  scheme.latestNavDate = parseDDMMYYYYString(schemeNav.date);
+  scheme.navStatus = SchemeNavStatus.Available;
+
+  return scheme;
 }

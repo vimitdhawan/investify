@@ -4,9 +4,10 @@ import {
   withdrawTypes,
   Transaction,
   TransactionType,
+  AggregateTransaction,
 } from '@/features/transactions/type';
 import { getTransactionsByScheme } from '@/features/transactions/repository';
-import { parseYYYYMMDDString } from '@/lib/utils/date';
+import { formatDateToYYYYMMDD } from '@/lib/utils/date';
 import xirr from 'xirr';
 import { logger } from '@/lib/logger';
 
@@ -14,12 +15,12 @@ export async function getTransactionViews(
   userId: string,
   schemeId: string
 ): Promise<TransactionView[]> {
-  const transactions = await getTransactionsByScheme(userId, schemeId);
+  const transactions = await getTransactionsBySchemeId(userId, schemeId);
   let transactionViews: TransactionView[] = [];
   for (const t of transactions) {
     let transactionView: TransactionView = {
       id: t.id,
-      date: t.date,
+      date: formatDateToYYYYMMDD(t.date),
       schemeId: t.schemeId,
       description: t.description,
       type: t.type,
@@ -37,16 +38,24 @@ export async function getTransactionViews(
     }
     transactionViews.push(transactionView);
   }
+
   return transactionViews.sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 }
 
-export async function getTransactions(
+export async function getTransactionsBySchemeId(
   userId: string,
   schemeId: string
 ): Promise<Transaction[]> {
   return getTransactionsByScheme(userId, schemeId);
+}
+
+export function filterTransactionsByDate(
+  transactions: Transaction[],
+  date: Date
+): Transaction[] {
+  return transactions.filter((t) => t.date <= date);
 }
 
 export function exludeReverseTransactions(
@@ -93,19 +102,20 @@ function buildCashFlows(
   marketValue: number,
   valuationDate: Date
 ): { amount: number; when: Date }[] {
+  // transactions.sort((a, b) => a.date.getDate() - b.date.getDate());
   const flows = transactions
     .map((tx) => {
       if (investmentTypes.includes(tx.type)) {
         return {
           amount: -Math.abs(tx.amount),
-          when: parseYYYYMMDDString(tx.date),
+          when: tx.date,
         };
       }
 
       if (withdrawTypes.includes(tx.type)) {
         return {
           amount: Math.abs(tx.amount),
-          when: parseYYYYMMDDString(tx.date),
+          when: tx.date,
         };
       }
 
@@ -154,7 +164,6 @@ export function calculateXIRR(
     logger.warn(
       {
         error: error?.message,
-        cashFlows,
       },
       'XIRR calculation failed'
     );
@@ -163,7 +172,9 @@ export function calculateXIRR(
   }
 }
 
-export function aggregateTransactions(transactions: Transaction[]) {
+export function aggregateTransactions(
+  transactions: Transaction[]
+): AggregateTransaction {
   let unitsHeld = 0;
   let totalCost = 0;
   let realizedGainLoss = 0;
@@ -213,8 +224,8 @@ export function aggregateTransactions(transactions: Transaction[]) {
     }
   }
   return {
-    unitsHeld,
-    totalCost,
+    units: unitsHeld,
+    investedAmount: totalCost,
     realizedGainLoss,
     withdrawAmount,
     capitalGainTax,

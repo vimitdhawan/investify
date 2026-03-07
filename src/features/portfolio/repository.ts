@@ -6,12 +6,14 @@ import { Portfolio, Investor, Statement } from '@/features/portfolio/type';
 
 const portfolioCache = new Map<string, Portfolio>();
 
-export async function getPortfolio(userId: string): Promise<Portfolio | null> {
+export async function getPortfolio(
+  userId: string
+): Promise<Portfolio | undefined> {
   const cached = portfolioCache.get(userId);
   if (cached) return cached;
 
   const investor = await getDocument<Investor>('users', userId);
-  if (!investor) return null;
+  if (!investor) return;
 
   const statements = await getSubCollection<Statement>(
     'users',

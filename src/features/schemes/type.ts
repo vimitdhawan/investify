@@ -6,6 +6,13 @@ export enum SchemeType {
   Hybrid = 'HYBRID',
 }
 
+export enum SchemeNavStatus {
+  Available = 'AVAILABLE',
+  Missing = 'MISSING',
+  Stale = 'STALE',
+  Pending = 'Pending',
+}
+
 export interface SchemeView {
   id: string;
   name: string;
@@ -13,20 +20,20 @@ export interface SchemeView {
   amc: string;
   isin: string;
   folioNumber: string;
-  units?: number;
+  units: number;
   investedAmount: number;
+  schemdNavStatus: SchemeNavStatus;
+  nav: number;
+  lastNavDate: string;
   marketValue?: number;
   absoluteGainLoss?: number;
   absoluteGainLossPercentage?: number;
-  nav?: number;
-  date?: string;
   realizedGainLoss?: number;
   xirrGainLoss?: number;
   withdrawAmount?: number;
   stampDuty?: number;
   sttTax?: number;
   capitalGainLoss?: number;
-  schemdNavStatus?: SchemeNavStatus;
 }
 
 export interface Scheme {
@@ -37,15 +44,23 @@ export interface Scheme {
   isin: string;
   folioNumber: string;
   units: number;
+  type: SchemeType;
   investedAmount: number;
+  marketValue: number;
   isClosed: boolean;
+  latestNavDate: Date;
+  nav: number;
   transactions: Transaction[];
   withdrawAmount?: number;
   realizedGainLoss?: number;
   stampDuty?: number;
   sttTax?: number;
   capitalGainTax?: number;
-  goalId?: string; // Optional reference to a Goal ID
+  goalId?: string;
+  navStatus: SchemeNavStatus;
+  xirrGainLoss?: number;
+  absoluteGainLoss?: number;
+  absoluteGainLossPercentage?: number;
 }
 
 export function generateSchemeId(mutualFundId: string, scheme: Scheme) {
@@ -57,27 +72,4 @@ export function generateSchemeId(mutualFundId: string, scheme: Scheme) {
     .replace(/[^a-zA-Z0-9]/g, '')
     .toLowerCase();
   return `${mutualFundId}-${sanitizedIsin}-${sanitizedAmfi}`;
-}
-
-export enum SchemeNavStatus {
-  Available = 'AVAILABLE',
-  Missing = 'MISSING',
-  Stale = 'STALE',
-}
-
-export interface DerivedScheme {
-  units?: number;
-  marketValue?: number;
-  absoluteGainLoss?: number;
-  absoluteGainLossPercentage?: number;
-  nav?: number;
-  date?: string;
-  realizedGainLoss?: number;
-  xirrGainLoss?: number;
-  withdrawAmount?: number;
-  stampDuty?: number;
-  sttTax?: number;
-  capitalGainLoss?: number;
-  inestedAmount?: number;
-  navStatus: SchemeNavStatus;
 }

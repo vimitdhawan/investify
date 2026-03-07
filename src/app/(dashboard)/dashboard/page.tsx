@@ -5,12 +5,8 @@ import { PortfolioOverviewCard } from '@/features/portfolio/components/portfolio
 import { Button } from '@/components/ui/button';
 import { getSessionUserId } from '@/lib/session';
 import { getPortfolioByDate } from '@/features/portfolio/service';
-import {
-  parseYYYYMMDDString,
-  parseDDMMYYYYString,
-  formatDateToYYYYMMDD,
-} from '@/lib/utils/date';
 import { PortfolioView } from '@/features/portfolio/type';
+import { parseYYYYMMDDString } from '@/lib/utils/date';
 
 export default async function Page() {
   const userId = await getSessionUserId();
@@ -37,45 +33,11 @@ export default async function Page() {
     );
   }
 
-  const latestPortfolioDate = parseDDMMYYYYString(latestPortfolio.date);
-  latestPortfolio.date = formatDateToYYYYMMDD(latestPortfolioDate);
+  const latestPortfolioDate = parseYYYYMMDDString(latestPortfolio.date);
   const previouDayDate = new Date(latestPortfolioDate); // clone
   previouDayDate.setDate(previouDayDate.getDate() - 1);
 
   const previousDayPortfolio = await getPortfolioByDate(userId, previouDayDate);
-
-  // const dailyPortfolios = await getLastNDaysPortfolio(userId, 2);
-
-  // if (dailyPortfolios.length === 0) {
-  //   return (
-  //     <div className="flex flex-1 flex-col items-center justify-center rounded-lg border border-dashed shadow-sm h-full min-h-[400px]">
-  //       <div className="flex flex-col items-center gap-2 text-center">
-  //         <h3 className="text-2xl font-bold tracking-tight">
-  //           No Portfolio Found
-  //         </h3>
-  //         <p className="text-sm text-muted-foreground">
-  //           You have not uploaded a portfolio yet.
-  //         </p>
-  //         <Button asChild className="mt-4">
-  //           <Link href="/settings">Upload Portfolio</Link>
-  //         </Button>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
-  // const portfolio = dailyPortfolios[dailyPortfolios.length - 1];
-  // const previousDayPortfolio =
-  //   dailyPortfolios.length > 1 ? dailyPortfolios[0] : null;
-
-  // const yearlyPortfolios = await getPortfolioForLastYearByMonth(userId);
-
-  // const previousDayChange = previousDayPortfolio
-  //   ? portfolio.marketValue - previousDayPortfolio.marketValue
-  //   : 0;
-  // const previousDayChangePercentage = previousDayPortfolio?.marketValue
-  //   ? (previousDayChange / previousDayPortfolio.marketValue) * 100
-  //   : 0;
 
   const previousDayChange = previousDayPortfolio
     ? latestPortfolio.marketValue - previousDayPortfolio.marketValue

@@ -42,24 +42,24 @@ async function calculateGoalProjections(
 
     for (const scheme of fetchedSchemes) {
       const schemeTransactions = await getTransactionViews(userId, scheme.id);
-      const processedScheme = await toSchemeView(scheme, []); // Use current date for processing
+      const processedScheme = await toSchemeView(scheme); // Use current date for processing
       if (processedScheme.xirrGainLoss && processedScheme.xirrGainLoss > 0) {
         totalCurrentAmount += processedScheme.marketValue ?? 0;
-        allTransactions = allTransactions.concat(
-          schemeTransactions.map((txView) => ({
-            id: txView.id,
-            date: txView.date,
-            schemeId: txView.schemeId,
-            description: txView.description,
-            type: txView.type,
-            nav: txView.nav,
-            units: txView.units,
-            amount: txView.actualInvestment ?? 0,
-            stampDuty: txView.stampDuty,
-            sttTax: txView.sttTax,
-            capitalGainTax: txView.capitalGainTax,
-          }))
-        );
+        // allTransactions = allTransactions.concat(
+        //   schemeTransactions.map((txView) => ({
+        //     id: txView.id,
+        //     date: txView.date,
+        //     schemeId: txView.schemeId,
+        //     description: txView.description,
+        //     type: txView.type,
+        //     nav: txView.nav,
+        //     units: txView.units,
+        //     amount: txView.actualInvestment ?? 0,
+        //     stampDuty: txView.stampDuty,
+        //     sttTax: txView.sttTax,
+        //     capitalGainTax: txView.capitalGainTax,
+        //   }))
+        // );
         validSchemesForXIRR.push(scheme);
       }
     }

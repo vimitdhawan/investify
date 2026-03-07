@@ -17,3 +17,10 @@ export function formatDateToYYYYMMDD(date: Date): string {
   const day = date.getDate().toString().padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+
+export const toJSDate = (date: any): Date => {
+  if (date && typeof date.toDate === 'function') {
+    return date.toDate();
+  }
+  return date;
+};
