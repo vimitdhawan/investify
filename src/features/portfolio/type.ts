@@ -1,17 +1,14 @@
 import { MutualFundView } from '@/features/fund-houses/type';
 import { Scheme } from '@/features/schemes/type';
 
-export interface PortfolioView {
-  investor: InvestorView;
-  statementPeriods: StatementPeriodView[];
+export interface PortfolioSummary {
   investedValue: number;
   marketValue: number;
   absoluteGainLoss: number;
   absoluteGainLossPercentage: number;
   realizedGainLoss: number;
-  mutualFunds: MutualFundView[];
-  date: string;
   xirrGainLoss?: number;
+  date: string;
 }
 
 interface InvestorView {
@@ -47,5 +44,4 @@ export interface Statement {
 export interface Portfolio {
   investor: Investor;
   statements: Statement[];
-  schemes: Scheme[];
 }

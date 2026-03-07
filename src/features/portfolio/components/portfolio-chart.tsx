@@ -24,8 +24,8 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from '@/components/ui/chart';
-import { PortfolioView } from '@/features/portfolio/type';
-import { formatCurrency, formatCurrencyCompact } from '@/lib/utils';
+import { PortfolioSummary } from '@/features/portfolio/type';
+import { formatCurrency } from '@/lib/utils';
 
 const chartConfig = {
   marketValue: {
@@ -45,7 +45,7 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 interface PortfolioChartProps {
-  historicalData: PortfolioView[];
+  historicalData: PortfolioSummary[];
 }
 
 export function PortfolioChart({ historicalData }: PortfolioChartProps) {

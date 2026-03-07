@@ -1,4 +1,3 @@
-import { Transaction } from '@/features/transactions/type';
 import {
   aggregateTransactions,
   calculateXIRR,
@@ -46,41 +45,6 @@ export async function fetchSchemeNAVByDate(
     }
   }
 }
-
-// export async function fetchSchemeNAV(
-//   amfiCode: string,
-//   isin: string,
-//   date?: Date
-// ): Promise<SchemeNav | null> {
-//   if (!amfiCode) {
-//     const amfi = await getAmficCodeByIsin(isin);
-//     if (!amfi) {
-//       return null;
-//     }
-//     amfiCode = amfi.toString();
-//   }
-//   if (date) {
-//     const navs = await getHistoricalNavBySchemeId(amfiCode);
-//     const requestedDate = new Date(
-//       date.getFullYear(),
-//       date.getMonth(),
-//       date.getDate()
-//     );
-//     for (const nav of navs) {
-//       const navDate = parseDDMMYYYYString(nav.date);
-//       if (navDate.getTime() === requestedDate.getTime()) {
-//         return nav;
-//       }
-//       if (navDate < requestedDate) {
-//         return nav;
-//       }
-//     }
-//   } else {
-//     const latestNav = await getLatestNavBySchemeId(amfiCode);
-//     return latestNav;
-//   }
-//   return null;
-// }
 
 export async function getSchemes(userId: string): Promise<Scheme[]> {
   const schemes = await getSchemesWithTransactions(userId);
@@ -202,40 +166,16 @@ export async function processScheme(
   scheme: Scheme,
   schemeNav: SchemeNav
 ): Promise<Scheme> {
-  // const aggregated = aggregateTransactions(scheme.transactions);
-
-  // // Default values from aggregated transactions
-  // scheme.withdrawAmount = aggregated.withdrawAmount;
-  // scheme.stampDuty = aggregated.stampDuty;
-  // scheme.sttTax = aggregated.sttTax;
-  // scheme.capitalGainTax = aggregated.capitalGainTax;
-  // if (scheme.isClosed) {
-  //   scheme.navStatus = SchemeNavStatus.Stale;
-  //   scheme.realizedGainLoss = scheme.withdrawAmount - scheme.investedAmount;
-  //   return scheme;
-  // }
-  // scheme.investedAmount = aggregated.investedAmount;
-  // scheme.units = aggregated.units;
-  // scheme.realizedGainLoss = aggregated.realizedGainLoss;
-  // // const navByDate = await fetchSchemeNAV(scheme.amfi, scheme.isin, reqDate);
-  // // if (!navByDate) {
-  // //   scheme.navStatus = SchemeNavStatus.Missing;
-  // //   return scheme;
-  // // }
-  // // Calculate performance metrics with available NAV
   const nav = Number(schemeNav.nav);
   const marketValue = scheme.units * nav;
   const gainLoss = marketValue - scheme.investedAmount;
   const gainLossPercentage =
     scheme.investedAmount > 0 ? (gainLoss / scheme.investedAmount) * 100 : 0;
-
-  // Update valuation specific fields
   scheme.nav = nav;
   scheme.marketValue = marketValue;
   scheme.absoluteGainLoss = gainLoss;
   scheme.absoluteGainLossPercentage = gainLossPercentage;
   scheme.latestNavDate = parseDDMMYYYYString(schemeNav.date);
   scheme.navStatus = SchemeNavStatus.Available;
-
   return scheme;
 }

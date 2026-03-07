@@ -17,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { PortfolioView } from '@/features/portfolio/type';
+import { PortfolioSummary } from '@/features/portfolio/type';
 
 interface FinancialDetailProps {
   label: string;
@@ -70,7 +70,7 @@ function FinancialDetail({
 }
 
 interface PortfolioOverviewCardProps {
-  portfolio: PortfolioView;
+  portfolio: PortfolioSummary;
   previousDayChange: number;
   previousDayChangePercentage: number;
 }

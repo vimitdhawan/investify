@@ -24,7 +24,6 @@ export async function getPortfolio(
   const portfolio: Portfolio = {
     investor,
     statements,
-    schemes: [],
   };
 
   // 5️⃣ Cache it

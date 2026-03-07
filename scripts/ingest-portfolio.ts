@@ -122,6 +122,11 @@ async function ingestPortfolioData(
 ) {
   console.log('Ingesting data for user:', userId);
   const portfolio = await processPortfolio(portfolioData);
+  const lastesNavDate = new Date(portfolioData.meta.generated_at);
+  const schemes = await processSchemes(
+    lastesNavDate,
+    portfolioData.mutual_funds
+  );
 
   const batch = firestore.batch();
 
@@ -144,7 +149,7 @@ async function ingestPortfolioData(
     );
   batch.set(statementRef, statemnet, { merge: true });
 
-  for (const s of portfolio.schemes) {
+  for (const s of schemes) {
     const schemeId = s.id;
     if (!schemeId) {
       console.warn(
@@ -185,14 +190,8 @@ async function processPortfolio(portfolio: PortfolioDTO): Promise<Portfolio> {
     name: portfolio.investor.name,
     pan: portfolio.investor.pan ?? '',
   };
-  const lastesNavDate = new Date(portfolio.meta.generated_at);
-  for (const mf of portfolio.mutual_funds) {
-    const schms = await processSchemes(lastesNavDate, mf);
-    schemes.push(...schms);
-  }
   let pf: Portfolio = {
     investor: investor,
-    schemes: schemes,
     statements: [
       {
         period: {
@@ -207,32 +206,35 @@ async function processPortfolio(portfolio: PortfolioDTO): Promise<Portfolio> {
 
 async function processSchemes(
   latestNavDate: Date,
-  mutualFund: MutualFundDTO
+  mutualFunds: MutualFundDTO[]
 ): Promise<Scheme[]> {
   const schemes: Scheme[] = [];
-  for (const s of mutualFund.schemes) {
-    const { schemeId, amfi } = await getSchemeIdAndAmfi(mutualFund, s);
-    const transactions = processTransactions(s.transactions, schemeId);
-    const isClosed = s.units === 0;
-    const scheme: Scheme = {
-      id: schemeId,
-      name: s.name,
-      amfi: amfi,
-      amc: mutualFund.amc,
-      isin: s.isin,
-      folioNumber: mutualFund.folio_number,
-      units: s.units,
-      investedAmount: s.cost,
-      isClosed: isClosed,
-      marketValue: s.value,
-      navStatus: SchemeNavStatus.Pending,
-      type: s.type,
-      transactions: transactions,
-      nav: s.nav,
-      latestNavDate: latestNavDate,
-    };
-    schemes.push(scheme);
+  for (const mf of mutualFunds) {
+    for (const s of mf.schemes) {
+      const { schemeId, amfi } = await getSchemeIdAndAmfi(mf, s);
+      const transactions = processTransactions(s.transactions, schemeId);
+      const isClosed = s.units === 0;
+      const scheme: Scheme = {
+        id: schemeId,
+        name: s.name,
+        amfi: amfi,
+        amc: mf.amc,
+        isin: s.isin,
+        folioNumber: mf.folio_number,
+        units: s.units,
+        investedAmount: s.cost,
+        isClosed: isClosed,
+        marketValue: s.value,
+        navStatus: SchemeNavStatus.Pending,
+        type: s.type,
+        transactions: transactions,
+        nav: s.nav,
+        latestNavDate: latestNavDate,
+      };
+      schemes.push(scheme);
+    }
   }
+
   return schemes;
 }
 

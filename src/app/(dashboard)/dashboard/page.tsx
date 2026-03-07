@@ -4,8 +4,11 @@ import { PortfolioChart } from '@/features/portfolio/components/portfolio-chart'
 import { PortfolioOverviewCard } from '@/features/portfolio/components/portfolio-overview-card';
 import { Button } from '@/components/ui/button';
 import { getSessionUserId } from '@/lib/session';
-import { getPortfolioByDate } from '@/features/portfolio/service';
-import { PortfolioView } from '@/features/portfolio/type';
+import {
+  getLatestPortfolio,
+  getPortfolioSummaryByDate,
+} from '@/features/portfolio/service';
+import { PortfolioSummary } from '@/features/portfolio/type';
 import { parseYYYYMMDDString } from '@/lib/utils/date';
 
 export default async function Page() {
@@ -13,9 +16,8 @@ export default async function Page() {
   if (!userId) {
     redirect('/login');
   }
-
-  const latestPortfolio = await getPortfolioByDate(userId);
-  if (latestPortfolio == null) {
+  const latestPortfolio = await getLatestPortfolio(userId);
+  if (!latestPortfolio) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center rounded-lg border border-dashed shadow-sm h-full min-h-[400px]">
         <div className="flex flex-col items-center gap-2 text-center">
@@ -37,7 +39,10 @@ export default async function Page() {
   const previouDayDate = new Date(latestPortfolioDate); // clone
   previouDayDate.setDate(previouDayDate.getDate() - 1);
 
-  const previousDayPortfolio = await getPortfolioByDate(userId, previouDayDate);
+  const previousDayPortfolio = await getPortfolioSummaryByDate(
+    userId,
+    previouDayDate
+  );
 
   const previousDayChange = previousDayPortfolio
     ? latestPortfolio.marketValue - previousDayPortfolio.marketValue
@@ -46,7 +51,7 @@ export default async function Page() {
     ? (previousDayChange / previousDayPortfolio.marketValue) * 100
     : 0;
 
-  const promises: Promise<PortfolioView | null>[] = [];
+  const promises: Promise<PortfolioSummary>[] = [];
 
   for (let i = 11; i >= 0; i--) {
     const targetDate = new Date(
@@ -54,11 +59,11 @@ export default async function Page() {
       latestPortfolioDate.getMonth() - i,
       1
     );
-    promises.push(getPortfolioByDate(userId, targetDate));
+    promises.push(getPortfolioSummaryByDate(userId, targetDate));
   }
   const yearlyPortfolios = await Promise.all(promises);
   const filterYearlyPortfolio = yearlyPortfolios
-    .filter((a): a is PortfolioView => a !== null)
+    .filter((a): a is PortfolioSummary => a !== null)
     .sort(
       (a, b) =>
         parseYYYYMMDDString(a.date).getTime() -
