@@ -10,7 +10,6 @@ export interface MutualFundView {
   realizedGainLoss?: number;
   stampDuty?: number;
   xirrGainLoss?: number;
-  schemes: SchemeView[]; // TODO: remove this later
 }
 
 export function generateMutualFundId(folioNumber: string, amc: string): string {

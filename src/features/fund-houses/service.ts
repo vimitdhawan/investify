@@ -74,7 +74,6 @@ export async function getFundHouses(userId: string) {
       absoluteGainLossPercentage: gainLossPercentage,
       stampDuty: stampDuty,
       xirrGainLoss: xirrGainLoss,
-      schemes: [],
     });
   }
   return mutualFundViews;
