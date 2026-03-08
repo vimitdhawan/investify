@@ -10,6 +10,7 @@ import {
   Building,
   List,
   Banknote,
+  Target,
 } from 'lucide-react';
 
 type SideMenuItem = {
@@ -25,6 +26,12 @@ export const data: SideMenuItem[] = [
     url: '/dashboard',
     icon: LayoutDashboard,
     description: 'Overview of your business performance',
+  },
+  {
+    title: 'Goals',
+    url: '/goals',
+    icon: Target,
+    description: 'Track your financial objectives',
   },
   {
     title: 'Fund Houses',

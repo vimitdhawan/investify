@@ -4,5 +4,6 @@ This proposal introduces the ability for users to create financial goals and ass
 
 ## Capabilities
 
-*   **Goals Management**: Users can create, view, update, and delete their financial goals.
-*   **Scheme-Goal Assignment**: Users can link one or more schemes to a specific goal.
+- **Goals Management**: Users can create, view, update, and delete their financial goals.
+- **Scheme-Goal Assignment**: Users can link one or more schemes to a specific goal.
+- **Goal Tracking**: Users can monitor their progress towards goals based on the current value of assigned schemes.

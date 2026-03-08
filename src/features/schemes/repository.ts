@@ -2,14 +2,9 @@ import { getSubCollection, getNestedSubCollection } from '@/lib/db';
 
 import { Scheme } from '@/features/schemes/type';
 import { Transaction } from '@/features/transactions/type';
-import { toJSDate } from '@/lib/utils/date';
 
 export async function getSchemes(userId: string): Promise<Scheme[]> {
-  const schemes = await getSubCollection<Scheme>('users', userId, 'schemes');
-  return schemes.map((s) => ({
-    ...s,
-    latestNavDate: toJSDate(s.latestNavDate),
-  }));
+  return getSubCollection<Scheme>('users', userId, 'schemes');
 }
 
 export async function getSchemesWithTransactions(
@@ -28,10 +23,7 @@ export async function getSchemesWithTransactions(
       );
       return {
         ...s,
-        transactions: transactions.map((t) => ({
-          ...t,
-          date: toJSDate(t.date),
-        })),
+        transactions,
       };
     })
   );

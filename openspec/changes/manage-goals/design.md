@@ -2,25 +2,24 @@
 
 ## 1. Data Model
 
-We will introduce a new collection in Firestore to store user-specific goals.
+We will introduce a new sub-collection in Firestore to store user-specific goals.
 
 ### `Goal` Document
 
 A `Goal` document will represent a single financial goal for a user.
 
-*   **Collection:** `users/{userId}/goals`
-*   **Document ID:** Auto-generated
+- **Collection:** `users/{userId}/goals`
+- **Document ID:** Auto-generated
 
 **Schema:**
 
 ```typescript
 interface Goal {
-  id: string;        // Document ID
-  name: string;      // e.g., "Retirement Fund"
+  id: string; // Document ID
+  name: string; // e.g., "Retirement Fund"
   targetAmount: number; // Target monetary value
-  targetDate: Date;    // Target date to achieve the goal
+  targetDate: Date; // Target date to achieve the goal
   currentAmount: number; // Calculated field: sum of current value of assigned schemes
-  userId: string;      // Owning user
   schemeIds: string[]; // List of assigned scheme IDs
   projectedDate?: Date; // Calculated date to reach the goal based on XIRR
 }
@@ -39,23 +38,32 @@ interface Scheme {
 }
 ```
 
-This approach establishes a clear relationship: a goal can encompass multiple schemes, while each scheme is linked to a single goal. This simplifies data management and querying.
+## 2. Feature Structure
 
-## 2. API and Server Logic
+Following the project's architecture, all goal-related logic will be centralized in `src/features/goal/`:
 
-*   Instead of traditional API endpoints, we will use **Next.js Server Actions** for all CRUD operations (Create, Read, Update, Delete) related to goals. This keeps data mutations co-located with the components that use them.
-*   Server-side logic will be implemented in `lib/actions/goal.ts`.
-*   We will refer to the existing `signup` implementation (`src/lib/actions/signup.ts`) for patterns on how to structure server actions, handle form state, and manage validation.
-*   A new calculation service will be implemented to project goal completion. It will use the **XIRR (Extended Internal Rate of Return)** of the combined transactions from all schemes assigned to a goal.
-*   **Calculation Rules:**
-    *   Schemes with a negative XIRR (indicating a loss) will be **excluded** from the projection calculation.
-    *   If all schemes assigned to a goal have a negative XIRR, the `projectedDate` will be considered "Not Applicable" (N/A), as the target is unreachable. This status will be clearly indicated in the UI.
-    *   Based on the aggregated positive rate of return, the service will forecast how long it will take for the current investment to reach the `targetAmount`.
+- `src/features/goal/type.ts`: TypeScript interfaces for Goals.
+- `src/features/goal/schema.ts`: Zod schemas for form validation.
+- `src/features/goal/repository.ts`: Data access logic for Firestore.
+- `src/features/goal/service.ts`: Business logic and calculation utilities.
+- `src/features/goal/action.ts`: Next.js Server Actions for CRUD operations.
+- `src/features/goal/components/`: Reusable UI components for goals.
 
-## 3. User Interface
+## 3. API and Server Logic
 
-*   A new **"Goals"** item will be added to the main sidebar navigation to provide users with easy access to the feature.
-*   A new route ` /goals` will be added to the dashboard to list and manage goals. Adding or removing scheme assignments will be handled exclusively on this page.
-*   The goal creation and editing forms will include a multi-select dropdown, allowing users to choose from their available schemes to assign to the goal.
-*   The **/schemes/[id] page will not be modified.** All goal-related interactions will be centralized on the new ` /goals` page.
-*   A new component will be created to display goal progress. It will visualize the `currentAmount` against the `targetAmount` and display the **projected time to completion** based on the XIRR calculation, or "N/A" if a projection is not possible.
+- **Next.js Server Actions** will be used for all CRUD operations, located in `src/features/goal/action.ts`.
+- Repository functions in `src/features/goal/repository.ts` will handle Firestore interactions.
+- **Business Logic**: All calculations, projections (e.g., goal completion based on combined XIRR), and data transformations will be implemented directly in `src/features/goal/service.ts`.
+
+## 4. User Interface
+
+- **Navigation**: A new "Goals" item will be added to the sidebar (`src/features/side-bar/`).
+- **Pages**:
+  - `src/app/(dashboard)/goals/page.tsx`: List of all goals.
+  - `src/app/(dashboard)/goals/create/page.tsx`: Form to create a new goal.
+  - `src/app/(dashboard)/goals/[id]/page.tsx`: Goal details and progress tracking.
+  - `src/app/(dashboard)/goals/[id]/edit/page.tsx`: Form to edit an existing goal.
+- **Components**:
+  - Goal cards for the list view.
+  - Progress visualization (current vs. target).
+  - Multi-select scheme picker for goal assignment.

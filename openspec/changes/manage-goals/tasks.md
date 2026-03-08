@@ -1,22 +1,25 @@
 # Tasks: Manage Goals
 
-1.  **Backend: Goal Data Model**
-    *   [ ] Define and implement the `Goal` data model in Firestore.
-    *   [ ] Create repository functions for CRUD operations on goals.
+1.  **Backend: Feature Structure**
+    - [x] Initialize `src/features/goal/` directory.
+    - [x] Define `Goal` interface in `src/features/goal/type.ts`.
+    - [x] Define Zod schemas in `src/features/goal/schema.ts`.
+    - [x] Implement repository functions in `src/features/goal/repository.ts`.
+    - [x] Implement business logic in `src/features/goal/service.ts`.
+    - [x] Implement Server Actions in `src/features/goal/action.ts`.
 
-2.  **Backend: Scheme-Goal Association**
-    *   [ ] Update the `Scheme` data model to include a `goalId` field.
-    *   [ ] Implement logic to assign/unassign `goalId` to schemes when goals are created/updated/deleted.
+2.  **Backend: Scheme Integration**
+    - [x] Update `src/features/schemes/type.ts` to include `goalId`.
+    - [x] Implement logic in `src/features/goal/repository.ts` to update schemes when goal assignments change.
 
-3.  **Frontend: Goal Management UI**
-    *   [ ] Create a new page for listing and managing goals.
-    *   [ ] Implement a form for creating and editing a goal, including a multi-select dropdown for assigning schemes.
-    *   [ ] Add functionality to delete a goal.
+3.  **Frontend: Pages and Routing**
+    - [x] Create dashboard pages in `src/app/(dashboard)/goals/`.
+    - [x] Add "Goals" link to the sidebar in `src/features/side-bar/`.
 
-4.  **Testing**
-    *   [ ] Write unit tests for the new repository functions.
-    *   [ ] Write integration tests for the new UI components.
+4.  **Frontend: Components**
+    - [x] Create goal list components in `src/features/goal/components/`.
+    - [x] Implement goal form with multi-select scheme picker.
+    - [x] Implement progress visualization.
 
 5.  **Documentation**
-    *   [ ] Update `DATA_MODEL.md` with the new `Goal` model.
-    *   [ ] Update `DATA_MODEL.md` with the updated `Scheme` model.
+    - [x] Update `DATA_MODEL.md` with the new `Goal` model.

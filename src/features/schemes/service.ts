@@ -78,6 +78,11 @@ export async function getSchemes(userId: string): Promise<Scheme[]> {
   );
 }
 
+export async function getActiveSchemes(userId: string): Promise<Scheme[]> {
+  const schemes = await getSchemes(userId);
+  return schemes.filter((s) => !s.isClosed);
+}
+
 async function resolveAmfiCode(
   amfiCode: string | undefined,
   isin: string
