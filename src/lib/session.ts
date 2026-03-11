@@ -1,19 +1,36 @@
 'server-only';
-import { SignJWT, jwtVerify, createRemoteJWKSet, importPKCS8 } from 'jose';
+import {
+  SignJWT,
+  jwtVerify,
+  createRemoteJWKSet,
+  createLocalJWKSet,
+  importPKCS8,
+} from 'jose';
 import { cookies } from 'next/headers';
+import fs from 'fs';
+import path from 'path';
 
 type SessionPayload = {
   userId: string;
 };
 
-// Get the JWKS URL from environment variables
-const jwksUrl = process.env.JWKS_URL;
-if (!jwksUrl) {
-  throw new Error('JWKS_URL environment variable is not set.');
-}
+const isEmulator = process.env.FIREBASE_EMULATOR_MODE === 'true';
 
-// Create a remote JWK set from the Firebase Storage URL
-const JWKS = createRemoteJWKSet(new URL(jwksUrl));
+let JWKS: ReturnType<typeof createRemoteJWKSet> | ReturnType<typeof createLocalJWKSet>;
+
+if (isEmulator) {
+  const jwksPath = path.join(process.cwd(), 'jwks.json');
+  const jwksData = JSON.parse(fs.readFileSync(jwksPath, 'utf8'));
+  JWKS = createLocalJWKSet(jwksData);
+} else {
+  // Get the JWKS URL from environment variables
+  const jwksUrl = process.env.JWKS_URL;
+  if (!jwksUrl) {
+    throw new Error('JWKS_URL environment variable is not set.');
+  }
+  // Create a remote JWK set from the Firebase Storage URL
+  JWKS = createRemoteJWKSet(new URL(jwksUrl));
+}
 
 export async function encrypt(payload: SessionPayload) {
   const privateKeyString = process.env.AUTH_PRIVATE_KEY;

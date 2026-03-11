@@ -13,7 +13,7 @@ import { parseYYYYMMDDString } from '@/lib/utils/date';
 
 // --- Main script execution ---
 
-const USER_ID = 'O5ChLBJpFDeWd74VMnDL32tjmCI3';
+const USER_ID = 'Tjf5pyfIoe0AJGNfYEnFwwFAvKSq';
 
 export interface PortfolioDTO {
   demat_accounts: DematAccountDTO[];

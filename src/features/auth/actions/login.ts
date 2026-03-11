@@ -26,7 +26,14 @@ export async function handleLogin(
     if (!apiKey) {
       throw new Error('Firebase Web API Key is not configured.');
     }
-    const firebaseLoginUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`;
+
+    const isEmulator = process.env.FIREBASE_EMULATOR_MODE === 'true';
+    const authEmulatorHost =
+      process.env.FIREBASE_AUTH_EMULATOR_HOST || 'localhost:9099';
+
+    const firebaseLoginUrl = isEmulator
+      ? `http://${authEmulatorHost}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`
+      : `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`;
 
     const response = await fetch(firebaseLoginUrl, {
       method: 'POST',
