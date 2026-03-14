@@ -1,24 +1,61 @@
-/** @type {import('ts-jest').JestConfigWithTsJest}
- */
+/** @type {import('jest').Config} */
 module.exports = {
   preset: 'ts-jest',
-  testEnvironment: 'node',
+  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+
   // Automatically clear mock calls and instances between every test
   clearMocks: true,
+
   // The directory where Jest should output its coverage files
   coverageDirectory: 'coverage',
-  // An array of glob patterns indicating a set of files for which coverage information should be collected
-  collectCoverageFrom: ['src/**/*.{ts,tsx,js,jsx}', '!src/**/*.d.ts'],
-  // An array of regexp patterns that are matched against all source file paths before transformation
-  transformIgnorePatterns: ['/node_modules/(?!some-module-you-want-to-transform)/'],
-  // A map from regular expressions to paths to transformers
-  transform: {
-    '^.+\.tsx?$': 'ts-jest',
-  },
-  // Module file extensions for importing
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  // A map from regular expressions to module names that allow to stub out resources with a single module
+
+  // Module resolution
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1', // Map @/ imports to src folder
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/__mocks__/fileMock.js',
+  },
+
+  // Coverage configuration with low thresholds initially
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/*.stories.{ts,tsx}',
+    '!src/app/**/*', // Exclude Next.js app pages
+    '!src/types/**/*', // Exclude type definitions
+  ],
+
+  coverageThreshold: {
+    global: {
+      branches: 0,
+      functions: 0,
+      lines: 0,
+      statements: 0,
+    },
+  },
+
+  // Test patterns
+  testMatch: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+
+  // Ignore patterns
+  testPathIgnorePatterns: ['/node_modules/', '/.next/', '/out/', '/build/', '/coverage/'],
+
+  // Transform ESM modules
+  transformIgnorePatterns: ['node_modules/(?!(uuid|gaxios)/)'],
+
+  // Test environment options
+  testEnvironmentOptions: {
+    customExportConditions: [''],
+  },
+
+  // Module file extensions
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+
+  // Globals
+  globals: {
+    'ts-jest': {
+      isolatedModules: true,
+    },
   },
 };
