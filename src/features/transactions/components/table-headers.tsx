@@ -1,10 +1,7 @@
 // components/TableHeader.tsx
-import { Table, flexRender } from '@tanstack/react-table';
-import {
-  TableHead,
-  TableHeader as TableHeaderUI,
-  TableRow,
-} from '@/components/ui/table';
+import { type Table, flexRender } from '@tanstack/react-table';
+
+import { TableHead, TableHeader as TableHeaderUI, TableRow } from '@/components/ui/table';
 
 interface TableHeaderProps {
   table: Table<any>;
@@ -19,13 +16,9 @@ export function TableHeader({ table }: TableHeaderProps) {
             <TableHead
               key={header.id}
               onClick={
-                header.column.getCanSort()
-                  ? header.column.getToggleSortingHandler()
-                  : undefined
+                header.column.getCanSort() ? header.column.getToggleSortingHandler() : undefined
               }
-              className={
-                header.column.getCanSort() ? 'cursor-pointer select-none' : ''
-              }
+              className={header.column.getCanSort() ? 'cursor-pointer select-none' : ''}
             >
               {flexRender(header.column.columnDef.header, header.getContext())}
               {{

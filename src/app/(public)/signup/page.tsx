@@ -1,11 +1,6 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { SignupForm } from '@/features/auth/components/signup-form';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 
 export default function Page() {
   return (
@@ -15,9 +10,7 @@ export default function Page() {
           <Card>
             <CardHeader>
               <CardTitle>Create an account</CardTitle>
-              <CardDescription>
-                Enter your email below to create your account
-              </CardDescription>
+              <CardDescription>Enter your email below to create your account</CardDescription>
             </CardHeader>
             <CardContent>
               <SignupForm />

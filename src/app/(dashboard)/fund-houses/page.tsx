@@ -1,7 +1,10 @@
+import { redirect } from 'next/navigation';
+
 import { FundHousesClient } from '@/features/fund-houses/components/fund-houses-list';
-import { getSessionUserId } from '@/lib/session';
-import { redirect } from 'next/navigation'; // Import the new client component
+// Import the new client component
 import { getFundHouses } from '@/features/fund-houses/service';
+
+import { getSessionUserId } from '@/lib/session';
 
 export default async function FundHousesPage() {
   const userId = await getSessionUserId();

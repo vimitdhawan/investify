@@ -1,30 +1,19 @@
 'use client';
 
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  ChartConfig,
+  type ChartConfig,
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
 } from '@/components/ui/chart';
-import { PortfolioSummary } from '@/features/portfolio/type';
+
+import type { PortfolioSummary } from '@/features/portfolio/type';
+
 import { formatCurrency } from '@/lib/utils';
 
 const chartConfig = {
@@ -62,9 +51,7 @@ export function PortfolioChart({ historicalData }: PortfolioChartProps) {
     <Card>
       <CardHeader>
         <CardTitle>Portfolio Trend</CardTitle>
-        <CardDescription>
-          Market value vs. Invested value over the last 12 months
-        </CardDescription>
+        <CardDescription>Market value vs. Invested value over the last 12 months</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
@@ -102,8 +89,7 @@ export function PortfolioChart({ historicalData }: PortfolioChartProps) {
                   <ChartTooltipContent
                     indicator="dot"
                     formatter={(value, name) => {
-                      const label =
-                        chartConfig[name as keyof typeof chartConfig]?.label;
+                      const label = chartConfig[name as keyof typeof chartConfig]?.label;
                       return (
                         <div className="flex items-center justify-between w-full">
                           <span className="font-bold">{label}:</span>
@@ -117,41 +103,13 @@ export function PortfolioChart({ historicalData }: PortfolioChartProps) {
                 }
               />
               <defs>
-                <linearGradient
-                  id="fillMarketValue"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop
-                    offset="5%"
-                    stopColor="var(--color-marketValue)"
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="var(--color-marketValue)"
-                    stopOpacity={0.1}
-                  />
+                <linearGradient id="fillMarketValue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--color-marketValue)" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="var(--color-marketValue)" stopOpacity={0.1} />
                 </linearGradient>
-                <linearGradient
-                  id="fillInvestedValue"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop
-                    offset="5%"
-                    stopColor="var(--color-investedValue)"
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="var(--color-investedValue)"
-                    stopOpacity={0.1}
-                  />
+                <linearGradient id="fillInvestedValue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--color-investedValue)" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="var(--color-investedValue)" stopOpacity={0.1} />
                 </linearGradient>
               </defs>
               <Area
@@ -168,10 +126,7 @@ export function PortfolioChart({ historicalData }: PortfolioChartProps) {
               />
               <ChartLegend
                 content={({ payload }) => (
-                  <ChartLegendContent
-                    payload={payload}
-                    className="mt-4 gap-8"
-                  />
+                  <ChartLegendContent payload={payload as any[]} className="mt-4 gap-8" />
                 )}
               />
             </AreaChart>

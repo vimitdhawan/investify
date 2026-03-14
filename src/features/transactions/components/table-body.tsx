@@ -1,10 +1,7 @@
 // components/TableBody.tsx
-import { Table, flexRender } from "@tanstack/react-table";
-import {
-  TableBody as TableBodyUI,
-  TableCell,
-  TableRow,
-} from "@/components/ui/table";
+import { type Table, flexRender } from '@tanstack/react-table';
+
+import { TableBody as TableBodyUI, TableCell, TableRow } from '@/components/ui/table';
 
 interface TableBodyProps {
   table: Table<any>;
@@ -25,11 +22,8 @@ export function TableBody({ table }: TableBodyProps) {
         ))
       ) : (
         <TableRow>
-          <TableCell
-            colSpan={table.getAllColumns().length}
-            className="h-24 text-center"
-          >
-           No Transaction Found
+          <TableCell colSpan={table.getAllColumns().length} className="h-24 text-center">
+            No Transaction Found
           </TableCell>
         </TableRow>
       )}

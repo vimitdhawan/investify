@@ -1,19 +1,19 @@
+import { getSchemesWithTransactions } from '@/features/schemes/repository';
+import { type Scheme, SchemeNavStatus, type SchemeView } from '@/features/schemes/type';
 import {
   aggregateTransactions,
   calculateXIRR,
   exludeReverseTransactions,
   filterTransactionsByDate,
 } from '@/features/transactions/service';
-import { SchemeView, Scheme, SchemeNavStatus } from '@/features/schemes/type';
+
 import {
+  type SchemeNav,
   getAmficCodeByIsin,
   getHistoricalNavBySchemeId,
   getLatestNavBySchemeId,
 } from '@/lib/clients/mf';
-import { SchemeNav } from '@/lib/clients/mf';
 import { formatDateToYYYYMMDD, parseDDMMYYYYString } from '@/lib/utils/date';
-import { getSchemesWithTransactions } from '@/features/schemes/repository';
-import { logger } from '@/lib/logger';
 
 export async function getSchemeViews(userId: string): Promise<SchemeView[]> {
   const schemes = await getSchemes(userId);
@@ -30,11 +30,7 @@ export async function fetchSchemeNAVByDate(
     return;
   }
   const navs = await getHistoricalNavBySchemeId(amfiCode);
-  const requestedDate = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate()
-  );
+  const requestedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   for (const nav of navs) {
     const navDate = parseDDMMYYYYString(nav.date);
     if (navDate.getTime() === requestedDate.getTime()) {
@@ -52,9 +48,8 @@ export async function getSchemes(userId: string): Promise<Scheme[]> {
   return await Promise.all(
     schemes.map(async (scheme) => {
       scheme.transactions = exludeReverseTransactions(scheme.transactions);
-      const schemeWithAggregateTx =
-        processSchemeWithAggregateTransactions(scheme);
-      if (schemeWithAggregateTx.navStatus != SchemeNavStatus.Pending) {
+      const schemeWithAggregateTx = processSchemeWithAggregateTransactions(scheme);
+      if (schemeWithAggregateTx.navStatus !== SchemeNavStatus.Pending) {
         return schemeWithAggregateTx;
       }
       const amfiCode = await resolveAmfiCode(
@@ -71,8 +66,7 @@ export async function getSchemes(userId: string): Promise<Scheme[]> {
         return schemeWithAggregateTx;
       }
       const s = await processScheme(scheme, nav);
-      s.xirrGainLoss =
-        calculateXIRR(scheme.transactions, s.marketValue, new Date()) ?? 0;
+      s.xirrGainLoss = calculateXIRR(scheme.transactions, s.marketValue, new Date()) ?? 0;
       return s;
     })
   );
@@ -97,19 +91,15 @@ async function resolveAmfiCode(
   return amfi.toString();
 }
 
-export async function getSchemesByDate(
-  userId: string,
-  reqDate: Date
-): Promise<Scheme[]> {
+export async function getSchemesByDate(userId: string, reqDate: Date): Promise<Scheme[]> {
   const schemes = await getSchemesWithTransactions(userId);
   if (!schemes.length) return [];
   return await Promise.all(
     schemes.map(async (scheme) => {
       const transactions = exludeReverseTransactions(scheme.transactions);
       scheme.transactions = filterTransactionsByDate(transactions, reqDate);
-      const schemeWithAggregateTx =
-        processSchemeWithAggregateTransactions(scheme);
-      if (schemeWithAggregateTx.navStatus != SchemeNavStatus.Pending) {
+      const schemeWithAggregateTx = processSchemeWithAggregateTransactions(scheme);
+      if (schemeWithAggregateTx.navStatus !== SchemeNavStatus.Pending) {
         return schemeWithAggregateTx;
       }
       const nav = await fetchSchemeNAVByDate(scheme.amfi, scheme.isin, reqDate);
@@ -137,7 +127,7 @@ export function toSchemeView(scheme: Scheme): SchemeView {
     absoluteGainLossPercentage: scheme.absoluteGainLossPercentage,
     nav: scheme.nav,
     lastNavDate:
-      scheme.navStatus == SchemeNavStatus.Available
+      scheme.navStatus === SchemeNavStatus.Available
         ? formatDateToYYYYMMDD(scheme.latestNavDate)
         : '',
     realizedGainLoss: scheme.realizedGainLoss,
@@ -167,10 +157,7 @@ function processSchemeWithAggregateTransactions(scheme: Scheme): Scheme {
   return scheme;
 }
 
-export async function processScheme(
-  scheme: Scheme,
-  schemeNav: SchemeNav
-): Promise<Scheme> {
+export async function processScheme(scheme: Scheme, schemeNav: SchemeNav): Promise<Scheme> {
   const nav = Number(schemeNav.nav);
   const marketValue = scheme.units * nav;
   const gainLoss = marketValue - scheme.investedAmount;

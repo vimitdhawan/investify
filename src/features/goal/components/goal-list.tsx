@@ -1,4 +1,4 @@
-import { GoalView } from '../type';
+import type { GoalView } from '../type';
 import { GoalCard } from './goal-card';
 
 export function GoalList({ goals }: { goals: GoalView[] }) {

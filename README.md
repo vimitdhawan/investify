@@ -35,7 +35,6 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
-
 Mutual Fund Portfolio Analyzer - Application Specification
 
 1. Overview
@@ -53,39 +52,45 @@ Diagrams: PlantUML
 3. Core Features
 
 3.1. Data Ingestion & Processing
--   PDF Upload: Users can upload their password-protected or non-password-protected CAS PDF.
--   Automated Parsing: A backend process will read the PDF, extract all transactions (SIPs, redemptions, switches), and store them in a structured format in the database.
 
-3.2. XIRR Calculation (Highest Priority)
--   The application will calculate the Extended Internal Rate of Return (XIRR) for each individual fund and for the overall portfolio.
--   This provides an accurate, annualized return percentage, accounting for all cash flows at their specific dates.
+- PDF Upload: Users can upload their password-protected or non-password-protected CAS PDF.
+- Automated Parsing: A backend process will read the PDF, extract all transactions (SIPs, redemptions, switches), and store them in a structured format in the database.
 
-3.3. Tax & Charges Analysis
--   The system will identify and aggregate all fees and taxes paid by the user, including:
-    -   **Stamp Duty**: On purchases.
-    -   **Securities Transaction Tax (STT)**: On equity fund redemptions.
-    -   **Tax Deducted at Source (TDS)**: On debt fund redemptions.
-    -   **Exit Loads**: If applicable on early redemptions.
--   A dedicated section will show the user the total amount paid in charges.
+  3.2. XIRR Calculation (Highest Priority)
 
-3.4. Capital Gains on Withdrawals
--   When a user redeems (withdraws) units, the application will calculate the profit using the **First-In, First-Out (FIFO)** accounting method.
--   It will classify the gains into:
-    -   **Short-Term Capital Gains (STCG)**
-    -   **Long-Term Capital Gains (LTCG)**
--   The classification will follow Indian tax laws (Equity: >1 year is Long-Term; Debt: >3 years is Long-Term). This helps users understand their tax liability.
+- The application will calculate the Extended Internal Rate of Return (XIRR) for each individual fund and for the overall portfolio.
+- This provides an accurate, annualized return percentage, accounting for all cash flows at their specific dates.
 
-3.5. Interactive Portfolio Visualization
--   A dashboard with interactive charts (e.g., pie charts, bar charts) to visualize portfolio allocation.
--   Users can break down their portfolio by:
-    -   **Fund House**: (e.g., DSP, SBI, HDFC).
-    -   **Asset Class**: (e.g., Equity, Debt, Hybrid).
-    -   **Market Capitalization**: (e.g., Large-Cap, Mid-Cap, Small-Cap).
--   This requires a system to categorize each fund scheme based on its name or an external data source.
+  3.3. Tax & Charges Analysis
 
-3.6. User Management
--   Secure user registration and login using Firebase Authentication.
--   Each user's data will be stored securely and will only be accessible to them.
+- The system will identify and aggregate all fees and taxes paid by the user, including:
+  - **Stamp Duty**: On purchases.
+  - **Securities Transaction Tax (STT)**: On equity fund redemptions.
+  - **Tax Deducted at Source (TDS)**: On debt fund redemptions.
+  - **Exit Loads**: If applicable on early redemptions.
+- A dedicated section will show the user the total amount paid in charges.
+
+  3.4. Capital Gains on Withdrawals
+
+- When a user redeems (withdraws) units, the application will calculate the profit using the **First-In, First-Out (FIFO)** accounting method.
+- It will classify the gains into:
+  - **Short-Term Capital Gains (STCG)**
+  - **Long-Term Capital Gains (LTCG)**
+- The classification will follow Indian tax laws (Equity: >1 year is Long-Term; Debt: >3 years is Long-Term). This helps users understand their tax liability.
+
+  3.5. Interactive Portfolio Visualization
+
+- A dashboard with interactive charts (e.g., pie charts, bar charts) to visualize portfolio allocation.
+- Users can break down their portfolio by:
+  - **Fund House**: (e.g., DSP, SBI, HDFC).
+  - **Asset Class**: (e.g., Equity, Debt, Hybrid).
+  - **Market Capitalization**: (e.g., Large-Cap, Mid-Cap, Small-Cap).
+- This requires a system to categorize each fund scheme based on its name or an external data source.
+
+  3.6. User Management
+
+- Secure user registration and login using Firebase Authentication.
+- Each user's data will be stored securely and will only be accessible to them.
 
 4. High-Level Architecture & Data Flow
 
@@ -93,10 +98,8 @@ As requested, the architecture will be simplified to keep all business logic wit
 
 The data flow will work as follows: The Next.js frontend will send the user's uploaded PDF directly to a dedicated API route. This route will be responsible for the entire processing pipeline—parsing the document, performing calculations, and storing the results in Firestore.
 
-*(Note: For a large-scale application, this approach might lead to longer server response times for large PDFs. A more advanced pattern using pre-signed URLs to upload directly to a storage provider could be considered later for optimization.)*
+_(Note: For a large-scale application, this approach might lead to longer server response times for large PDFs. A more advanced pattern using pre-signed URLs to upload directly to a storage provider could be considered later for optimization.)_
 
 PlantUML Sequence Diagram: PDF Upload & Processing (In-App Backend)
 
 Here is the updated sequence diagram illustrating the new data flow.
-
-

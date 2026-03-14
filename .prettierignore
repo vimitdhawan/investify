@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Environment files
+.env*
+
+# Firebase
+firebase-data/
+.firebase/
+firebase-debug.log
+
+# Generated files
+*.min.js
+*.min.css
+coverage/
+*.log
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/settings.json
+
+# Public assets that might have vendor code
+public/vendor/

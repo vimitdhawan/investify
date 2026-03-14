@@ -1,24 +1,26 @@
+import xirr from 'xirr';
+
+import { getTransactionsByScheme } from '@/features/transactions/repository';
 import {
-  TransactionView,
+  type AggregateTransaction,
+  type Transaction,
+  TransactionType,
+  type TransactionView,
   investmentTypes,
   withdrawTypes,
-  Transaction,
-  TransactionType,
-  AggregateTransaction,
 } from '@/features/transactions/type';
-import { getTransactionsByScheme } from '@/features/transactions/repository';
-import { formatDateToYYYYMMDD } from '@/lib/utils/date';
-import xirr from 'xirr';
+
 import { logger } from '@/lib/logger';
+import { formatDateToYYYYMMDD } from '@/lib/utils/date';
 
 export async function getTransactionViews(
   userId: string,
   schemeId: string
 ): Promise<TransactionView[]> {
   const transactions = await getTransactionsBySchemeId(userId, schemeId);
-  let transactionViews: TransactionView[] = [];
+  const transactionViews: TransactionView[] = [];
   for (const t of transactions) {
-    let transactionView: TransactionView = {
+    const transactionView: TransactionView = {
       id: t.id,
       date: formatDateToYYYYMMDD(t.date),
       schemeId: t.schemeId,
@@ -39,9 +41,7 @@ export async function getTransactionViews(
     transactionViews.push(transactionView);
   }
 
-  return transactionViews.sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
+  return transactionViews.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
 export async function getTransactionsBySchemeId(
@@ -51,22 +51,13 @@ export async function getTransactionsBySchemeId(
   return getTransactionsByScheme(userId, schemeId);
 }
 
-export function filterTransactionsByDate(
-  transactions: Transaction[],
-  date: Date
-): Transaction[] {
+export function filterTransactionsByDate(transactions: Transaction[], date: Date): Transaction[] {
   return transactions.filter((t) => t.date <= date);
 }
 
-export function exludeReverseTransactions(
-  transactions: Transaction[]
-): Transaction[] {
-  const reversals = transactions.filter(
-    (tx) => tx.type === TransactionType.REVERSAL
-  );
-  const otherTxs = transactions.filter(
-    (tx) => tx.type !== TransactionType.REVERSAL
-  );
+export function exludeReverseTransactions(transactions: Transaction[]): Transaction[] {
+  const reversals = transactions.filter((tx) => tx.type === TransactionType.REVERSAL);
+  const otherTxs = transactions.filter((tx) => tx.type !== TransactionType.REVERSAL);
 
   if (reversals.length === 0) {
     return transactions; // No reversals, no change needed
@@ -150,10 +141,7 @@ export function calculateXIRR(
   const cashFlows = buildCashFlows(transactions, marketValue, valuationDate);
 
   if (!isValidForXirr(cashFlows)) {
-    logger.debug(
-      { cashFlowCount: cashFlows.length },
-      'XIRR skipped: insufficient valid cashflows'
-    );
+    logger.debug({ cashFlowCount: cashFlows.length }, 'XIRR skipped: insufficient valid cashflows');
     return null;
   }
 
@@ -172,9 +160,7 @@ export function calculateXIRR(
   }
 }
 
-export function aggregateTransactions(
-  transactions: Transaction[]
-): AggregateTransaction {
+export function aggregateTransactions(transactions: Transaction[]): AggregateTransaction {
   let unitsHeld = 0;
   let totalCost = 0;
   let realizedGainLoss = 0;
@@ -182,7 +168,7 @@ export function aggregateTransactions(
   let sttTax = 0;
   let capitalGainTax = 0;
   //TODO: update logic for closed schemes
-  let withdrawAmount: number = transactions // Declared withdrawAmount
+  const withdrawAmount: number = transactions // Declared withdrawAmount
     .filter((tx) => withdrawTypes.includes(tx.type))
     .reduce((sum, tx) => sum + tx.amount, 0); // Assuming tx.amount is correct for withdrawal
   const purchases = transactions

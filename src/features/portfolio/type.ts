@@ -1,6 +1,3 @@
-import { MutualFundView } from '@/features/fund-houses/type';
-import { Scheme } from '@/features/schemes/type';
-
 export interface PortfolioSummary {
   investedValue: number;
   marketValue: number;
@@ -9,19 +6,6 @@ export interface PortfolioSummary {
   realizedGainLoss: number;
   xirrGainLoss?: number;
   date: string;
-}
-
-interface InvestorView {
-  address: string;
-  email: string;
-  mobile: string;
-  name: string;
-  pan: string;
-}
-
-interface StatementPeriodView {
-  from: string;
-  to: string;
 }
 
 export interface StatementPeriod {

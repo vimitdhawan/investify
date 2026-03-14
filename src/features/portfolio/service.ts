@@ -1,29 +1,16 @@
 // features/portfolio/portfolio.repository.ts
-
-import { getPortfolio } from '@/features/portfolio/repository';
-
-import { PortfolioSummary } from '@/features/portfolio/type';
+import type { PortfolioSummary } from '@/features/portfolio/type';
 import { getSchemes, getSchemesByDate } from '@/features/schemes/service';
-import {
-  calculateXIRR,
-  getTransactionsBySchemeId,
-  exludeReverseTransactions,
-  filterTransactionsByDate,
-} from '@/features/transactions/service';
-import { Transaction } from '@/features/transactions/type';
-import { formatDateToYYYYMMDD } from '@/lib/utils/date';
-import { logger } from '@/lib/logger';
+import { calculateXIRR } from '@/features/transactions/service';
 
-export async function getLatestPortfolio(
-  userId: string
-): Promise<PortfolioSummary | undefined> {
+import { formatDateToYYYYMMDD } from '@/lib/utils/date';
+
+export async function getLatestPortfolio(userId: string): Promise<PortfolioSummary | undefined> {
   const schemes = await getSchemes(userId);
   if (!schemes) {
     return;
   }
-  const date =
-    schemes.find((s) => s.latestNavDate <= new Date())?.latestNavDate ??
-    new Date();
+  const date = schemes.find((s) => s.latestNavDate <= new Date())?.latestNavDate ?? new Date();
 
   const totalInvested = schemes.reduce(
     (acc, s) => acc + (s.units! > 0 ? (s.investedAmount ?? 0) : 0),
@@ -37,16 +24,10 @@ export async function getLatestPortfolio(
     (acc, s) => acc + (s.units! > 0 ? (s.absoluteGainLoss ?? 0) : 0),
     0
   );
-  const totalRealizedGain = schemes.reduce(
-    (acc, s) => acc + (s.realizedGainLoss ?? 0),
-    0
-  );
-  const totalGainLossPercentage =
-    totalInvested > 0 ? (totalAbsoluteGain / totalInvested) * 100 : 0;
+  const totalRealizedGain = schemes.reduce((acc, s) => acc + (s.realizedGainLoss ?? 0), 0);
+  const totalGainLossPercentage = totalInvested > 0 ? (totalAbsoluteGain / totalInvested) * 100 : 0;
 
-  const transactions = await Promise.all(
-    schemes.map((scheme) => scheme.transactions).flat()
-  );
+  const transactions = await Promise.all(schemes.map((scheme) => scheme.transactions).flat());
 
   const xirrGainLoss = calculateXIRR(transactions, totalMarketValue, date) ?? 0;
   const portfolioSummary: PortfolioSummary = {
@@ -78,12 +59,8 @@ export async function getPortfolioSummaryByDate(
     (acc, s) => acc + (s.units! > 0 ? (s.absoluteGainLoss ?? 0) : 0),
     0
   );
-  const totalRealizedGain = schemes.reduce(
-    (acc, s) => acc + (s.realizedGainLoss ?? 0),
-    0
-  );
-  const totalGainLossPercentage =
-    totalInvested > 0 ? (totalAbsoluteGain / totalInvested) * 100 : 0;
+  const totalRealizedGain = schemes.reduce((acc, s) => acc + (s.realizedGainLoss ?? 0), 0);
+  const totalGainLossPercentage = totalInvested > 0 ? (totalAbsoluteGain / totalInvested) * 100 : 0;
 
   const portfolioSummary: PortfolioSummary = {
     investedValue: totalInvested,

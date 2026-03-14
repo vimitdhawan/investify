@@ -1,10 +1,13 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { MutualFundView } from '@/features/fund-houses/type';
-import { FundHouseCard } from './fund-house-card';
+import React, { useMemo, useState } from 'react';
+
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+
+import type { MutualFundView } from '@/features/fund-houses/type';
+
+import { FundHouseCard } from './fund-house-card';
 
 interface FundHousesClientProps {
   mutualFunds: MutualFundView[];

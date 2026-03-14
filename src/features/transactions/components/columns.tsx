@@ -1,6 +1,7 @@
-import { ColumnDef } from '@tanstack/react-table';
-import { Badge } from '@/components/ui/badge';
-import { TransactionView } from '@/features/transactions/type';
+import type { ColumnDef } from '@tanstack/react-table';
+
+import type { TransactionView } from '@/features/transactions/type';
+
 import { formatCurrency } from '@/lib/utils';
 
 export const columns: ColumnDef<TransactionView>[] = [
@@ -23,9 +24,7 @@ export const columns: ColumnDef<TransactionView>[] = [
   {
     accessorKey: 'actualInvestment',
     header: 'Actual Investment',
-    cell: ({ row }) => (
-      <div>{formatCurrency(row.original.actualInvestment)}</div>
-    ),
+    cell: ({ row }) => <div>{formatCurrency(row.original.actualInvestment)}</div>,
   },
   {
     accessorKey: 'stampDuty',

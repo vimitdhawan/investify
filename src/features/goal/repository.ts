@@ -1,27 +1,18 @@
-import { firestore } from '@/lib/firebase';
-import { Goal } from './type';
 import { getDocument, getSubCollection } from '@/lib/db';
+import { firestore } from '@/lib/firebase';
+
+import type { Goal } from './type';
 
 export async function getGoals(userId: string): Promise<Goal[]> {
   return getSubCollection<Goal>('users', userId, 'goals');
 }
 
-export async function getGoal(
-  userId: string,
-  goalId: string
-): Promise<Goal | null> {
+export async function getGoal(userId: string, goalId: string): Promise<Goal | null> {
   return getDocument<Goal>(`users/${userId}/goals`, goalId);
 }
 
-export async function createGoal(
-  userId: string,
-  goal: Omit<Goal, 'id'>
-): Promise<string> {
-  const docRef = await firestore
-    .collection('users')
-    .doc(userId)
-    .collection('goals')
-    .add(goal);
+export async function createGoal(userId: string, goal: Omit<Goal, 'id'>): Promise<string> {
+  const docRef = await firestore.collection('users').doc(userId).collection('goals').add(goal);
 
   // Update assigned schemes with the new goalId
   if (goal.schemeIds && goal.schemeIds.length > 0) {
@@ -45,11 +36,7 @@ export async function updateGoal(
   goalId: string,
   updates: Partial<Goal>
 ): Promise<void> {
-  const goalRef = firestore
-    .collection('users')
-    .doc(userId)
-    .collection('goals')
-    .doc(goalId);
+  const goalRef = firestore.collection('users').doc(userId).collection('goals').doc(goalId);
 
   // If schemeIds are updated, we need to handle unassigning old ones and assigning new ones
   if (updates.schemeIds) {
@@ -91,10 +78,7 @@ export async function updateGoal(
   await goalRef.update(updates);
 }
 
-export async function deleteGoal(
-  userId: string,
-  goalId: string
-): Promise<void> {
+export async function deleteGoal(userId: string, goalId: string): Promise<void> {
   const goal = await getGoal(userId, goalId);
   if (!goal) return;
 
@@ -113,11 +97,7 @@ export async function deleteGoal(
   }
 
   // Delete goal document
-  const goalRef = firestore
-    .collection('users')
-    .doc(userId)
-    .collection('goals')
-    .doc(goalId);
+  const goalRef = firestore.collection('users').doc(userId).collection('goals').doc(goalId);
   batch.delete(goalRef);
 
   await batch.commit();

@@ -1,5 +1,7 @@
 import Link from 'next/link';
-import { Target, Calendar } from 'lucide-react';
+
+import { Calendar, Target } from 'lucide-react';
+
 import {
   Card,
   CardContent,
@@ -9,8 +11,10 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { GoalView } from '../type';
+
 import { formatDateToYYYYMMDD } from '@/lib/utils/date';
+
+import type { GoalView } from '../type';
 
 export function GoalCard({ goal }: { goal: GoalView }) {
   return (
@@ -22,8 +26,7 @@ export function GoalCard({ goal }: { goal: GoalView }) {
             <Target className="h-5 w-5 text-muted-foreground" />
           </div>
           <CardDescription>
-            Target: ₹{goal.targetAmount.toLocaleString()} by{' '}
-            {formatDateToYYYYMMDD(goal.targetDate)}
+            Target: ₹{goal.targetAmount.toLocaleString()} by {formatDateToYYYYMMDD(goal.targetDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -31,18 +34,14 @@ export function GoalCard({ goal }: { goal: GoalView }) {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Progress</span>
-                <span className="font-medium">
-                  {goal.progressPercentage.toFixed(1)}%
-                </span>
+                <span className="font-medium">{goal.progressPercentage.toFixed(1)}%</span>
               </div>
               <Progress value={goal.progressPercentage} className="h-2" />
             </div>
             <div className="grid grid-cols-2 gap-4 pt-2 text-sm">
               <div>
                 <p className="text-muted-foreground">Current Value</p>
-                <p className="font-bold text-primary">
-                  ₹{goal.currentAmount.toLocaleString()}
-                </p>
+                <p className="font-bold text-primary">₹{goal.currentAmount.toLocaleString()}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Remaining</p>
@@ -57,10 +56,7 @@ export function GoalCard({ goal }: { goal: GoalView }) {
           <div className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             <span>
-              Projected:{' '}
-              {goal.projectedDate
-                ? formatDateToYYYYMMDD(goal.projectedDate)
-                : 'N/A'}
+              Projected: {goal.projectedDate ? formatDateToYYYYMMDD(goal.projectedDate) : 'N/A'}
             </span>
           </div>
         </CardFooter>

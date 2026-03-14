@@ -1,12 +1,11 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import {
-  SignupActionState,
-  signupFormSchema,
-} from '@/features/auth/schema/signup';
-import { createSession } from '@/lib/session';
+
+import { type SignupActionState, signupFormSchema } from '@/features/auth/schema/signup';
+
 import { auth } from '@/lib/firebase';
+import { createSession } from '@/lib/session';
 
 export async function handleSignup(
   _prev: SignupActionState,

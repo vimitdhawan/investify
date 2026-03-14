@@ -1,17 +1,16 @@
 'use client';
-import { useActionState, useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
-import { handleLogin } from '@/features/auth/actions/login';
-import { useRouter } from 'next/navigation';
-import {
-  LoginActionState,
-  loginFormSchema,
-  LoginFormData,
-} from '@/features/auth/schema/login';
-import Link from 'next/link';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
+
+import { useActionState, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+import { Loader2 } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -21,14 +20,26 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
+
+import { handleLogin } from '@/features/auth/actions/login';
+import {
+  type LoginActionState,
+  type LoginFormData,
+  loginFormSchema,
+} from '@/features/auth/schema/login';
 
 export function LoginForm() {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(handleLogin, {
     errors: {},
   } as LoginActionState);
-  const [callbackUrl, setCallbackUrl] = useState('/dashboard');
+  const [callbackUrl] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('callbackUrl') || '/dashboard';
+    }
+    return '/dashboard';
+  });
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginFormSchema),
@@ -36,14 +47,7 @@ export function LoginForm() {
       email: '',
       password: '',
     },
-    mode: 'onBlur',
   });
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const value = params.get('callbackUrl') || '/dashboard';
-    setCallbackUrl(value);
-  }, []);
 
   useEffect(() => {
     if (!state) return;

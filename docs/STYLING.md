@@ -33,16 +33,19 @@ import { Button } from '@/components/ui/button';
 When you need to create a new component that is not available in `shadcn/ui` or is a custom composition for our application:
 
 1.  **Location**: Place the new component in an appropriate subdirectory within `/src/components`.
-    -   If it's a globally reusable component, it can live in `/src/components`.
-    -   If it's specific to a feature, place it in a feature-specific folder like `/src/components/dashboard/`.
+    - If it's a globally reusable component, it can live in `/src/components`.
+    - If it's specific to a feature, place it in a feature-specific folder like `/src/components/dashboard/`.
 2.  **Build with `cva`**: For components with multiple visual variants (e.g., different colors, sizes), use `class-variance-authority (cva)` to manage the class names. This is the same pattern `shadcn/ui` uses and ensures consistency.
 
 ### Example: Creating a new `StatusBadge` component
 
 ```tsx
 // src/components/ui/status-badge.tsx
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '@/lib/utils'; // Your utility for merging class names
+import { type VariantProps, cva } from 'class-variance-authority';
+
+import { cn } from '@/lib/utils';
+
+// Your utility for merging class names
 
 const badgeVariants = cva(
   'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors',
@@ -62,13 +65,10 @@ const badgeVariants = cva(
 );
 
 export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {}
 
 function StatusBadge({ className, variant, ...props }: BadgeProps) {
-  return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
-  );
+  return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
 }
 
 export { StatusBadge, badgeVariants };
