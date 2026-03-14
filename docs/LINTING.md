@@ -46,8 +46,8 @@ For the best developer experience, configure your editor to integrate with ESLin
 ### VS Code Setup
 
 1.  **Install Extensions**:
-    -   [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
-    -   [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+    - [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
+    - [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
 
 2.  **Configure Format on Save**: Open your VS Code `settings.json` file and add the following lines. This will automatically format your files with Prettier every time you save.
 

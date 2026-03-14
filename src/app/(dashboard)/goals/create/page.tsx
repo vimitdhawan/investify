@@ -1,6 +1,7 @@
-import { getSessionUserId } from '@/lib/session';
-import { getActiveSchemes } from '@/features/schemes/service';
 import { GoalForm } from '@/features/goal/components/goal-form';
+import { getActiveSchemes } from '@/features/schemes/service';
+
+import { getSessionUserId } from '@/lib/session';
 
 export default async function CreateGoalPage() {
   const userId = await getSessionUserId();

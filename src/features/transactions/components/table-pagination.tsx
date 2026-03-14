@@ -1,5 +1,13 @@
 // components/TablePagination.tsx
-import { Table } from '@tanstack/react-table';
+import type { Table } from '@tanstack/react-table';
+
+import {
+  IconChevronLeft,
+  IconChevronRight,
+  IconChevronsLeft,
+  IconChevronsRight,
+} from '@tabler/icons-react';
+
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -8,12 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  IconChevronLeft,
-  IconChevronRight,
-  IconChevronsLeft,
-  IconChevronsRight,
-} from '@tabler/icons-react';
 
 interface TablePaginationProps {
   table: Table<any>;
@@ -45,8 +47,7 @@ export function TablePagination({ table }: TablePaginationProps) {
           </Select>
         </div>
         <div className="flex ml-auto w-fit items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1} of{' '}
-          {table.getPageCount()}
+          Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
         </div>
         <div className="flex items-center gap-2 lg:ml-0">
           <Button

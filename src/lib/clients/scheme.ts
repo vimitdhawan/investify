@@ -1,5 +1,8 @@
+import type { Scheme } from '@/features/schemes/type';
+
 import { firestore } from '@/lib/firebase';
-import { Scheme } from '@/features/schemes/type'; // Assuming Scheme type is defined here or imported
+
+// Assuming Scheme type is defined here or imported
 
 export interface SchemeData {
   amc: string;
@@ -47,10 +50,7 @@ export async function getAllSchemeData(): Promise<SchemeData[]> {
 
 export async function getSchemesByUserId(userId: string): Promise<Scheme[]> {
   try {
-    const schemesRef = firestore
-      .collection('users')
-      .doc(userId)
-      .collection('schemes');
+    const schemesRef = firestore.collection('users').doc(userId).collection('schemes');
     const snapshot = await schemesRef.get();
 
     if (snapshot.empty) {

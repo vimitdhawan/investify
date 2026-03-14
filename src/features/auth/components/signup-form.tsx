@@ -1,16 +1,15 @@
 'use client';
-import { useActionState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
-import Link from 'next/link';
-import { handleSignup } from '@/features/auth/actions/signup';
-import {
-  SignupActionState,
-  signupFormSchema,
-  SignupFormData,
-} from '@/features/auth/schema/signup';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
+
+import { useActionState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+
+import Link from 'next/link';
+
+import { Loader2 } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -20,7 +19,13 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
+
+import { handleSignup } from '@/features/auth/actions/signup';
+import {
+  type SignupActionState,
+  type SignupFormData,
+  signupFormSchema,
+} from '@/features/auth/schema/signup';
 
 export function SignupForm() {
   const [state, formAction, isPending] = useActionState(handleSignup, {

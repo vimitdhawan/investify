@@ -1,11 +1,16 @@
 import { Suspense } from 'react';
+
 import Link from 'next/link';
+
 import { Plus } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
-import { getSessionUserId } from '@/lib/session';
-import { fetchGoals } from '@/features/goal/service';
-import { GoalList } from '@/features/goal/components/goal-list';
 import { Skeleton } from '@/components/ui/skeleton';
+
+import { GoalList } from '@/features/goal/components/goal-list';
+import { fetchGoals } from '@/features/goal/service';
+
+import { getSessionUserId } from '@/lib/session';
 
 export default async function GoalsPage() {
   const userId = await getSessionUserId();
@@ -19,9 +24,7 @@ export default async function GoalsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Goals</h1>
-          <p className="text-muted-foreground">
-            Track your financial objectives and progress.
-          </p>
+          <p className="text-muted-foreground">Track your financial objectives and progress.</p>
         </div>
         <Button asChild>
           <Link href="/goals/create">

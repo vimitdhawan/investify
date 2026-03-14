@@ -1,10 +1,14 @@
-import { DataTable } from '@/features/transactions/components/data-table';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { IconArrowLeft } from '@tabler/icons-react';
-import { getSessionUserId } from '@/lib/session';
 import { redirect } from 'next/navigation';
+
+import { IconArrowLeft } from '@tabler/icons-react';
+
+import { Button } from '@/components/ui/button';
+
+import { DataTable } from '@/features/transactions/components/data-table';
 import { getTransactionViews } from '@/features/transactions/service';
+
+import { getSessionUserId } from '@/lib/session';
 
 export default async function SchemeTransactionsPage({
   params,

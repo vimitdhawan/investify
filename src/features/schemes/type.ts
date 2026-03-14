@@ -1,4 +1,4 @@
-import { Transaction } from '@/features/transactions/type';
+import type { Transaction } from '@/features/transactions/type';
 
 export enum SchemeType {
   Equity = 'EQUITY',
@@ -65,11 +65,7 @@ export interface Scheme {
 
 export function generateSchemeId(mutualFundId: string, scheme: Scheme) {
   // Sanitize the inputs to create a consistent and unique ID
-  const sanitizedIsin = (scheme.isin ?? '')
-    .replace(/[^a-zA-Z0-9]/g, '')
-    .toLowerCase();
-  const sanitizedAmfi = (scheme.amfi ?? '')
-    .replace(/[^a-zA-Z0-9]/g, '')
-    .toLowerCase();
+  const sanitizedIsin = (scheme.isin ?? '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  const sanitizedAmfi = (scheme.amfi ?? '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
   return `${mutualFundId}-${sanitizedIsin}-${sanitizedAmfi}`;
 }

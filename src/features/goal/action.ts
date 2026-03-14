@@ -2,13 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+
 import { getSessionUserId } from '@/lib/session';
-import {
-  createGoal,
-  updateGoal,
-  deleteGoal as deleteGoalFromRepo,
-} from './repository';
-import { GoalActionState, goalFormSchema } from './schema';
+
+import { createGoal, deleteGoal as deleteGoalFromRepo, updateGoal } from './repository';
+import { type GoalActionState, goalFormSchema } from './schema';
 
 export async function handleCreateGoal(
   _prev: GoalActionState,
@@ -40,8 +38,7 @@ export async function handleCreateGoal(
       currentAmount: 0, // Will be calculated by service
     });
   } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Failed to create goal';
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create goal';
     return { errorMessage };
   }
 
@@ -77,8 +74,7 @@ export async function handleUpdateGoal(
   try {
     await updateGoal(userId, goalId, validationResult.data);
   } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Failed to update goal';
+    const errorMessage = error instanceof Error ? error.message : 'Failed to update goal';
     return { errorMessage };
   }
 

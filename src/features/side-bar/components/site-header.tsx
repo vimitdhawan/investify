@@ -1,10 +1,11 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
+
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
-import { usePathname } from 'next/navigation';
 import { data } from '@/features/side-bar/type';
 
 export function SiteHeader() {
@@ -17,17 +18,10 @@ export function SiteHeader() {
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
           <SidebarTrigger className="-ml-1" />
-          <Separator
-            orientation="vertical"
-            className="mx-2 data-[orientation=vertical]:h-5"
-          />
+          <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-5" />
           <div className="flex flex-col">
-            <h1 className="text-lg font-medium leading-tight sm:text-xl">
-              {matchedMenu?.title}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {matchedMenu?.description}
-            </p>
+            <h1 className="text-lg font-medium leading-tight sm:text-xl">{matchedMenu?.title}</h1>
+            <p className="text-sm text-muted-foreground">{matchedMenu?.description}</p>
           </div>
         </div>
         <ThemeToggle />

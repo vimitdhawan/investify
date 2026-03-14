@@ -1,5 +1,6 @@
-import Image from "next/image";
-import { CheckCircle } from "lucide-react";
+import Image from 'next/image';
+
+import { CheckCircle } from 'lucide-react';
 
 export default function About() {
   return (
@@ -14,13 +15,15 @@ export default function About() {
               src="/placeholder-about.png" // Replace with your actual image path
               alt="About SaarthiFlow"
               fill
-              style={{ objectFit: "cover" }}
+              style={{ objectFit: 'cover' }}
               className="rounded-lg shadow-lg"
             />
           </div>
           <div className="md:w-1/2 text-left md:text-lg space-y-4">
             <p className="text-muted-foreground">
-              SaarthiFlow empowers businesses by simplifying bookings and streamlining operations. Our mission is to eliminate operational complexities, allowing businesses to focus on growth.
+              SaarthiFlow empowers businesses by simplifying bookings and streamlining operations.
+              Our mission is to eliminate operational complexities, allowing businesses to focus on
+              growth.
             </p>
             <p className="text-muted-foreground">
               With our intuitive tools and automation, we help you:

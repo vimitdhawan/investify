@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { SchemeView } from '@/features/schemes/type';
-import { SchemeCard } from '@/features/schemes/components/scheme-card';
+import React, { useMemo, useState } from 'react';
+
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -10,8 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+
+import { SchemeCard } from '@/features/schemes/components/scheme-card';
+import type { SchemeView } from '@/features/schemes/type';
 
 export function SchemeList({
   schemes,
@@ -37,8 +39,7 @@ export function SchemeList({
 
   const filteredSchemes = useMemo(() => {
     return schemes.filter((scheme) => {
-      const folioMatch =
-        selectedFolio === 'All' || scheme.folioNumber === selectedFolio;
+      const folioMatch = selectedFolio === 'All' || scheme.folioNumber === selectedFolio;
       const statusMatch = showClosedSchemes
         ? (scheme.marketValue ?? 0) === 0 // Show only closed schemes
         : (scheme.marketValue ?? 0) > 0; // Show only active schemes
@@ -58,10 +59,7 @@ export function SchemeList({
             <SelectContent>
               <SelectItem value="All">All Folios</SelectItem>
               {folios.map(({ folio, amc }) => (
-                <SelectItem
-                  key={folio}
-                  value={folio}
-                >{`${amc} - ${folio}`}</SelectItem>
+                <SelectItem key={folio} value={folio}>{`${amc} - ${folio}`}</SelectItem>
               ))}
             </SelectContent>
           </Select>

@@ -1,12 +1,9 @@
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+
 import { AppSidebar } from '@/features/side-bar/components/app-sidebar';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { SiteHeader } from '@/features/side-bar/components/site-header';
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <main className="flex-grow">
       <SidebarProvider

@@ -1,23 +1,23 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const testimonials = [
   {
-    name: "Jane Doe",
-    title: "CEO, Local Cafe",
+    name: 'Jane Doe',
+    title: 'CEO, Local Cafe',
     quote:
       "SaarthiFlow transformed our booking system. It's intuitive, efficient, and our customers love the seamless experience.",
   },
   {
-    name: "John Smith",
-    title: "Owner, Fitness Studio",
+    name: 'John Smith',
+    title: 'Owner, Fitness Studio',
     quote:
-      "Inventory management used to be a nightmare. With SaarthiFlow, we track everything in real-time and never run out of stock.",
+      'Inventory management used to be a nightmare. With SaarthiFlow, we track everything in real-time and never run out of stock.',
   },
   {
-    name: "Emily White",
-    title: "Manager, Beauty Salon",
+    name: 'Emily White',
+    title: 'Manager, Beauty Salon',
     quote:
-      "The analytics dashboard is a game-changer. We can now make data-driven decisions that truly impact our revenue.",
+      'The analytics dashboard is a game-changer. We can now make data-driven decisions that truly impact our revenue.',
   },
 ];
 
@@ -36,14 +36,10 @@ export default function Testimonials() {
             <Card key={index} className="flex flex-col justify-between">
               <CardHeader>
                 <CardTitle>{testimonial.name}</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {testimonial.title}
-                </p>
+                <p className="text-sm text-muted-foreground">{testimonial.title}</p>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground italic">
-                  {testimonial.quote}
-                </p>
+                <p className="text-muted-foreground italic">{testimonial.quote}</p>
               </CardContent>
             </Card>
           ))}

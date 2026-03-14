@@ -32,11 +32,7 @@ interface SchemeMeta {
 
 let cachedSchemeMap: Map<string, number> | null = null;
 
-export async function fetchWithRetry<T>(
-  path: string,
-  retries = 2,
-  timeoutMs = 10000
-): Promise<T> {
+export async function fetchWithRetry<T>(path: string, retries = 2, timeoutMs = 10000): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const url = `${config.mfApiBaseUrl}${path}`;
@@ -62,9 +58,7 @@ export async function fetchWithRetry<T>(
   }
 }
 
-export async function getLatestNavBySchemeId(
-  schemeCode: string
-): Promise<SchemeNav | undefined> {
+export async function getLatestNavBySchemeId(schemeCode: string): Promise<SchemeNav | undefined> {
   const res = await fetchWithRetry<Scheme>(`/mf/${schemeCode}/latest`);
   if (!res.data?.[0]) {
     logger.error({ schemeCode }, 'empty response from latest nav api');
@@ -73,9 +67,7 @@ export async function getLatestNavBySchemeId(
   return res.data[0];
 }
 
-export async function getHistoricalNavBySchemeId(
-  schemeCode: string
-): Promise<SchemeNav[]> {
+export async function getHistoricalNavBySchemeId(schemeCode: string): Promise<SchemeNav[]> {
   const res = await fetchWithRetry<Scheme>(`/mf/${schemeCode}`);
   if (!res.data) {
     logger.error({ schemeCode }, 'empty response from historical nav api');
@@ -84,9 +76,7 @@ export async function getHistoricalNavBySchemeId(
   return res.data;
 }
 
-export async function getAmficCodeByIsin(
-  isin: string
-): Promise<number | undefined> {
+export async function getAmficCodeByIsin(isin: string): Promise<number | undefined> {
   if (!cachedSchemeMap) {
     const schemes = await fetchWithRetry<SchemeListItem[]>(`/mf`);
     cachedSchemeMap = new Map();

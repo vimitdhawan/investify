@@ -1,15 +1,11 @@
 import { IconTrendingDown, IconTrendingUp } from '@tabler/icons-react';
+
 import { Badge } from '@/components/ui/badge';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+import type { MutualFundView } from '@/features/fund-houses/type';
+
 import { cn } from '@/lib/utils';
-import { MutualFundView } from '@/features/fund-houses/type';
 
 // FinancialDetail component (copied from scheme-card.tsx)
 function FinancialDetail({
@@ -40,13 +36,11 @@ export function FundHouseCard({ mutualFund }: FundHouseCardProps) {
   const gainLossColorClass = isGain ? 'text-green-500' : 'text-red-500';
   const xirrGainLossClass =
     (mutualFund?.xirrGainLoss ?? 0) >= 0 ? 'text-green-500' : 'text-red-500';
-  const Icon = isGain ? IconTrendingUp : IconTrendingDown;
+  const _Icon = isGain ? IconTrendingUp : IconTrendingDown;
 
   // Realized Gain/Loss specific color class
   const isRealizedGain = (mutualFund.realizedGainLoss ?? 0) >= 0;
-  const realizedGainLossColorClass = isRealizedGain
-    ? 'text-green-500'
-    : 'text-red-500';
+  const realizedGainLossColorClass = isRealizedGain ? 'text-green-500' : 'text-red-500';
 
   return (
     <Card className="@container/card">

@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { X, Check, ChevronDown } from "lucide-react";
+import * as React from 'react';
 
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Check, ChevronDown, X } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Command,
   CommandEmpty,
@@ -14,12 +14,10 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+} from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
+import { cn } from '@/lib/utils';
 
 export type OptionType = {
   label: string;
@@ -38,11 +36,11 @@ export function MultiSelect({
   options,
   selected,
   onSelectedChange,
-  placeholder = "Select options",
+  placeholder = 'Select options',
   className,
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
-  const [inputValue, setInputValue] = React.useState("");
+  const [inputValue, setInputValue] = React.useState('');
 
   const handleSelect = (value: string) => {
     const isAlreadySelected = selected.includes(value);
@@ -65,9 +63,7 @@ export function MultiSelect({
     onSelectedChange([]);
   };
 
-  const selectedOptions = options.filter((option) =>
-    selected.includes(option.value)
-  );
+  const selectedOptions = options.filter((option) => selected.includes(option.value));
 
   return (
     <div className="flex flex-col gap-3">
@@ -77,11 +73,11 @@ export function MultiSelect({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className={cn("w-full justify-between h-10", className)}
+            className={cn('w-full justify-between h-10', className)}
           >
             <span className="text-muted-foreground truncate">
               {selected.length > 0
-                ? `${selected.length} item${selected.length > 1 ? "s" : ""} selected`
+                ? `${selected.length} item${selected.length > 1 ? 's' : ''} selected`
                 : placeholder}
             </span>
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -102,14 +98,12 @@ export function MultiSelect({
                     key={option.value}
                     onSelect={() => {
                       handleSelect(option.value);
-                      setInputValue("");
+                      setInputValue('');
                     }}
                     className="flex justify-between items-center"
                   >
                     {option.label}
-                    {selected.includes(option.value) && (
-                      <Check className="h-4 w-4" />
-                    )}
+                    {selected.includes(option.value) && <Check className="h-4 w-4" />}
                   </CommandItem>
                 ))}
               </CommandGroup>

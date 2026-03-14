@@ -6,16 +6,16 @@ Quality and correctness are critical for the Investify application. This documen
 
 We employ a multi-layered testing strategy to ensure the application is reliable, correct, and bug-free.
 
--   **Unit Tests**: Form the foundation of our testing pyramid. They are fast, isolated, and verify the smallest parts of our application (e.g., a single React component or a utility function).
--   **Integration Tests**: Verify the interaction between several units. For example, testing a page that fetches data from the repository and displays it.
--   **End-to-End (E2E) Tests**: Simulate real user journeys through the entire application in a browser, verifying critical user flows from start to finish.
+- **Unit Tests**: Form the foundation of our testing pyramid. They are fast, isolated, and verify the smallest parts of our application (e.g., a single React component or a utility function).
+- **Integration Tests**: Verify the interaction between several units. For example, testing a page that fetches data from the repository and displays it.
+- **End-to-End (E2E) Tests**: Simulate real user journeys through the entire application in a browser, verifying critical user flows from start to finish.
 
 ## 2. Tools
 
--   **[Jest](https://jestjs.io/)**: Our primary testing framework for running tests.
--   **[React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)**: For testing React components. It encourages writing tests that resemble how users interact with the application.
--   **[msw (Mock Service Worker)](https://mswjs.io/)**: For mocking API requests and Firebase interactions during testing.
--   **[Playwright](https://playwright.dev/)** (Future): For end-to-end tests.
+- **[Jest](https://jestjs.io/)**: Our primary testing framework for running tests.
+- **[React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)**: For testing React components. It encourages writing tests that resemble how users interact with the application.
+- **[msw (Mock Service Worker)](https://mswjs.io/)**: For mocking API requests and Firebase interactions during testing.
+- **[Playwright](https://playwright.dev/)** (Future): For end-to-end tests.
 
 ## 3. Unit Tests
 
@@ -40,9 +40,9 @@ Test files should be co-located with the source files they are testing, using th
 
 When testing a component, focus on what the user sees and interacts with, not on implementation details.
 
--   Use `render` from React Testing Library to render your component.
--   Use queries like `getByRole`, `getByText`, `getByLabelText` to find elements.
--   Use `@testing-library/user-event` to simulate user interactions like clicking buttons or typing in inputs.
+- Use `render` from React Testing Library to render your component.
+- Use queries like `getByRole`, `getByText`, `getByLabelText` to find elements.
+- Use `@testing-library/user-event` to simulate user interactions like clicking buttons or typing in inputs.
 
 **Example: Testing a simple counter button**
 
@@ -50,6 +50,7 @@ When testing a component, focus on what the user sees and interacts with, not on
 // src/components/counter.test.tsx
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
 import { Counter } from './counter';
 
 describe('Counter', () => {

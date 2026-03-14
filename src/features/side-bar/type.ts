@@ -1,17 +1,4 @@
-import {
-  LayoutDashboard,
-  FileText,
-  Calendar,
-  Settings,
-  Tag,
-  Award,
-  Package,
-  UserRound,
-  Building,
-  List,
-  Banknote,
-  Target,
-} from 'lucide-react';
+import { Building, LayoutDashboard, List, Settings, Target } from 'lucide-react';
 
 type SideMenuItem = {
   title: string;

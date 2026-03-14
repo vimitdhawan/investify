@@ -1,14 +1,14 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+
+import { Button } from '@/components/ui/button';
+
 import { PortfolioChart } from '@/features/portfolio/components/portfolio-chart';
 import { PortfolioOverviewCard } from '@/features/portfolio/components/portfolio-overview-card';
-import { Button } from '@/components/ui/button';
+import { getLatestPortfolio, getPortfolioSummaryByDate } from '@/features/portfolio/service';
+import type { PortfolioSummary } from '@/features/portfolio/type';
+
 import { getSessionUserId } from '@/lib/session';
-import {
-  getLatestPortfolio,
-  getPortfolioSummaryByDate,
-} from '@/features/portfolio/service';
-import { PortfolioSummary } from '@/features/portfolio/type';
 import { parseYYYYMMDDString } from '@/lib/utils/date';
 
 export default async function Page() {
@@ -21,12 +21,8 @@ export default async function Page() {
     return (
       <div className="flex flex-1 flex-col items-center justify-center rounded-lg border border-dashed shadow-sm h-full min-h-[400px]">
         <div className="flex flex-col items-center gap-2 text-center">
-          <h3 className="text-2xl font-bold tracking-tight">
-            No Portfolio Found
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            You have not uploaded a portfolio yet.
-          </p>
+          <h3 className="text-2xl font-bold tracking-tight">No Portfolio Found</h3>
+          <p className="text-sm text-muted-foreground">You have not uploaded a portfolio yet.</p>
           <Button asChild className="mt-4">
             <Link href="/settings">Upload Portfolio</Link>
           </Button>
@@ -39,10 +35,7 @@ export default async function Page() {
   const previouDayDate = new Date(latestPortfolioDate); // clone
   previouDayDate.setDate(previouDayDate.getDate() - 1);
 
-  const previousDayPortfolio = await getPortfolioSummaryByDate(
-    userId,
-    previouDayDate
-  );
+  const previousDayPortfolio = await getPortfolioSummaryByDate(userId, previouDayDate);
 
   const previousDayChange = previousDayPortfolio
     ? latestPortfolio.marketValue - previousDayPortfolio.marketValue
@@ -64,11 +57,7 @@ export default async function Page() {
   const yearlyPortfolios = await Promise.all(promises);
   const filterYearlyPortfolio = yearlyPortfolios
     .filter((a): a is PortfolioSummary => a !== null)
-    .sort(
-      (a, b) =>
-        parseYYYYMMDDString(a.date).getTime() -
-        parseYYYYMMDDString(b.date).getTime()
-    );
+    .sort((a, b) => parseYYYYMMDDString(a.date).getTime() - parseYYYYMMDDString(b.date).getTime());
   return (
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-2">

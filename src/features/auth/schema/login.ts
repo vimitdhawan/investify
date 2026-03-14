@@ -1,4 +1,5 @@
 import * as z from 'zod';
+
 import { PasswordInputValidation } from '@/features/auth/schema/pasword';
 
 export const loginFormSchema = z.object({

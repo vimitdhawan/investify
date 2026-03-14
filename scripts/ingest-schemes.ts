@@ -1,5 +1,7 @@
 // scripts/ingest-schemes.ts
-import { firestore, bucket } from '@/lib/firebase'; // Corrected import (removed fs and path)
+import { bucket, firestore } from '@/lib/firebase';
+
+// Corrected import (removed fs and path)
 
 // --- All scheme ingestion logic is now in this file ---
 
@@ -16,8 +18,6 @@ interface SchemeData {
   isinDivPayoutOrGrowth: string;
   isinDivReinvestment: string;
 }
-
-let cachedData: SchemeData[] | null = null;
 
 async function parseCSV(csvContent: string): Promise<SchemeData[]> {
   const lines = csvContent.split('\n');
@@ -63,10 +63,7 @@ async function readSchemeFile(): Promise<SchemeData[]> {
     const parsedData = await parseCSV(fileContent.toString('utf-8'));
     return parsedData;
   } catch (error) {
-    console.error(
-      'Error reading or parsing scheme data CSV from Firebase Storage:',
-      error
-    ); // Updated error message
+    console.error('Error reading or parsing scheme data CSV from Firebase Storage:', error); // Updated error message
     if ((error as any).code === 404) {
       console.error(`File '${fileName}' not found in the bucket.`); // More specific error
     }

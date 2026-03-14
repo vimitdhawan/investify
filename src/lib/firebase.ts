@@ -11,8 +11,7 @@ if (!global._firebaseAdminInstance) {
     if (isEmulator) {
       // 1. Manually set the host for Admin SDK if not already in system env
       if (process.env.FIREBASE_STORAGE_EMULATOR_HOST) {
-        process.env.STORAGE_EMULATOR_HOST =
-          process.env.FIREBASE_STORAGE_EMULATOR_HOST;
+        process.env.STORAGE_EMULATOR_HOST = process.env.FIREBASE_STORAGE_EMULATOR_HOST;
       }
       admin.initializeApp({
         projectId: process.env.FIREBASE_EMULATOR_PROJECT_ID,

@@ -1,14 +1,12 @@
 import { notFound } from 'next/navigation';
-import { getSessionUserId } from '@/lib/session';
+
+import { GoalForm } from '@/features/goal/components/goal-form';
 import { getGoal } from '@/features/goal/repository';
 import { getSchemes } from '@/features/schemes/service';
-import { GoalForm } from '@/features/goal/components/goal-form';
 
-export default async function EditGoalPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+import { getSessionUserId } from '@/lib/session';
+
+export default async function EditGoalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const userId = await getSessionUserId();
 
@@ -16,10 +14,7 @@ export default async function EditGoalPage({
     return <div>Unauthorized</div>;
   }
 
-  const [goal, allSchemes] = await Promise.all([
-    getGoal(userId, id),
-    getSchemes(userId),
-  ]);
+  const [goal, allSchemes] = await Promise.all([getGoal(userId, id), getSchemes(userId)]);
 
   if (!goal) {
     notFound();

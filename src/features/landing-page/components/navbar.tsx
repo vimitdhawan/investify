@@ -1,10 +1,14 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useEffect, useState } from 'react';
+
+import Link from 'next/link';
+
+import { Menu, X } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+
+import { cn } from '@/lib/utils';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,13 +16,13 @@ export default function Navbar() {
   // Effect to lock body scroll when the menu is open
   useEffect(() => {
     if (isOpen) {
-      document.body.classList.add("overflow-hidden");
+      document.body.classList.add('overflow-hidden');
     } else {
-      document.body.classList.remove("overflow-hidden");
+      document.body.classList.remove('overflow-hidden');
     }
     // Cleanup function to remove the class when the component unmounts
     return () => {
-      document.body.classList.remove("overflow-hidden");
+      document.body.classList.remove('overflow-hidden');
     };
   }, [isOpen]);
 
@@ -44,10 +48,7 @@ export default function Navbar() {
                 About Us
               </Link>
               <Button asChild>
-                <Link
-                  href="/demo"
-                  className="text-sm font-medium hover:text-primary"
-                >
+                <Link href="/demo" className="text-sm font-medium hover:text-primary">
                   Book Demo
                 </Link>
               </Button>
@@ -79,8 +80,8 @@ export default function Navbar() {
       {/* Mobile Menu Overlay */}
       <div
         className={cn(
-          "md:hidden fixed inset-0 z-40 bg-background/80 backdrop-blur-sm transition-transform duration-300 ease-in-out",
-          isOpen ? "translate-x-0" : "translate-x-full"
+          'md:hidden fixed inset-0 z-40 bg-background/80 backdrop-blur-sm transition-transform duration-300 ease-in-out',
+          isOpen ? 'translate-x-0' : 'translate-x-full'
         )}
       >
         <nav className="flex flex-col items-center justify-center h-full text-2xl font-medium space-y-8">

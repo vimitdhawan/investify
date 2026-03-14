@@ -1,9 +1,7 @@
 'use client';
 
-import { IconCirclePlusFilled } from '@tabler/icons-react';
-import { useRouter, usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { data } from '@/features/side-bar/type';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 import {
   SidebarGroup,
@@ -12,10 +10,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import Link from 'next/link';
+
+import { data } from '@/features/side-bar/type';
+
+import { cn } from '@/lib/utils';
 
 export function NavMain() {
-  const router = useRouter();
   const pathname = usePathname();
   const isActive = (url: string) => pathname.startsWith(url);
 

@@ -1,7 +1,9 @@
-import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
+import Image from 'next/image';
+import Link from 'next/link';
+
+import { ArrowRight } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
 
 export default function HeroSection() {
   return (
@@ -13,8 +15,8 @@ export default function HeroSection() {
           Smarter with SaarthiFlow
         </h1>
         <p className="text-muted-foreground sm:text-lg max-w-3xl mx-auto">
-          Manage bookings, inventory, memberships, and more — all in one simple
-          platform. Built to save your time and grow your revenue.
+          Manage bookings, inventory, memberships, and more — all in one simple platform. Built to
+          save your time and grow your revenue.
         </p>
       </div>
       <div className="flex gap-4">
@@ -30,7 +32,7 @@ export default function HeroSection() {
           src="/dashboard.png" // Replace with your actual image path
           alt="SaarthiFlow Dashboard Preview"
           fill
-          style={{ objectFit: "cover" }}
+          style={{ objectFit: 'cover' }}
           priority
         />
       </div>

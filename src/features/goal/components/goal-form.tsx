@@ -1,20 +1,16 @@
 'use client';
 
-import * as React from 'react';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useActionState, useEffect } from 'react';
-import {
-  goalFormSchema,
-  GoalFormData,
-  GoalActionState,
-  GoalFormInput,
-} from '../schema';
-import { handleCreateGoal, handleUpdateGoal } from '../action';
-import { Goal } from '../type';
-import { Scheme } from '@/features/schemes/type';
 
+import * as React from 'react';
+import { useActionState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+
+import { InfoIcon, Loader2 } from 'lucide-react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -25,10 +21,13 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { MultiSelect, OptionType } from '@/components/ui/multi-select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { InfoIcon, Loader2 } from 'lucide-react';
+import { MultiSelect, type OptionType } from '@/components/ui/multi-select';
+
+import type { Scheme } from '@/features/schemes/type';
+
+import { handleCreateGoal, handleUpdateGoal } from '../action';
+import { type GoalActionState, type GoalFormData, goalFormSchema } from '../schema';
+import type { Goal } from '../type';
 
 interface GoalFormProps {
   goal?: Goal;
@@ -46,8 +45,7 @@ function calculateRequiredXIRR(
   if (currentAmount >= targetAmount) return 0;
 
   const now = new Date();
-  const years =
-    (targetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+  const years = (targetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
 
   if (years <= 0) return Infinity;
 
@@ -65,14 +63,13 @@ export function GoalForm({ goal, schemes }: GoalFormProps) {
     } as GoalActionState
   );
 
-  const form = useForm<GoalFormData>({
+  const form = useForm({
     resolver: zodResolver(goalFormSchema),
     defaultValues: {
       name: goal?.name || '',
       targetAmount: goal?.targetAmount || 0,
       targetDate:
-        goal?.targetDate ||
-        new Date(new Date().setFullYear(new Date().getFullYear() + 5)),
+        goal?.targetDate || new Date(new Date().setFullYear(new Date().getFullYear() + 5)),
       schemeIds: goal?.schemeIds || [],
     },
   });
@@ -84,9 +81,7 @@ export function GoalForm({ goal, schemes }: GoalFormProps) {
         if (messages && messages.length > 0) {
           form.setError(key as keyof GoalFormData, {
             type: 'server',
-            message: Array.isArray(messages)
-              ? messages[0]
-              : (messages as string),
+            message: Array.isArray(messages) ? messages[0] : (messages as string),
           });
         }
       });
@@ -99,9 +94,9 @@ export function GoalForm({ goal, schemes }: GoalFormProps) {
   }));
 
   const { watch } = form;
-  const watchedAmount = watch('targetAmount');
-  const watchedDate = watch('targetDate');
-  const watchedSchemeIds = watch('schemeIds') || [];
+  const watchedAmount = watch('targetAmount') as number;
+  const watchedDate = watch('targetDate') as Date;
+  const watchedSchemeIds = (watch('schemeIds') as string[]) || [];
 
   const currentAmount = React.useMemo(() => {
     return schemes
@@ -112,12 +107,8 @@ export function GoalForm({ goal, schemes }: GoalFormProps) {
   const requiredXirr = React.useMemo(() => {
     if (!watchedAmount || !watchedDate || currentAmount <= 0) return null;
     try {
-      return calculateRequiredXIRR(
-        currentAmount,
-        watchedAmount,
-        new Date(watchedDate)
-      );
-    } catch (e) {
+      return calculateRequiredXIRR(currentAmount, watchedAmount as number, new Date(watchedDate));
+    } catch {
       return null;
     }
   }, [watchedAmount, watchedDate, currentAmount]);
@@ -160,8 +151,12 @@ export function GoalForm({ goal, schemes }: GoalFormProps) {
                     <FormControl>
                       <Input
                         type="number"
-                        {...field}
+                        value={field.value as number}
                         onChange={(e) => field.onChange(Number(e.target.value))}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                        disabled={field.disabled}
                       />
                     </FormControl>
                     <FormMessage />
@@ -180,14 +175,10 @@ export function GoalForm({ goal, schemes }: GoalFormProps) {
                         type="date"
                         name={field.name}
                         value={
-                          field.value instanceof Date
-                            ? field.value.toISOString().split('T')[0]
-                            : ''
+                          field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''
                         }
                         onChange={(e) =>
-                          field.onChange(
-                            e.target.value ? new Date(e.target.value) : null
-                          )
+                          field.onChange(e.target.value ? new Date(e.target.value) : null)
                         }
                         onBlur={field.onBlur}
                         ref={field.ref}
@@ -214,12 +205,7 @@ export function GoalForm({ goal, schemes }: GoalFormProps) {
                         placeholder="Select mutual fund schemes"
                       />
                       {field.value.map((id) => (
-                        <input
-                          key={id}
-                          type="hidden"
-                          name="schemeIds"
-                          value={id}
-                        />
+                        <input key={id} type="hidden" name="schemeIds" value={id} />
                       ))}
                     </>
                   </FormControl>
@@ -235,13 +221,11 @@ export function GoalForm({ goal, schemes }: GoalFormProps) {
               <Alert>
                 <InfoIcon className="h-4 w-4" />
                 <AlertDescription>
-                  To reach your target of ₹{watchedAmount.toLocaleString()} from
-                  your current ₹{currentAmount.toLocaleString()} by the target
-                  date, you need an estimated annual return (XIRR) of{' '}
+                  To reach your target of ₹{watchedAmount.toLocaleString()} from your current ₹
+                  {currentAmount.toLocaleString()} by the target date, you need an estimated annual
+                  return (XIRR) of{' '}
                   <span className="font-bold text-primary">
-                    {requiredXirr === Infinity
-                      ? 'N/A'
-                      : `${requiredXirr.toFixed(2)}%`}
+                    {requiredXirr === Infinity ? 'N/A' : `${requiredXirr.toFixed(2)}%`}
                   </span>
                   .
                 </AlertDescription>
@@ -249,11 +233,7 @@ export function GoalForm({ goal, schemes }: GoalFormProps) {
             )}
 
             <div className="flex justify-end gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => window.history.back()}
-              >
+              <Button type="button" variant="outline" onClick={() => window.history.back()}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isPending}>

@@ -1,23 +1,20 @@
 'use client';
 
 import {
-  IconTrendingDown,
-  IconTrendingUp,
+  IconArrowsHorizontal,
   IconBriefcase,
   IconCash,
   IconGauge,
   IconMessageCircleDollar,
-  IconArrowsHorizontal,
+  IconTrendingDown,
+  IconTrendingUp,
 } from '@tabler/icons-react';
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+import type { PortfolioSummary } from '@/features/portfolio/type';
+
 import { cn, formatCurrency } from '@/lib/utils';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { PortfolioSummary } from '@/features/portfolio/type';
 
 interface FinancialDetailProps {
   label: string;
@@ -37,14 +34,9 @@ function FinancialDetail({
   isPercentageValue,
 }: FinancialDetailProps) {
   const isGain = typeof value === 'number' ? value >= 0 : undefined;
-  const trendingIconClass =
-    isGain === undefined
-      ? ''
-      : isGain
-        ? 'text-[color:var(--gain)]'
-        : 'text-[color:var(--loss)]';
-  const TrendingIcon =
-    isGain === undefined ? null : isGain ? IconTrendingUp : IconTrendingDown;
+  const _trendingIconClass =
+    isGain === undefined ? '' : isGain ? 'text-[color:var(--gain)]' : 'text-[color:var(--loss)]';
+  const TrendingIcon = isGain === undefined ? null : isGain ? IconTrendingUp : IconTrendingDown;
 
   const formattedValue =
     isPercentageValue && typeof value === 'number'
@@ -56,9 +48,7 @@ function FinancialDetail({
   return (
     <div className="flex items-baseline justify-between">
       <span className="flex items-center gap-2 text-muted-foreground">
-        {IconComponent && (
-          <IconComponent className="size-6 text-[color:var(--info)]" />
-        )}
+        {IconComponent && <IconComponent className="size-6 text-[color:var(--info)]" />}
         {label}
       </span>
       <span className={cn('font-medium flex items-center gap-1', valueClass)}>
@@ -95,21 +85,15 @@ export function PortfolioOverviewCard({
     ? 'text-[color:var(--gain)]'
     : 'text-[color:var(--loss)]';
 
-  const isXirrGain = portfolio.xirrGainLoss
-    ? portfolio.xirrGainLoss >= 0
-    : false;
-  const xirrValueClass = isXirrGain
-    ? 'text-[color:var(--gain)]'
-    : 'text-[color:var(--loss)]';
+  const isXirrGain = portfolio.xirrGainLoss ? portfolio.xirrGainLoss >= 0 : false;
+  const xirrValueClass = isXirrGain ? 'text-[color:var(--gain)]' : 'text-[color:var(--loss)]';
 
   return (
     <Card className="@container/card">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-md">Portfolio Overview</CardTitle>
         {portfolio.date && (
-          <CardDescription className="text-sm">
-            Latest NAV as of: {portfolio.date}
-          </CardDescription>
+          <CardDescription className="text-sm">Latest NAV as of: {portfolio.date}</CardDescription>
         )}
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -126,18 +110,14 @@ export function PortfolioOverviewCard({
           />
           {/* Previous Day Change Value */}
           <FinancialDetail
-            label={
-              isPreviousDayGain ? 'Previous Day Gain' : 'Previous Day Loss'
-            }
+            label={isPreviousDayGain ? 'Previous Day Gain' : 'Previous Day Loss'}
             value={previousDayChange}
             iconComponent={IconArrowsHorizontal}
             valueClass={previousDayValueClass}
           />
           {/* Previous Day Change Percentage */}
           <FinancialDetail
-            label={
-              isPreviousDayGain ? 'Previous Day Gain %' : 'Previous Day Loss %'
-            }
+            label={isPreviousDayGain ? 'Previous Day Gain %' : 'Previous Day Loss %'}
             value={Math.abs(previousDayChangePercentage)} // Display absolute value for percentage
             isPercentageValue={true}
             iconComponent={IconGauge}

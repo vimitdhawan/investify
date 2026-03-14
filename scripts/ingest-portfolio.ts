@@ -1,14 +1,15 @@
 // scripts/ingest-portfolio.ts
-import { firestore, bucket } from '@/lib/firebase';
-import { Scheme, SchemeNavStatus, SchemeType } from '@/features/schemes/type';
+import type { Investor, Portfolio, Statement } from '@/features/portfolio/type';
+import { type Scheme, SchemeNavStatus, type SchemeType } from '@/features/schemes/type';
 import {
-  Transaction,
+  type Transaction,
   TransactionType,
   investmentTypes,
   withdrawTypes,
 } from '@/features/transactions/type';
-import { Investor, Statement, Portfolio } from '@/features/portfolio/type';
+
 import { getAllSchemeData } from '@/lib/clients/scheme';
+import { bucket, firestore } from '@/lib/firebase';
 import { parseYYYYMMDDString } from '@/lib/utils/date';
 
 // --- Main script execution ---
@@ -44,10 +45,12 @@ interface MetaDTO {
   statement_period: StatementPeriodDTO;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface DematAccountDTO {
   // Define properties for DematAccount if any
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface LifeInsurancePolicyDTO {
   // Define properties for LifeInsurancePolicy if any
 }
@@ -116,54 +119,35 @@ interface SchemeAdditionalInfoDTO {
   rta_code: string;
 }
 
-async function ingestPortfolioData(
-  portfolioData: PortfolioDTO,
-  userId: string
-) {
+async function ingestPortfolioData(portfolioData: PortfolioDTO, userId: string) {
   console.log('Ingesting data for user:', userId);
   const portfolio = await processPortfolio(portfolioData);
   const lastesNavDate = new Date(portfolioData.meta.generated_at);
-  const schemes = await processSchemes(
-    lastesNavDate,
-    portfolioData.mutual_funds
-  );
+  const schemes = await processSchemes(lastesNavDate, portfolioData.mutual_funds);
 
   const batch = firestore.batch();
 
   const userRef = firestore.collection('users').doc(userId);
 
   const investorData: Partial<Investor> = portfolio.investor;
-  batch.set(
-    userRef,
-    { ...investorData, updatedAt: new Date() },
-    { merge: true }
-  );
+  batch.set(userRef, { ...investorData, updatedAt: new Date() }, { merge: true });
   const statemnet: Partial<Statement> = portfolio.statements[0];
 
   const statementRef = firestore
     .collection('users')
     .doc(userId)
     .collection('statements')
-    .doc(
-      `${portfolio.statements[0].period.from}-${portfolio.statements[0].period.to}`
-    );
+    .doc(`${portfolio.statements[0].period.from}-${portfolio.statements[0].period.to}`);
   batch.set(statementRef, statemnet, { merge: true });
 
   for (const s of schemes) {
     const schemeId = s.id;
     if (!schemeId) {
-      console.warn(
-        'Scheme found with no transactions or schemeId, skipping:',
-        s.name
-      );
+      console.warn('Scheme found with no transactions or schemeId, skipping:', s.name);
       continue;
     }
 
-    const schemeRef = firestore
-      .collection('users')
-      .doc(userId)
-      .collection('schemes')
-      .doc(schemeId);
+    const schemeRef = firestore.collection('users').doc(userId).collection('schemes').doc(schemeId);
 
     // Omit 'transactions' from the main scheme document
     const { transactions, ...schemeToSave } = s;
@@ -171,9 +155,7 @@ async function ingestPortfolioData(
 
     // Add each transaction to a 'transactions' subcollection
     for (const transaction of transactions) {
-      const transactionRef = schemeRef
-        .collection('transactions')
-        .doc(transaction.id);
+      const transactionRef = schemeRef.collection('transactions').doc(transaction.id);
       batch.set(transactionRef, transaction);
     }
   }
@@ -182,7 +164,7 @@ async function ingestPortfolioData(
 }
 
 async function processPortfolio(portfolio: PortfolioDTO): Promise<Portfolio> {
-  let schemes: Scheme[] = [];
+  const _schemes: Scheme[] = [];
   const investor: Investor = {
     address: portfolio.investor.address,
     email: portfolio.investor.email,
@@ -190,7 +172,7 @@ async function processPortfolio(portfolio: PortfolioDTO): Promise<Portfolio> {
     name: portfolio.investor.name,
     pan: portfolio.investor.pan ?? '',
   };
-  let pf: Portfolio = {
+  const pf: Portfolio = {
     investor: investor,
     statements: [
       {
@@ -247,10 +229,7 @@ function processInvestment(
   let nextIndex = currentIndex + 1;
   while (nextIndex < allTxs.length) {
     const nextTx = allTxs[nextIndex];
-    if (
-      nextTx.date === currentTx.date &&
-      nextTx.type === TransactionType.StampDutyTax
-    ) {
+    if (nextTx.date === currentTx.date && nextTx.type === TransactionType.StampDutyTax) {
       transaction.stampDuty = nextTx.amount;
       nextIndex++;
     } else {
@@ -269,22 +248,13 @@ function processWithdrawal(
   let nextIndex = currentIndex + 1;
   while (nextIndex < allTxs.length) {
     const nextTx = allTxs[nextIndex];
-    if (
-      nextTx.date === currentTx.date &&
-      nextTx.type === TransactionType.SttTax
-    ) {
+    if (nextTx.date === currentTx.date && nextTx.type === TransactionType.SttTax) {
       transaction.sttTax = nextTx.amount;
       nextIndex++;
-    } else if (
-      nextTx.date === currentTx.date &&
-      nextTx.type === TransactionType.TdsTax
-    ) {
+    } else if (nextTx.date === currentTx.date && nextTx.type === TransactionType.TdsTax) {
       transaction.capitalGainTax = nextTx.amount;
       nextIndex++;
-    } else if (
-      nextTx.date === currentTx.date &&
-      nextTx.type === TransactionType.StampDutyTax
-    ) {
+    } else if (nextTx.date === currentTx.date && nextTx.type === TransactionType.StampDutyTax) {
       transaction.stampDuty = nextTx.amount;
       nextIndex++;
     } else {
@@ -294,10 +264,7 @@ function processWithdrawal(
   return nextIndex;
 }
 
-function processTransactions(
-  transactionDTOs: TransactionDTO[],
-  schemeId: string
-): Transaction[] {
+function processTransactions(transactionDTOs: TransactionDTO[], schemeId: string): Transaction[] {
   const transactions: Transaction[] = [];
   let i = 0;
   while (i < transactionDTOs.length) {
@@ -311,7 +278,7 @@ function processTransactions(
       i = processInvestment(currentTxDto, transactionDTOs, i, transaction);
     } else if (
       withdrawTypes.includes(currentTxDto.type) ||
-      currentTxDto.type == TransactionType.REVERSAL
+      currentTxDto.type === TransactionType.REVERSAL
     ) {
       i = processWithdrawal(currentTxDto, transactionDTOs, i, transaction);
     } else {
@@ -320,23 +287,16 @@ function processTransactions(
     transactions.push(transaction);
   }
 
-  return transactions.sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
-async function getSchemeIdAndAmfi(
-  mutualFund: MutualFundDTO,
-  scheme: SchemeDTO
-) {
+async function getSchemeIdAndAmfi(mutualFund: MutualFundDTO, scheme: SchemeDTO) {
   let amfi = scheme.additional_info?.amfi;
 
   if (!amfi) {
     const allSchemes = await getAllSchemeData();
     const matchingScheme = allSchemes.find(
-      (s) =>
-        s.isinDivPayoutOrGrowth === scheme.isin ||
-        s.isinDivReinvestment === scheme.isin
+      (s) => s.isinDivPayoutOrGrowth === scheme.isin || s.isinDivReinvestment === scheme.isin
     );
     if (matchingScheme) {
       amfi = matchingScheme.code;
@@ -345,18 +305,12 @@ async function getSchemeIdAndAmfi(
 
   const sanitizedAmfi = (amfi ?? '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
   const sanitizedFolio = mutualFund.folio_number.replace(/\//g, '');
-  const sanitizedAmc = mutualFund.amc
-    .replace(/[^a-zA-Z0-9]/g, '')
-    .toLowerCase();
+  const sanitizedAmc = mutualFund.amc.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
   const schemeId = `${sanitizedAmc}-${sanitizedFolio}-${sanitizedAmfi}`;
   return { schemeId, amfi: amfi ?? '' };
 }
 
-function mapTransaction(
-  dto: TransactionDTO,
-  schemeId: string,
-  index: number
-): Transaction {
+function mapTransaction(dto: TransactionDTO, schemeId: string, index: number): Transaction {
   return {
     id: `${schemeId}-${dto.date}-${index}`,
     schemeId,
@@ -376,18 +330,13 @@ async function main() {
   let fileContent;
 
   try {
-    console.log(
-      `Downloading portfolio file '${fileName}' from storage bucket...`
-    );
+    console.log(`Downloading portfolio file '${fileName}' from storage bucket...`);
     const file = bucket.file(fileName);
     const [downloadedContent] = await file.download();
     fileContent = downloadedContent.toString('utf-8');
     console.log('File downloaded successfully.');
   } catch (error) {
-    console.error(
-      `Failed to download '${fileName}' from Firebase Storage.`,
-      error
-    );
+    console.error(`Failed to download '${fileName}' from Firebase Storage.`, error);
     process.exit(1);
   }
 

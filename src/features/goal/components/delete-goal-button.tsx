@@ -1,9 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import { Trash2, Loader2 } from 'lucide-react';
-import { handleDeleteGoal } from '../action';
-import { Button } from '@/components/ui/button';
+
+import { Loader2, Trash2 } from 'lucide-react';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,6 +15,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+
+import { handleDeleteGoal } from '../action';
 
 export function DeleteGoalButton({ goalId }: { goalId: string }) {
   const [isPending, setIsPending] = React.useState(false);
@@ -44,8 +47,8 @@ export function DeleteGoalButton({ goalId }: { goalId: string }) {
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete your goal
-            and unassign all associated schemes.
+            This action cannot be undone. This will permanently delete your goal and unassign all
+            associated schemes.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

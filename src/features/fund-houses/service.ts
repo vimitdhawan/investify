@@ -1,18 +1,16 @@
-import { Scheme } from '@/features/schemes/type';
-import { MutualFundView } from '@/features/fund-houses/type';
+import type { MutualFundView } from '@/features/fund-houses/type';
+import { getSchemes } from '@/features/schemes/service';
+import type { Scheme } from '@/features/schemes/type';
 import {
   calculateXIRR,
-  getTransactionsBySchemeId,
   exludeReverseTransactions,
+  getTransactionsBySchemeId,
 } from '@/features/transactions/service';
-import { getSchemes } from '@/features/schemes/service';
 
 export async function getFundHouses(userId: string) {
   const schemes = await getSchemes(userId);
-  const fundsMap: Map<
-    string,
-    { amc: string; folioNumbers: Set<string>; schemes: Scheme[] }
-  > = new Map();
+  const fundsMap: Map<string, { amc: string; folioNumbers: Set<string>; schemes: Scheme[] }> =
+    new Map();
   schemes.forEach((s) => {
     if (!fundsMap.has(s.amc)) {
       fundsMap.set(s.amc, {
@@ -26,7 +24,7 @@ export async function getFundHouses(userId: string) {
   });
 
   const mutualFundViews: MutualFundView[] = [];
-  for (const [key, fundGroup] of fundsMap.entries()) {
+  for (const [_key, fundGroup] of fundsMap.entries()) {
     const investedAmount = fundGroup.schemes.reduce(
       (acc, s) => acc + (s.units! > 0 ? (s.investedAmount ?? 0) : 0),
       0
@@ -43,27 +41,17 @@ export async function getFundHouses(userId: string) {
       (acc, s) => acc + (s.realizedGainLoss ?? 0),
       0
     );
-    const gainLossPercentage =
-      investedAmount > 0 ? (absoluteGainLoss / investedAmount) * 100 : 0;
-    const stampDuty = fundGroup.schemes.reduce(
-      (acc, s) => acc + (s.stampDuty ?? 0),
-      0
-    );
+    const gainLossPercentage = investedAmount > 0 ? (absoluteGainLoss / investedAmount) * 100 : 0;
+    const stampDuty = fundGroup.schemes.reduce((acc, s) => acc + (s.stampDuty ?? 0), 0);
 
     const transactionsPerScheme = await Promise.all(
-      fundGroup.schemes.map((scheme) =>
-        getTransactionsBySchemeId(userId, scheme.id)
-      )
+      fundGroup.schemes.map((scheme) => getTransactionsBySchemeId(userId, scheme.id))
     );
-    const transactions = transactionsPerScheme
-      .map((t) => exludeReverseTransactions(t))
-      .flat();
-    const date =
-      fundGroup.schemes.find((s) => s.latestNavDate != null)?.latestNavDate ??
-      new Date();
+    const transactions = transactionsPerScheme.map((t) => exludeReverseTransactions(t)).flat();
+    const _date =
+      fundGroup.schemes.find((s) => s.latestNavDate != null)?.latestNavDate ?? new Date();
 
-    const xirrGainLoss =
-      calculateXIRR(transactions, marketValue, new Date()) ?? 0;
+    const xirrGainLoss = calculateXIRR(transactions, marketValue, new Date()) ?? 0;
     mutualFundViews.push({
       name: fundGroup.amc,
       folioNumbers: [...fundGroup.folioNumbers.keys()],

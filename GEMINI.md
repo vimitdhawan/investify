@@ -4,21 +4,21 @@ We **always prefer Server Components by default**.
 
 Client Components should be introduced **only when client-side behavior is required**, such as:
 
-* User interactions (selection, input, form state)
-* Local UI state (toggles, tabs, modals)
-* Browser-only APIs (window, localStorage, etc.)
+- User interactions (selection, input, form state)
+- Local UI state (toggles, tabs, modals)
+- Browser-only APIs (window, localStorage, etc.)
 
 **Guiding principle:**
 
-* Keep Client Components **small, focused, and isolated**
-* Compose them inside Server Components whenever possible
-* Push data fetching, heavy logic, and layout composition to Server Components
+- Keep Client Components **small, focused, and isolated**
+- Compose them inside Server Components whenever possible
+- Push data fetching, heavy logic, and layout composition to Server Components
 
 This approach:
 
-* Reduces client-side JavaScript
-* Improves performance and SEO
-* Keeps the architecture easier to reason about and scale
+- Reduces client-side JavaScript
+- Improves performance and SEO
+- Keeps the architecture easier to reason about and scale
 
 ---
 
@@ -34,10 +34,10 @@ This document provides a comprehensive overview of the Investify project, its ar
 
 ### Core User Goals
 
-* Analyze overall portfolio performance
-* Track daily gains and losses
-* Visualize historical NAV (Net Asset Value) for individual schemes
-* View detailed transaction history per scheme
+- Analyze overall portfolio performance
+- Track daily gains and losses
+- Visualize historical NAV (Net Asset Value) for individual schemes
+- View detailed transaction history per scheme
 
 ---
 
@@ -45,23 +45,23 @@ This document provides a comprehensive overview of the Investify project, its ar
 
 This project follows a set of established best practices to ensure code quality, consistency, and maintainability. For detailed information, please refer to the following documents in the `/docs` directory:
 
-*   **[Architecture Guide](./docs/ARCHITECTURE.md)**: Detailed patterns for data fetching, state management, and component design.
-*   **[Data Model Guide](./docs/DATA_MODEL.md)**: A comprehensive overview of the core data structures and types.
-*   **[Styling Guide](./docs/STYLING.md)**: Guidelines for using Tailwind CSS and `shadcn/ui`.
-*   **[Linting Guide](./docs/LINTING.md)**: Rules and scripts for maintaining a consistent and error-free codebase.
-*   **[Testing Guide](./docs/TESTING.md)**: Strategy and examples for writing unit, integration, and E2E tests.
+- **[Architecture Guide](./docs/ARCHITECTURE.md)**: Detailed patterns for data fetching, state management, and component design.
+- **[Data Model Guide](./docs/DATA_MODEL.md)**: A comprehensive overview of the core data structures and types.
+- **[Styling Guide](./docs/STYLING.md)**: Guidelines for using Tailwind CSS and `shadcn/ui`.
+- **[Linting Guide](./docs/LINTING.md)**: Rules and scripts for maintaining a consistent and error-free codebase.
+- **[Testing Guide](./docs/TESTING.md)**: Strategy and examples for writing unit, integration, and E2E tests.
 
 ---
 
 ## 3. Tech Stack
 
-* **Framework:** Next.js (App Router)
-* **Authentication & Database:** Firebase (Auth, Firestore, Storage)
-* **UI Components:** shadcn/ui
-* **Styling:** Tailwind CSS
-* **Charts:** Recharts
-* **Language:** TypeScript
-* **Linting:** ESLint
+- **Framework:** Next.js (App Router)
+- **Authentication & Database:** Firebase (Auth, Firestore, Storage)
+- **UI Components:** shadcn/ui
+- **Styling:** Tailwind CSS
+- **Charts:** Recharts
+- **Language:** TypeScript
+- **Linting:** ESLint
 
 ---
 
@@ -71,9 +71,9 @@ The primary goal is to deliver a **clean, intuitive, and data-rich user experien
 
 Key principles:
 
-* **Clarity:** Financial data should be easy to read and interpret
-* **Responsiveness:** Seamless experience across desktop, tablet, and mobile
-* **Interactivity:** Charts and tables should encourage exploration without overwhelming the user
+- **Clarity:** Financial data should be easy to read and interpret
+- **Responsiveness:** Seamless experience across desktop, tablet, and mobile
+- **Interactivity:** Charts and tables should encourage exploration without overwhelming the user
 
 ---
 
@@ -112,7 +112,7 @@ The project follows a **feature-based structure** using the Next.js App Router. 
 
 ### Core Domains
 
-* **Portfolio**
+- **Portfolio**
   Represents the user’s complete investment portfolio.
   Aggregate calculations (total invested, market value, gains/losses) live in:
 
@@ -120,18 +120,17 @@ The project follows a **feature-based structure** using the Next.js App Router. 
   lib/repository/portfolio.ts
   ```
 
-* **Mutual Funds**
+- **Mutual Funds**
   Groups schemes by fund house (AMC).
 
-* **Schemes**
+- **Schemes**
   Represents a single mutual fund scheme (e.g., index fund, equity fund).
   Includes:
+  - NAV history
+  - Performance charts
+  - Scheme-level metadata
 
-  * NAV history
-  * Performance charts
-  * Scheme-level metadata
-
-* **Transactions**
+- **Transactions**
   Individual buy, sell, or switch entries within a scheme.
 
 ---
@@ -140,20 +139,17 @@ The project follows a **feature-based structure** using the Next.js App Router. 
 
 Quality and correctness are critical for financial applications.
 
-* **Unit Tests**
+- **Unit Tests**
+  - Use Jest and React Testing Library
+  - Cover components, utility functions, and repository logic
+  - Focus on deterministic, isolated tests
 
-  * Use Jest and React Testing Library
-  * Cover components, utility functions, and repository logic
-  * Focus on deterministic, isolated tests
+- **Integration Tests (Future)**
+  - Validate interactions between components, API routes, and data layers
 
-* **Integration Tests (Future)**
-
-  * Validate interactions between components, API routes, and data layers
-
-* **End-to-End Tests (Future)**
-
-  * Use Playwright or Cypress
-  * Cover critical user journeys (login → dashboard → scheme analysis)
+- **End-to-End Tests (Future)**
+  - Use Playwright or Cypress
+  - Cover critical user journeys (login → dashboard → scheme analysis)
 
 ---
 
@@ -161,32 +157,31 @@ Quality and correctness are critical for financial applications.
 
 ### Environment Variables
 
-* Store all secrets in `.env.local`
-* Never hard-code credentials
-* Maintain `.env.example` for documentation
+- Store all secrets in `.env.local`
+- Never hard-code credentials
+- Maintain `.env.example` for documentation
 
 ### Error Handling & Logging
 
-* Centralized logging (Sentry, Logtail, etc.)
-* Graceful client-side error states
-* Error boundaries for critical UI sections
+- Centralized logging (Sentry, Logtail, etc.)
+- Graceful client-side error states
+- Error boundaries for critical UI sections
 
 ### Performance
 
-* Server Components by default
-* Automatic code-splitting via App Router
-* Optimize images with `next/image`
-* Minimize client-side JavaScript
+- Server Components by default
+- Automatic code-splitting via App Router
+- Optimize images with `next/image`
+- Minimize client-side JavaScript
 
 ### Security
 
-* Validate all inputs using Zod (client + server)
-* Configure Firebase security rules correctly
-* Apply appropriate security headers
+- Validate all inputs using Zod (client + server)
+- Configure Firebase security rules correctly
+- Apply appropriate security headers
 
 ### Build & Deployment
 
-* `npm run build` must pass without errors
-* CI/CD via GitHub Actions (lint, test, build)
-* Deploy to Vercel or Netlify
-
+- `npm run build` must pass without errors
+- CI/CD via GitHub Actions (lint, test, build)
+- Deploy to Vercel or Netlify

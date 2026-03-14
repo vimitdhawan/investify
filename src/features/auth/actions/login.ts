@@ -1,9 +1,7 @@
 'use server';
 
-import {
-  LoginActionState,
-  loginFormSchema,
-} from '@/features/auth/schema/login';
+import { type LoginActionState, loginFormSchema } from '@/features/auth/schema/login';
+
 import { createSession } from '@/lib/session';
 
 export async function handleLogin(
@@ -28,8 +26,7 @@ export async function handleLogin(
     }
 
     const isEmulator = process.env.FIREBASE_EMULATOR_MODE === 'true';
-    const authEmulatorHost =
-      process.env.FIREBASE_AUTH_EMULATOR_HOST || 'localhost:9099';
+    const authEmulatorHost = process.env.FIREBASE_AUTH_EMULATOR_HOST || 'localhost:9099';
 
     const firebaseLoginUrl = isEmulator
       ? `http://${authEmulatorHost}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`
@@ -54,7 +51,7 @@ export async function handleLogin(
     if (!response.ok) {
       const errorCode = result?.error?.message;
 
-      if (errorCode == 'INVALID_LOGIN_CREDENTIALS') {
+      if (errorCode === 'INVALID_LOGIN_CREDENTIALS') {
         return {
           errors: {
             password: ['Invalid email or password.'],
