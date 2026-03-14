@@ -53,6 +53,18 @@ const eslintConfig = defineConfig([
       'import/no-anonymous-default-export': 'warn',
     },
   },
+  // Test files specific configuration
+  {
+    files: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}', '**/jest.setup.js', '**/__mocks__/**'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+      'no-console': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/consistent-type-imports': 'off',
+      'import/no-anonymous-default-export': 'off',
+    },
+  },
   eslintConfigPrettier,
   // Override default ignores of eslint-config-next.
   globalIgnores([
