@@ -54,16 +54,19 @@ jobs:
       # Code Quality Checks
       # ============================================
       - name: TypeScript type check
+        id: type-check
         run: |
           echo "🔍 Running TypeScript type check..."
           npm run type-check
 
       - name: ESLint check
+        id: lint
         run: |
           echo "🔍 Running ESLint..."
           npm run lint
 
       - name: Prettier format check
+        id: format
         run: |
           echo "🔍 Checking code formatting..."
           npm run format:check
@@ -72,6 +75,7 @@ jobs:
       # Tests
       # ============================================
       - name: Run unit tests
+        id: test
         run: |
           echo "🧪 Running unit tests with coverage..."
           npm run test:ci
@@ -89,6 +93,7 @@ jobs:
       # Build
       # ============================================
       - name: Build application
+        id: build
         run: |
           echo "🏗️  Building Next.js application..."
           npm run build
