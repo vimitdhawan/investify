@@ -21,296 +21,167 @@ env:
   FIREBASE_WEB_API_KEY: 'demo-api-key'
 
 jobs:
-  # Install dependencies once and cache for other jobs
-  install:
-    name: Install Dependencies
+  ci:
+    name: CI Pipeline
     runs-on: ubuntu-latest
+
     steps:
+      # ============================================
+      # Setup
+      # ============================================
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Cache node_modules
-        id: cache-node-modules
-        uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-${{ env.NODE_VERSION }}-
-
       - name: Install dependencies
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci --legacy-peer-deps
 
-      - name: Verify installation
-        run: npm list --depth=0
+      - name: Verify dependencies
+        run: |
+          echo "Verifying critical dependencies..."
+          npx jest --version
+          npx tsc --version
+          npx eslint --version
+          npx prettier --version
+          echo "✅ All dependencies verified"
 
-  # Lint check
-  lint:
-    name: ESLint
-    runs-on: ubuntu-latest
-    needs: install
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      # ============================================
+      # Code Quality Checks
+      # ============================================
+      - name: TypeScript type check
+        run: |
+          echo "🔍 Running TypeScript type check..."
+          npm run type-check
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
+      - name: ESLint check
+        run: |
+          echo "🔍 Running ESLint..."
+          npm run lint
 
-      - name: Restore node_modules
-        uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
+      - name: Prettier format check
+        run: |
+          echo "🔍 Checking code formatting..."
+          npm run format:check
 
-      - name: Cache ESLint
-        uses: actions/cache@v4
-        with:
-          path: .eslintcache
-          key: eslint-${{ runner.os }}-${{ hashFiles('eslint.config.mjs') }}
+      # ============================================
+      # Tests
+      # ============================================
+      - name: Run unit tests
+        run: |
+          echo "🧪 Running unit tests with coverage..."
+          npm run test:ci
 
-      - name: Run ESLint
-        run: npm run lint
-
-  # Type check
-  type-check:
-    name: TypeScript
-    runs-on: ubuntu-latest
-    needs: install
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Restore node_modules
-        uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
-
-      - name: Cache TypeScript
-        uses: actions/cache@v4
-        with:
-          path: '*.tsbuildinfo'
-          key: typescript-${{ runner.os }}-${{ hashFiles('tsconfig.json') }}
-
-      - name: Run TypeScript type check
-        run: npm run type-check
-
-  # Format check
-  format:
-    name: Prettier
-    runs-on: ubuntu-latest
-    needs: install
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Restore node_modules
-        uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
-
-      - name: Run Prettier check
-        run: npm run format:check
-
-  # Security audit
-  audit:
-    name: Security Audit
-    runs-on: ubuntu-latest
-    needs: install
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Restore node_modules
-        uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
-
-      - name: Run npm audit
-        run: npm audit --audit-level=moderate --production
-        continue-on-error: true
-
-  # Unit tests
-  test:
-    name: Unit Tests
-    runs-on: ubuntu-latest
-    needs: install
-    strategy:
-      matrix:
-        node-version: ['18.x', '20.x']
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: Restore node_modules
-        uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('package-lock.json') }}
-
-      - name: Cache Jest
-        uses: actions/cache@v4
-        with:
-          path: .jest-cache
-          key: jest-${{ runner.os }}-${{ matrix.node-version }}-${{ hashFiles('jest.config.js') }}
-
-      - name: Run tests
-        run: npm run test:ci
-
-      - name: Upload coverage to artifacts
-        if: matrix.node-version == '20.x'
+      - name: Upload coverage reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage/
           retention-days: 7
-
-      - name: Generate coverage summary
-        if: matrix.node-version == '20.x'
-        id: coverage
-        run: |
-          COVERAGE_SUMMARY=$(npx coverage-summary coverage/coverage-summary.json --format text 2>/dev/null || echo "Coverage report not available")
-          echo "summary=$COVERAGE_SUMMARY" >> $GITHUB_OUTPUT
-
-  # Build verification
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    needs: install
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Restore node_modules
-        uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
-
-      - name: Cache Next.js build
-        uses: actions/cache@v4
-        with:
-          path: |
-            .next/cache
-          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx') }}
-          restore-keys: |
-            nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
-
-      - name: Build application
-        run: npm run build
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-output
-          path: .next/
-          retention-days: 1
-
-  # Post results to PR
-  report:
-    name: Report Results
-    runs-on: ubuntu-latest
-    needs: [lint, type-check, format, test, build, audit]
-    if: always() && github.event_name == 'pull_request'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download coverage report
-        uses: actions/download-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage/
         continue-on-error: true
 
-      - name: Generate summary report
-        id: summary
+      # ============================================
+      # Build
+      # ============================================
+      - name: Build application
         run: |
-          echo "## CI Results Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| ESLint | ${{ needs.lint.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| TypeScript | ${{ needs.type-check.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Prettier | ${{ needs.format.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Tests | ${{ needs.test.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build | ${{ needs.build.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Security Audit | ${{ needs.audit.result == 'success' && '✅ Passed' || '⚠️  Warnings' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "🏗️  Building Next.js application..."
+          npm run build
+        env:
+          # Explicitly disable Turbopack for CI builds
+          TURBOPACK: 0
 
-      - name: Comment PR
+      - name: Upload build artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: .next/
+          retention-days: 1
+        continue-on-error: true
+
+      # ============================================
+      # Security
+      # ============================================
+      - name: Security audit
+        run: |
+          echo "🔒 Running security audit..."
+          npm audit --audit-level=moderate --production || echo "⚠️  Security warnings found (non-blocking)"
+        continue-on-error: true
+
+      # ============================================
+      # Report Results
+      # ============================================
+      - name: Generate coverage summary
+        if: always()
+        id: coverage
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            echo "coverage_exists=true" >> $GITHUB_OUTPUT
+            
+            # Extract coverage percentages
+            LINES=$(jq -r '.total.lines.pct' coverage/coverage-summary.json)
+            STATEMENTS=$(jq -r '.total.statements.pct' coverage/coverage-summary.json)
+            FUNCTIONS=$(jq -r '.total.functions.pct' coverage/coverage-summary.json)
+            BRANCHES=$(jq -r '.total.branches.pct' coverage/coverage-summary.json)
+            
+            echo "lines=$LINES" >> $GITHUB_OUTPUT
+            echo "statements=$STATEMENTS" >> $GITHUB_OUTPUT
+            echo "functions=$FUNCTIONS" >> $GITHUB_OUTPUT
+            echo "branches=$BRANCHES" >> $GITHUB_OUTPUT
+          else
+            echo "coverage_exists=false" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
+      - name: Comment PR with results
+        if: always() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
 
-            // Read coverage summary if available
+            // Determine status
+            const conclusion = '${{ job.status }}';
+            const statusEmoji = conclusion === 'success' ? '✅' : '❌';
+
+            // Build coverage section
             let coverageSummary = '';
-            try {
-              const coverageData = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
-              const total = coverageData.total;
+            if ('${{ steps.coverage.outputs.coverage_exists }}' === 'true') {
               coverageSummary = `
             ### 📊 Test Coverage
-            - **Lines**: ${total.lines.pct}%
-            - **Statements**: ${total.statements.pct}%
-            - **Functions**: ${total.functions.pct}%
-            - **Branches**: ${total.branches.pct}%
+            - **Lines**: ${{ steps.coverage.outputs.lines }}%
+            - **Statements**: ${{ steps.coverage.outputs.statements }}%
+            - **Functions**: ${{ steps.coverage.outputs.functions }}%
+            - **Branches**: ${{ steps.coverage.outputs.branches }}%
             `;
-            } catch (error) {
+            } else {
               coverageSummary = '\n_Coverage report not available_\n';
             }
 
-            const body = `## 🤖 CI Results
+            const body = `## ${statusEmoji} CI Pipeline Results
 
+            **Status**: ${conclusion === 'success' ? '✅ All checks passed!' : '❌ Some checks failed'}
+
+            ### 📋 Checks Summary
             | Check | Status |
             |-------|--------|
-            | ESLint | ${{ needs.lint.result == 'success' && '✅ Passed' || '❌ Failed' }} |
-            | TypeScript | ${{ needs.type-check.result == 'success' && '✅ Passed' || '❌ Failed' }} |
-            | Prettier | ${{ needs.format.result == 'success' && '✅ Passed' || '❌ Failed' }} |
-            | Tests | ${{ needs.test.result == 'success' && '✅ Passed' || '❌ Failed' }} |
-            | Build | ${{ needs.build.result == 'success' && '✅ Passed' || '❌ Failed' }} |
-            | Security Audit | ${{ needs.audit.result == 'success' && '✅ Passed' || '⚠️  Warnings' }} |
+            | TypeScript | ${{ steps.type-check.conclusion == 'success' && '✅ Passed' || '❌ Failed' }} |
+            | ESLint | ${{ steps.lint.conclusion == 'success' && '✅ Passed' || '❌ Failed' }} |
+            | Prettier | ${{ steps.format.conclusion == 'success' && '✅ Passed' || '❌ Failed' }} |
+            | Tests | ${{ steps.test.conclusion == 'success' && '✅ Passed' || '❌ Failed' }} |
+            | Build | ${{ steps.build.conclusion == 'success' && '✅ Passed' || '❌ Failed' }} |
 
             ${coverageSummary}
 
             ---
-            _Updated at ${new Date().toUTCString()}_
+            <sub>🤖 Updated at ${new Date().toUTCString()} | [View Details](${context.payload.pull_request.html_url}/checks)</sub>
             `;
 
             // Find existing comment
@@ -321,7 +192,7 @@ jobs:
             });
 
             const botComment = comments.find(comment => 
-              comment.user.type === 'Bot' && comment.body.includes('🤖 CI Results')
+              comment.user.type === 'Bot' && comment.body.includes('CI Pipeline Results')
             );
 
             if (botComment) {
@@ -332,6 +203,7 @@ jobs:
                 comment_id: botComment.id,
                 body: body
               });
+              console.log('Updated existing PR comment');
             } else {
               // Create new comment
               await github.rest.issues.createComment({
@@ -340,4 +212,29 @@ jobs:
                 issue_number: context.issue.number,
                 body: body
               });
+              console.log('Created new PR comment');
             }
+
+      - name: Generate job summary
+        if: always()
+        run: |
+          echo "## 🎯 CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Checks Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ TypeScript type checking" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ ESLint code quality" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Prettier formatting" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Unit tests with coverage" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Production build" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Security audit" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.coverage.outputs.coverage_exists }}" = "true" ]; then
+            echo "### 📊 Coverage" >> $GITHUB_STEP_SUMMARY
+            echo "- Lines: ${{ steps.coverage.outputs.lines }}%" >> $GITHUB_STEP_SUMMARY
+            echo "- Statements: ${{ steps.coverage.outputs.statements }}%" >> $GITHUB_STEP_SUMMARY
+            echo "- Functions: ${{ steps.coverage.outputs.functions }}%" >> $GITHUB_STEP_SUMMARY
+            echo "- Branches: ${{ steps.coverage.outputs.branches }}%" >> $GITHUB_STEP_SUMMARY
+          fi

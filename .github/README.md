@@ -6,43 +6,40 @@ This directory contains GitHub-specific configuration files for automated workfl
 
 ```
 .github/
-├── workflows/          # GitHub Actions workflow definitions
-│   ├── ci.yml         # Main CI pipeline
-│   └── merge-requirements.yml  # PR merge gate
+├── workflows/
+│   └── ci.yml         # Single comprehensive CI pipeline
 ├── dependabot.yml     # Automated dependency updates
 └── README.md          # This file
 ```
 
-## Workflows
+## CI Workflow
 
-### CI Workflow (`workflows/ci.yml`)
+### Single-Job Pipeline (`workflows/ci.yml`)
 
-Comprehensive CI pipeline that runs on every PR and push to main/develop branches.
+A simplified, single-job workflow that runs all checks sequentially.
 
-**Jobs:**
+**Execution Flow:**
 
-- Install Dependencies
-- ESLint (code quality)
-- TypeScript (type checking)
-- Prettier (code formatting)
-- Security Audit (vulnerability scanning)
-- Unit Tests (with coverage on Node 18.x and 20.x)
-- Build Verification
-- PR Comment Bot (results summary)
+1. Setup (checkout, Node.js 20.x, install deps)
+2. Code Quality (TypeScript, ESLint, Prettier)
+3. Tests (Jest with coverage)
+4. Build (Next.js with Webpack)
+5. Security (npm audit)
+6. Report (PR comment + job summary)
 
-### Merge Requirements (`workflows/merge-requirements.yml`)
+**Benefits:**
 
-Single status check that verifies all CI checks have passed before allowing PR merge.
+- ✅ Simple to understand and maintain
+- ✅ Fails fast on first error
+- ✅ No complex caching between jobs
+- ✅ Linear execution for easier debugging
+- ✅ Single status check for branch protection
 
-**Purpose:**
-
-- Simplifies branch protection rules
-- Ensures all quality gates are met
-- Provides clear feedback on blocking issues
+**Expected Runtime:** ~2-4 minutes
 
 ## Dependabot
 
-Automated dependency updates configuration for:
+Automated dependency updates configuration:
 
 - **NPM packages**: Weekly updates every Monday
 - **GitHub Actions**: Weekly updates every Monday
@@ -51,60 +48,132 @@ Automated dependency updates configuration for:
 
 ## Documentation
 
-For detailed information about CI/CD setup, troubleshooting, and best practices, see:
+For detailed information, see:
 
-- [CI/CD Documentation](../docs/ci-cd.md)
+- [Comprehensive CI/CD Documentation](../docs/ci-cd.md)
 
 ## Quick Reference
 
-### Required Environment Variables (CI)
+### Node.js Version
+
+- **CI**: Node.js 20.x
+- **Local**: Use `nvm use` (reads `.nvmrc`)
+
+### Environment Variables (CI)
 
 All variables use test/demo values in CI:
 
-- `FIREBASE_EMULATOR_MODE=true`
-- `FIREBASE_PROJECT_ID=demo-investify`
-- `FIREBASE_WEB_API_KEY=demo-api-key`
+```bash
+FIREBASE_EMULATOR_MODE=true
+FIREBASE_PROJECT_ID=demo-investify
+FIREBASE_WEB_API_KEY=demo-api-key
+```
 
 See `.env.example` for complete list.
 
-### NPM Scripts for CI
+### NPM Scripts
 
 ```bash
-npm run ci:install      # Install deps with legacy-peer-deps
-npm run ci:validate     # Run all validation checks
+npm run ci:validate     # Run all checks (like CI does)
 npm run test:ci         # Run tests in CI mode
+npm run check-all       # Run all checks with coverage
 ```
 
-### Setting Up Branch Protection
+### Branch Protection Setup
+
+**Required Status Check:** `CI Pipeline`
 
 1. Go to **Settings** → **Branches**
 2. Add protection rule for `main` branch
 3. Enable "Require status checks to pass before merging"
-4. Select required check: **"All Checks Passed"**
+4. Select: **"CI Pipeline"** ✅
+
+That's it! Single check, simple setup.
 
 ## Troubleshooting
 
-Common issues and solutions:
+### Common Issues
 
 **Tests fail in CI but pass locally:**
 
-- Check Node version (CI uses 18.x and 20.x)
-- Verify environment variables are set correctly
-- Review workflow logs in Actions tab
+```bash
+nvm use 20                      # Use same Node version
+rm -rf node_modules             # Clean install
+npm ci --legacy-peer-deps       # Install like CI
+npm run test:ci                 # Run tests like CI
+```
 
-**Build fails with memory errors:**
+**Build fails with Turbopack errors:**
 
-- Adjust `maxWorkers` in `test:ci` script
-- Check cache configuration
+- Turbopack is disabled in `next.config.ts`
+- CI sets `TURBOPACK=0` during builds
+- If you see Turbopack errors, check your config
 
-**Dependabot PRs not appearing:**
+**"jest: not found" error:**
 
-- Verify dependabot.yml syntax
-- Check GitHub repository settings
-- Review Dependabot logs in Insights → Dependency graph
+- All scripts use `npx` prefix now
+- Run `npm ci --legacy-peer-deps` to reinstall
+
+**CI is slow:**
+
+- npm cache should hit after first run
+- Check for slow tests: `npm run test:ci -- --verbose`
+- Optimize test performance if needed
+
+### Debugging
+
+1. **Check workflow logs** - Click on failed job in Actions tab
+2. **Download artifacts** - Coverage reports available for 7 days
+3. **Reproduce locally** - Use `npm run ci:validate`
+4. **Review PR comment** - Shows which check failed
+
+## Key Features
+
+### 1. Fail Fast
+
+Pipeline stops at first failure for quick feedback.
+
+### 2. PR Comment Bot
+
+Automatically posts/updates PR comments with:
+
+- Status of all checks
+- Coverage summary
+- Link to detailed results
+
+### 3. Artifacts
+
+- Coverage reports (7 day retention)
+- Build output on failure (1 day retention)
+
+### 4. Security
+
+- npm audit runs on every build
+- Non-blocking (continues on error)
+- Results shown in logs and PR comment
+
+## Best Practices
+
+1. **Run checks before pushing:**
+
+   ```bash
+   npm run check-all
+   ```
+
+2. **Use pre-commit hooks:**
+
+   ```bash
+   npm run setup:hooks
+   ```
+
+3. **Keep PRs small** - Faster CI, easier reviews
+
+4. **Write tests** - Maintain coverage
+
+5. **Fix CI immediately** - Don't let it stay red
 
 ## Resources
 
+- [Full CI/CD Documentation](../docs/ci-cd.md)
 - [GitHub Actions Docs](https://docs.github.com/en/actions)
 - [Dependabot Docs](https://docs.github.com/en/code-security/dependabot)
-- [Project CI/CD Docs](../docs/ci-cd.md)
