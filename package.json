@@ -19,6 +19,8 @@
     "pre-commit": "npm run type-check && npm run lint && npm run format:check && npm run test:ci -- --passWithNoTests",
     "setup:hooks": "bash scripts/setup-git-hooks.sh",
     "check-all": "npm run type-check && npm run lint && npm run format:check && npm run test:coverage",
+    "ci:install": "npm ci --legacy-peer-deps",
+    "ci:validate": "npm run type-check && npm run lint && npm run format:check && npm run test:ci && npm run build",
     "emulators:start": "npx firebase emulators:start --import=./firebase-data --export-on-exit=./firebase-data",
     "ingest:schemes": "node --env-file=.env.local -r tsx scripts/ingest-schemes.ts",
     "ingest:portfolio": "node --env-file=.env.local -r tsx scripts/ingest-portfolio.ts"

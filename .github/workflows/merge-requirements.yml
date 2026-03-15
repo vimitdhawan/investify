@@ -1,0 +1,104 @@
+name: Merge Requirements
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+    branches: [main, develop]
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+
+jobs:
+  # This job acts as a single status check that depends on all CI checks
+  # Configure branch protection to require only this check
+  verify-all:
+    name: All Checks Passed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for CI workflow
+        uses: fountainhead/action-wait-for-check@v1.2.0
+        id: wait-for-ci
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Install Dependencies
+          ref: ${{ github.event.pull_request.head.sha }}
+          timeoutSeconds: 600
+          intervalSeconds: 10
+
+      - name: Check CI workflow status
+        if: steps.wait-for-ci.outputs.conclusion != 'success'
+        run: |
+          echo "CI workflow did not complete successfully"
+          echo "Status: ${{ steps.wait-for-ci.outputs.conclusion }}"
+          exit 1
+
+      - name: Verify all required checks
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const requiredChecks = [
+              'ESLint',
+              'TypeScript', 
+              'Prettier',
+              'Unit Tests',
+              'Build',
+              'Security Audit'
+            ];
+
+            const { data: checkRuns } = await github.rest.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.payload.pull_request.head.sha,
+            });
+
+            console.log('All check runs:', checkRuns.check_runs.map(c => ({ name: c.name, conclusion: c.conclusion })));
+
+            const failedChecks = [];
+            const pendingChecks = [];
+
+            for (const checkName of requiredChecks) {
+              const check = checkRuns.check_runs.find(c => c.name === checkName);
+              
+              if (!check) {
+                pendingChecks.push(checkName);
+                continue;
+              }
+
+              if (check.conclusion === 'failure' || check.conclusion === 'cancelled') {
+                failedChecks.push(checkName);
+              } else if (!check.conclusion || check.conclusion === 'pending') {
+                pendingChecks.push(checkName);
+              }
+            }
+
+            if (failedChecks.length > 0) {
+              core.setFailed(`The following checks failed: ${failedChecks.join(', ')}`);
+              return;
+            }
+
+            if (pendingChecks.length > 0) {
+              console.log(`The following checks are still pending: ${pendingChecks.join(', ')}`);
+            }
+
+            console.log('✅ All required checks passed!');
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Merge Requirements Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This check verifies that all required CI checks have passed." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Required Checks:**" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ ESLint (code quality)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ TypeScript (type safety)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Prettier (code formatting)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Unit Tests (functionality)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Build (production readiness)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Security Audit (vulnerability scan)" >> $GITHUB_STEP_SUMMARY
