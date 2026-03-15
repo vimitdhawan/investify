@@ -68,15 +68,8 @@ if [ $? -ne 0 ]; then
 fi
 echo "${GREEN}✅ Prettier check passed${NC}"
 
-# 4. Run tests
-echo "🧪 Running tests..."
-npm run test:ci -- --passWithNoTests
-if [ $? -ne 0 ]; then
-  echo "${RED}❌ Tests failed${NC}"
-  echo "${YELLOW}💡 Fix failing tests before committing${NC}"
-  exit 1
-fi
-echo "${GREEN}✅ Tests passed${NC}"
+# Tests are run in CI only, not in pre-commit hooks
+# This allows faster local commits while ensuring quality in CI
 
 echo "${GREEN}✨ All pre-commit checks passed!${NC}"
 exit 0
@@ -91,7 +84,8 @@ echo "📝 Note: Pre-commit hook will run the following checks:"
 echo "   - TypeScript type checking"
 echo "   - ESLint validation"
 echo "   - Prettier formatting"
-echo "   - Unit tests"
+echo ""
+echo "ℹ️  Unit tests run in CI only (not pre-commit) for faster local development"
 echo ""
 echo "💡 To bypass hooks in emergency: git commit --no-verify"
 echo "⚠️  Use --no-verify sparingly and fix issues in the next commit"
