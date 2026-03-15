@@ -54,10 +54,5 @@ describe('Utils', () => {
     it('should handle undefined', () => {
       expect(formatCurrencyCompact(undefined)).toBe('');
     });
-
-    // INTENTIONAL FAILING TEST - Remove this to make CI pass
-    it('should fail intentionally to test CI', () => {
-      expect(1 + 1).toBe(3); // This will fail!
-    });
   });
 });
