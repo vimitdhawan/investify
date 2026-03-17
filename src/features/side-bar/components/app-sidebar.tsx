@@ -10,10 +10,15 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 
+import type { Investor } from '@/features/portfolio/type';
 import { NavMain } from '@/features/side-bar/components/nav-main';
 import { NavUser } from '@/features/side-bar/components/nav-user';
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  user?: Investor;
+}
+
+export function AppSidebar({ user, ...props }: AppSidebarProps) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -32,7 +37,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser />
+        <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
   );
