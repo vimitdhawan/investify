@@ -5,6 +5,23 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        type: boolean
+        description: 'Skip unit tests (for faster builds)'
+        required: false
+        default: false
+      skip_lint:
+        type: boolean
+        description: 'Skip linting checks'
+        required: false
+        default: false
+      skip_type_check:
+        type: boolean
+        description: 'Skip TypeScript type checking'
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -55,18 +72,21 @@ jobs:
       # ============================================
       - name: TypeScript type check
         id: type-check
+        if: ${{ !inputs.skip_type_check }}
         run: |
           echo "🔍 Running TypeScript type check..."
           npm run type-check
 
       - name: ESLint check
         id: lint
+        if: ${{ !inputs.skip_lint }}
         run: |
           echo "🔍 Running ESLint..."
           npm run lint
 
       - name: Prettier format check
         id: format
+        if: ${{ !inputs.skip_lint }}
         run: |
           echo "🔍 Checking code formatting..."
           npm run format:check
@@ -76,6 +96,7 @@ jobs:
       # ============================================
       - name: Run unit tests
         id: test
+        if: ${{ !inputs.skip_tests }}
         run: |
           echo "🧪 Running unit tests with coverage..."
           npm run test:ci
