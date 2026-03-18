@@ -24,7 +24,10 @@
     "ci:validate": "npm run type-check && npm run lint && npm run format:check && npm run test:ci && npm run build",
     "emulators:start": "npx firebase emulators:start --import=./firebase-data --export-on-exit=./firebase-data",
     "ingest:schemes": "node --env-file=.env.local -r tsx scripts/ingest-schemes.ts",
-    "ingest:portfolio": "node --env-file=.env.local -r tsx scripts/ingest-portfolio.ts"
+    "ingest:portfolio": "node --env-file=.env.local -r tsx scripts/ingest-portfolio.ts",
+    "ingest:holdings": "node --env-file=.env.local -r tsx scripts/ingest-holdings.ts",
+    "ingest:holdings:test": "node --env-file=.env.local -r tsx scripts/ingest-holdings.ts -- --test",
+    "ingest:holdings:verify": "node --env-file=.env.local -r tsx scripts/ingest-holdings.ts -- --verify --local"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -47,6 +50,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tabler/icons-react": "^3.35.0",
     "@tanstack/react-table": "^8.21.3",
+    "axios": "^1.13.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
