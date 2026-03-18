@@ -1,6 +1,6 @@
 // scripts/ingest-portfolio.ts
 import type { Investor, Portfolio, Statement } from '@/features/portfolio/type';
-import { type Scheme, SchemeNavStatus, type SchemeType } from '@/features/schemes/type';
+import { type Scheme, SchemeNavStatus, SchemeType } from '@/features/schemes/type';
 import {
   type Transaction,
   TransactionType,
@@ -208,7 +208,7 @@ async function processSchemes(
         isClosed: isClosed,
         marketValue: s.value,
         navStatus: SchemeNavStatus.Pending,
-        type: s.type,
+        type: mapSchemeType(s.type),
         transactions: transactions,
         nav: s.nav,
         latestNavDate: latestNavDate,
@@ -321,6 +321,19 @@ function mapTransaction(dto: TransactionDTO, schemeId: string, index: number): T
     units: Math.abs(dto.units || 0),
     amount: Math.abs(dto.amount),
   };
+}
+
+function mapSchemeType(schemeType: string): SchemeType {
+  switch (schemeType) {
+    case 'EQUITY':
+      return SchemeType.Equity;
+    case 'DEBT':
+      return SchemeType.Debt;
+    case 'HYBRID':
+      return SchemeType.Hybrid;
+    default:
+      return SchemeType.Other;
+  }
 }
 
 async function main() {

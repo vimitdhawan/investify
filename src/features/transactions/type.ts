@@ -1,3 +1,5 @@
+import type { SchemeType } from '@/features/schemes/type';
+
 export enum TransactionType {
   Purchase = 'PURCHASE',
   PurchaseSIP = 'PURCHASE_SIP',
@@ -68,4 +70,22 @@ export interface AggregateTransaction {
   capitalGainTax: number;
   stampDuty: number;
   sttTax: number;
+}
+
+export interface RealizedGainDetail {
+  id: string;
+  schemeId: string;
+  schemeName: string;
+  schemeType: SchemeType;
+  units: number;
+  purchaseDate: Date;
+  saleDate: Date;
+  purchasePrice: number;
+  salePrice: number;
+  gainLoss: number;
+  holdingPeriodDays: number;
+  isLTCG: boolean;
+  isSTCG: boolean;
+  isDebt: boolean;
+  fiscalYear: string; // e.g., "2023-24"
 }
