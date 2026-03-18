@@ -1,4 +1,4 @@
-import { Building, LayoutDashboard, List, Settings, Target } from 'lucide-react';
+import { Building, FileText, LayoutDashboard, List, Settings, Target } from 'lucide-react';
 
 type SideMenuItem = {
   title: string;
@@ -31,6 +31,12 @@ export const data: SideMenuItem[] = [
     url: '/schemes',
     icon: List,
     description: 'View performance by scheme',
+  },
+  {
+    title: 'Tax Report',
+    url: '/tax-report',
+    icon: FileText,
+    description: 'Realized gains and tax liabilities',
   },
   {
     title: 'Settings',

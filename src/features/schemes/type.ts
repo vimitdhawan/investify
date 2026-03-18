@@ -4,6 +4,7 @@ export enum SchemeType {
   Equity = 'EQUITY',
   Debt = 'DEBT',
   Hybrid = 'HYBRID',
+  Other = 'OTHER',
 }
 
 export enum SchemeNavStatus {
