@@ -21,11 +21,15 @@ interface SchemeData {
   isinDivReinvestment: string;
 }
 
+interface ColorCodes {
+  [key: string]: string;
+}
+
 interface AssetAllocation {
-  equity_alloc: string;
-  bond_alloc: string;
-  cash_alloc: string;
-  other_alloc: string;
+  equity_alloc: number;
+  bond_alloc: number;
+  cash_alloc: number;
+  other_alloc: number;
 }
 
 interface MarketCapWeightage {
@@ -38,12 +42,36 @@ interface MarketCapWeightage {
 interface Concentration {
   number_of_holding: number;
   avg_market_cap: string;
+  top_10_stk_wt: number;
+  top_5_stk_wt: number;
+  top_3_sector_wt: number;
+}
+
+interface StockHolding {
+  name: string;
+  sector: string;
+  value: number;
+  weighting: number;
+}
+
+// Raw response from MoneyControl API (before type conversion)
+interface MoneycontrolAssetAllocation {
+  equity_alloc: string;
+  bond_alloc: string;
+  cash_alloc: string;
+  other_alloc: string;
+  colorCodes?: ColorCodes;
+}
+
+interface MoneycontrolConcentration {
+  number_of_holding: number;
+  avg_market_cap: string;
   top_10_stk_wt: string;
   top_5_stk_wt: string;
   top_3_sector_wt: string;
 }
 
-interface StockHolding {
+interface MoneycontrolStockHolding {
   name: string;
   sector: string;
   value: string;
@@ -54,12 +82,12 @@ interface MoneycontrolResponse {
   success: number;
   data: [
     {
-      asset_alloc: AssetAllocation;
+      asset_alloc: MoneycontrolAssetAllocation;
       market_cap_weightage: MarketCapWeightage;
-      concentration: Concentration;
+      concentration: MoneycontrolConcentration;
     },
     {
-      stock_holding: StockHolding[];
+      stock_holding: MoneycontrolStockHolding[];
     },
   ];
 }
@@ -190,6 +218,55 @@ function groupSchemesByName(schemes: SchemeData[]): SchemeGroup[] {
 }
 
 // ===========================
+// Type Conversion Helpers
+// ===========================
+
+/**
+ * Safely converts string to number, returns 0 if invalid
+ */
+function parseNumericString(value: string): number {
+  const parsed = parseFloat(value);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+/**
+ * Converts MoneyControl asset allocation to typed version
+ */
+function convertAssetAllocation(raw: MoneycontrolAssetAllocation): AssetAllocation {
+  return {
+    equity_alloc: parseNumericString(raw.equity_alloc),
+    bond_alloc: parseNumericString(raw.bond_alloc),
+    cash_alloc: parseNumericString(raw.cash_alloc),
+    other_alloc: parseNumericString(raw.other_alloc),
+  };
+}
+
+/**
+ * Converts MoneyControl concentration to typed version
+ */
+function convertConcentration(raw: MoneycontrolConcentration): Concentration {
+  return {
+    number_of_holding: raw.number_of_holding,
+    avg_market_cap: raw.avg_market_cap,
+    top_10_stk_wt: parseNumericString(raw.top_10_stk_wt),
+    top_5_stk_wt: parseNumericString(raw.top_5_stk_wt),
+    top_3_sector_wt: parseNumericString(raw.top_3_sector_wt),
+  };
+}
+
+/**
+ * Converts MoneyControl stock holding to typed version
+ */
+function convertStockHolding(raw: MoneycontrolStockHolding): StockHolding {
+  return {
+    name: raw.name,
+    sector: raw.sector,
+    value: parseNumericString(raw.value),
+    weighting: parseNumericString(raw.weighting),
+  };
+}
+
+// ===========================
 // Deduplication
 // ===========================
 
@@ -271,23 +348,28 @@ async function fetchHoldingsFromMoneycontrol(
       return null;
     }
 
+    // Convert types from raw MoneyControl response
+    const convertedAssetAlloc = convertAssetAllocation(assetData.asset_alloc);
+    const convertedConcentration = convertConcentration(assetData.concentration);
+    const convertedStockHoldings = stockData.stock_holding.map(convertStockHolding);
+
     // Deduplicate stocks by name + sector
-    const uniqueStockHoldings = deduplicateStockHoldings(stockData.stock_holding);
+    const uniqueStockHoldings = deduplicateStockHoldings(convertedStockHoldings);
 
     if (verbose) {
-      const dedupCount = stockData.stock_holding.length - uniqueStockHoldings.length;
+      const dedupCount = convertedStockHoldings.length - uniqueStockHoldings.length;
       console.log(
         `    ✓ Holdings count: ${uniqueStockHoldings.length}${dedupCount > 0 ? ` (removed ${dedupCount} duplicates)` : ''}`
       );
-      console.log(`    ✓ Equity allocation: ${assetData.asset_alloc.equity_alloc}%`);
+      console.log(`    ✓ Equity allocation: ${convertedAssetAlloc.equity_alloc}%`);
     }
 
     // Map to SchemeHolding
     const schemeHolding: SchemeHolding = {
       isin,
-      asset_alloc: assetData.asset_alloc,
+      asset_alloc: convertedAssetAlloc,
       market_cap_weightage: assetData.market_cap_weightage,
-      concentration: assetData.concentration,
+      concentration: convertedConcentration,
       stock_holding: uniqueStockHoldings,
       fetchedAt: new Date().toISOString(),
     };
