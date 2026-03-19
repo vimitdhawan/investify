@@ -1,7 +1,5 @@
 // scripts/ingest-holdings.ts
 import axios from 'axios';
-import fs from 'fs';
-import path from 'path';
 
 import { bucket, firestore } from '@/lib/firebase';
 
@@ -66,11 +64,13 @@ interface MoneycontrolResponse {
   ];
 }
 
-interface HoldingData {
+interface SchemeHolding {
+  isin: string;
   asset_alloc: AssetAllocation;
   market_cap_weightage: MarketCapWeightage;
   concentration: Concentration;
   stock_holding: StockHolding[];
+  fetchedAt: string;
 }
 
 interface SchemeGroup {
@@ -80,11 +80,10 @@ interface SchemeGroup {
 }
 
 interface IngestOptions {
-  mode: 'full' | 'test' | 'verify';
-  limit?: number;
   dryRun?: boolean;
   verbose?: boolean;
-  useLocalCsv?: boolean;
+  recordsLimit?: number;
+  workerCount?: number;
 }
 
 // ===========================
@@ -128,25 +127,18 @@ function parseCSV(csvContent: string): SchemeData[] {
   return data;
 }
 
-async function readSchemeFile(useLocalCsv: boolean = false): Promise<SchemeData[]> {
+async function readSchemeFile(): Promise<SchemeData[]> {
   const fileName = 'SchemeData.csv';
 
   try {
-    if (useLocalCsv) {
-      // Read from local file system
-      const csvPath = path.join(process.cwd(), fileName);
-      const csvContent = fs.readFileSync(csvPath, 'utf-8');
-      return parseCSV(csvContent);
-    } else {
-      // Read from Firebase Storage
-      const file = bucket.file(fileName);
-      const [fileContent] = await file.download();
-      return parseCSV(fileContent.toString('utf-8'));
-    }
+    // Always read from Firebase Storage
+    const file = bucket.file(fileName);
+    const [fileContent] = await file.download();
+    return parseCSV(fileContent.toString('utf-8'));
   } catch (error) {
     console.error('Error reading or parsing scheme data CSV:', error);
     if ((error as any).code === 404) {
-      console.error(`File '${fileName}' not found.`);
+      console.error(`File '${fileName}' not found in Firebase Storage.`);
     }
     return [];
   }
@@ -198,13 +190,38 @@ function groupSchemesByName(schemes: SchemeData[]): SchemeGroup[] {
 }
 
 // ===========================
+// Deduplication
+// ===========================
+
+/**
+ * Deduplicates stock holdings by name + sector combination
+ * Keeps the first occurrence if duplicates exist
+ */
+function deduplicateStockHoldings(stockHoldings: StockHolding[]): StockHolding[] {
+  const seen = new Set<string>();
+  const unique: StockHolding[] = [];
+
+  for (const holding of stockHoldings) {
+    // Create unique key from name + sector
+    const key = `${holding.name.trim()}|${holding.sector.trim()}`;
+
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(holding);
+    }
+  }
+
+  return unique;
+}
+
+// ===========================
 // API Fetching
 // ===========================
 
 async function fetchHoldingsFromMoneycontrol(
   isin: string,
   verbose: boolean = false
-): Promise<HoldingData | null> {
+): Promise<SchemeHolding | null> {
   const apiUrl = `https://api.moneycontrol.com/swiftapi/v1/mutualfunds/portfolio?isin=${isin}&deviceType=W&responseType=json`;
 
   try {
@@ -223,24 +240,59 @@ async function fetchHoldingsFromMoneycontrol(
       console.log(`    Response status: ${response.status}`);
     }
 
-    if (response.data.success !== 1 || !response.data.data || response.data.data.length < 2) {
+    // Validation: Check success flag
+    if (response.data.success !== 1) {
+      console.warn(`API returned success=0 for ISIN: ${isin}`);
+      return null;
+    }
+
+    // Validate data structure
+    if (
+      !response.data.data ||
+      !Array.isArray(response.data.data) ||
+      response.data.data.length < 2
+    ) {
       console.warn(`No holdings data found for ISIN: ${isin}`);
       return null;
     }
 
-    const [assetData, stockData] = response.data.data;
+    // Safe extraction from tuple array
+    const assetData = response.data.data[0];
+    const stockData = response.data.data[1];
+
+    // Validate extracted data has required fields
+    if (!assetData?.asset_alloc) {
+      console.warn(`Missing asset_alloc in response for ISIN: ${isin}`);
+      return null;
+    }
+
+    if (!stockData?.stock_holding || !Array.isArray(stockData.stock_holding)) {
+      console.warn(`Missing or invalid stock_holding in response for ISIN: ${isin}`);
+      return null;
+    }
+
+    // Deduplicate stocks by name + sector
+    const uniqueStockHoldings = deduplicateStockHoldings(stockData.stock_holding);
 
     if (verbose) {
-      console.log(`    ✓ Holdings count: ${stockData.stock_holding?.length || 0}`);
+      const dedupCount = stockData.stock_holding.length - uniqueStockHoldings.length;
+      console.log(
+        `    ✓ Holdings count: ${uniqueStockHoldings.length}${dedupCount > 0 ? ` (removed ${dedupCount} duplicates)` : ''}`
+      );
       console.log(`    ✓ Equity allocation: ${assetData.asset_alloc.equity_alloc}%`);
     }
 
-    return {
+    // Map to SchemeHolding
+    const schemeHolding: SchemeHolding = {
+      isin,
       asset_alloc: assetData.asset_alloc,
       market_cap_weightage: assetData.market_cap_weightage,
       concentration: assetData.concentration,
-      stock_holding: stockData.stock_holding || [],
+      stock_holding: uniqueStockHoldings,
+      fetchedAt: new Date().toISOString(),
     };
+
+    return schemeHolding;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.error(`API error for ISIN ${isin}: ${error.message}`);
@@ -250,8 +302,54 @@ async function fetchHoldingsFromMoneycontrol(
     } else {
       console.error(`Unexpected error for ISIN ${isin}:`, error);
     }
-    return null;
+    throw error; // Throw to allow retry logic to catch
   }
+}
+
+/**
+ * Fetches holdings with exponential backoff retry logic
+ * Retries up to maxRetries times with increasing delays
+ */
+async function fetchHoldingsWithRetry(
+  isin: string,
+  maxRetries: number = 2,
+  verbose: boolean = false
+): Promise<SchemeHolding | null> {
+  for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+    try {
+      const holding = await fetchHoldingsFromMoneycontrol(isin, verbose);
+
+      // Successfully fetched and validated
+      if (holding !== null) {
+        return holding;
+      }
+
+      // If holding is null (validation failed), don't retry
+      return null;
+    } catch (error) {
+      if (attempt <= maxRetries) {
+        // Exponential backoff: 1s, 2s
+        const delayMs = 1000 * attempt;
+        if (verbose) {
+          console.warn(
+            `  ⚠️  Attempt ${attempt}/${maxRetries + 1} failed for ISIN ${isin}. Retrying in ${delayMs}ms...`
+          );
+        }
+        await delay(delayMs);
+      } else {
+        // All retries exhausted
+        if (verbose) {
+          console.error(
+            `  ✗ Failed to fetch after ${maxRetries + 1} attempts for ISIN ${isin}`,
+            error
+          );
+        }
+        return null;
+      }
+    }
+  }
+
+  return null;
 }
 
 async function delay(ms: number): Promise<void> {
@@ -264,22 +362,22 @@ async function delay(ms: number): Promise<void> {
 
 async function saveHoldingToFirestore(
   isin: string,
-  holdings: HoldingData,
+  holding: SchemeHolding,
   dryRun: boolean = false,
   verbose: boolean = false
 ): Promise<void> {
   try {
     if (dryRun) {
       if (verbose) {
-        console.log(`    [DRY RUN] Would save holdings for ISIN: ${isin}`);
-        console.log(`      - ${holdings.stock_holding.length} stock holdings`);
-        console.log(`      - Equity: ${holdings.asset_alloc.equity_alloc}%`);
+        console.log(`    [DRY RUN] Would save SchemeHolding for ISIN: ${isin}`);
+        console.log(`      - ${holding.stock_holding.length} stock holdings`);
+        console.log(`      - Equity: ${holding.asset_alloc.equity_alloc}%`);
       }
     } else {
       const holdingRef = firestore.collection('holdings').doc(isin);
-      await holdingRef.set(holdings, { merge: true });
+      await holdingRef.set(holding, { merge: true });
       if (verbose) {
-        console.log(`    ✓ Saved holdings for ISIN: ${isin}`);
+        console.log(`    ✓ Saved SchemeHolding for ISIN: ${isin}`);
       }
     }
   } catch (error) {
@@ -288,25 +386,94 @@ async function saveHoldingToFirestore(
 }
 
 // ===========================
+// Parallel Processing
+// ===========================
+
+/**
+ * Processes scheme groups in parallel using a worker pool
+ * Each worker fetches and saves holdings independently
+ */
+async function processGroupsInParallel(
+  groups: SchemeGroup[],
+  workerCount: number,
+  dryRun: boolean,
+  verbose: boolean
+): Promise<{
+  successCount: number;
+  failureCount: number;
+  totalIsins: number;
+}> {
+  let successCount = 0;
+  let failureCount = 0;
+  let totalIsins = 0;
+  let currentIndex = 0;
+
+  if (verbose) {
+    console.log(`Starting parallel processing with ${workerCount} workers...\n`);
+  }
+
+  /**
+   * Worker function: processes one group at a time until queue is empty
+   */
+  const worker = async (workerId: number) => {
+    while (currentIndex < groups.length) {
+      const index = currentIndex++;
+      const group = groups[index];
+
+      if (verbose) {
+        console.log(
+          `[Worker ${workerId}] [${index + 1}/${groups.length}] Processing: ${group.schemeName}`
+        );
+      } else {
+        console.log(`[${index + 1}/${groups.length}] Processing: ${group.schemeName}`);
+      }
+
+      // Fetch holdings for primary ISIN (with retry)
+      const holdings = await fetchHoldingsWithRetry(group.primaryIsin, 2, verbose);
+
+      if (holdings) {
+        // Save for all ISINs in the group
+        for (const isin of group.allIsins) {
+          await saveHoldingToFirestore(isin, holdings, dryRun, verbose);
+        }
+        successCount++;
+        totalIsins += group.allIsins.length;
+
+        if (!verbose) {
+          console.log(`  ✓ Saved holdings for ${group.allIsins.length} ISINs`);
+        }
+      } else {
+        failureCount++;
+        console.warn(`  ✗ Failed to fetch holdings for ${group.schemeName}`);
+      }
+
+      // Small delay between API calls even in parallel
+      await delay(100);
+    }
+  };
+
+  // Launch N workers in parallel
+  const workers = Array(workerCount)
+    .fill(null)
+    .map((_, i) => worker(i + 1));
+
+  await Promise.all(workers);
+
+  return { successCount, failureCount, totalIsins };
+}
+
+// ===========================
 // Main Ingestion Logic
 // ===========================
 
 async function ingestHoldings(options: IngestOptions) {
-  const { mode, limit, dryRun = false, verbose = false, useLocalCsv = false } = options;
+  const { dryRun = false, verbose = false, recordsLimit, workerCount = 5 } = options;
 
-  if (mode === 'verify') {
-    console.log('\n🚀 Holdings Ingestion Logic Verification\n');
-    console.log('This will verify:');
-    console.log('  1. CSV parsing and ISIN extraction');
-    console.log('  2. Scheme grouping logic');
-    console.log('  3. Moneycontrol API fetching');
-    console.log('  4. Data structure validation\n');
-  } else {
-    console.log('Starting mutual fund holdings ingestion...\n');
-  }
+  console.log('Starting mutual fund holdings ingestion...\n');
 
-  console.log(`Reading scheme data from ${useLocalCsv ? 'local CSV' : 'Firebase Storage'}...`);
-  const allSchemes = await readSchemeFile(useLocalCsv);
+  // Always read from Firebase Storage
+  console.log('Reading scheme data from Firebase Storage...');
+  const allSchemes = await readSchemeFile();
 
   if (!allSchemes || allSchemes.length === 0) {
     console.log('No scheme data found to ingest.');
@@ -315,127 +482,36 @@ async function ingestHoldings(options: IngestOptions) {
 
   console.log(`✓ Found ${allSchemes.length} schemes in CSV\n`);
 
+  // Group schemes by name
   console.log('Grouping schemes by name to deduplicate portfolio fetching...');
   const schemeGroups = groupSchemesByName(allSchemes);
   console.log(`✓ Grouped into ${schemeGroups.length} unique scheme families\n`);
 
-  // Determine how many groups to process
+  // Apply record limit
   let groupsToProcess = schemeGroups;
-  if (limit && limit > 0) {
-    groupsToProcess = schemeGroups.slice(0, limit);
-    console.log(
-      `${mode === 'verify' ? '🧪' : '⚠️'} Processing only first ${limit} groups${mode === 'test' || mode === 'verify' ? ' (test mode)' : ''}\n`
-    );
+  if (recordsLimit && recordsLimit > 0) {
+    groupsToProcess = schemeGroups.slice(0, recordsLimit);
+    console.log(`⚠️  Processing only first ${recordsLimit} groups\n`);
   }
 
   if (dryRun) {
     console.log('🔍 DRY RUN MODE - No data will be saved to Firestore\n');
   }
 
-  if (mode === 'verify') {
-    console.log('='.repeat(60));
-  }
-
-  let processedGroups = 0;
-  let successfulFetches = 0;
-  let failedFetches = 0;
-  let totalIsinsSaved = 0;
-
-  for (const group of groupsToProcess) {
-    processedGroups++;
-
-    if (verbose || mode === 'verify') {
-      console.log(
-        `\n[${processedGroups}/${groupsToProcess.length}] ${mode === 'verify' ? group.schemeName : `Processing: ${group.schemeName}`}`
-      );
-      console.log(`  Primary ISIN: ${group.primaryIsin}`);
-      console.log(
-        `  Total ISINs${mode === 'verify' ? '' : ' in group'}: ${group.allIsins.length}${mode === 'verify' ? ` (${group.allIsins.join(', ')})` : ''}`
-      );
-    } else {
-      console.log(`[${processedGroups}/${groupsToProcess.length}] Processing: ${group.schemeName}`);
-    }
-
-    // Fetch holdings for the primary ISIN
-    const holdings = await fetchHoldingsFromMoneycontrol(
-      group.primaryIsin,
-      verbose || mode === 'verify'
-    );
-
-    if (holdings) {
-      // Save for all ISINs in the group
-      for (const isin of group.allIsins) {
-        await saveHoldingToFirestore(isin, holdings, dryRun, verbose);
-      }
-      successfulFetches++;
-      totalIsinsSaved += group.allIsins.length;
-
-      if (mode === 'verify') {
-        console.log(`  ✓ SUCCESS - Would save for ${group.allIsins.length} ISINs`);
-        console.log(`\n  📊 Sample Data:`);
-        console.log(`    Asset Allocation:`);
-        console.log(`      - Equity: ${holdings.asset_alloc.equity_alloc}%`);
-        console.log(`      - Bond: ${holdings.asset_alloc.bond_alloc}%`);
-        console.log(`      - Cash: ${holdings.asset_alloc.cash_alloc}%`);
-        console.log(`    Market Cap:`);
-        console.log(`      - Large Cap: ${holdings.market_cap_weightage.large_cap || 'N/A'}%`);
-        console.log(`      - Mid Cap: ${holdings.market_cap_weightage.mid_cap || 'N/A'}%`);
-        console.log(`      - Small Cap: ${holdings.market_cap_weightage.small_cap || 'N/A'}%`);
-        console.log(`    Holdings: ${holdings.stock_holding.length} stocks`);
-        if (holdings.stock_holding.length > 0) {
-          console.log(
-            `    Top holding: ${holdings.stock_holding[0].name} (${holdings.stock_holding[0].weighting}%)`
-          );
-        }
-      } else if (!verbose) {
-        console.log(`  ✓ Saved holdings for ${group.allIsins.length} ISINs`);
-      }
-    } else {
-      console.warn(`  ✗ Failed to fetch holdings for ${group.schemeName}`);
-      failedFetches++;
-    }
-
-    // Rate limiting: delay between each scheme family
-    if (processedGroups < groupsToProcess.length) {
-      if (mode === 'verify') {
-        console.log(`\n  ⏳ Waiting 500ms before next request...`);
-      }
-      await delay(500);
-    }
-  }
+  // Process groups in parallel
+  const results = await processGroupsInParallel(groupsToProcess, workerCount, dryRun, verbose);
 
   // Summary
-  if (mode === 'verify') {
-    console.log('\n' + '='.repeat(60));
-  }
-
+  console.log('\n' + '='.repeat(60));
+  console.log('=== Ingestion Complete ===');
   console.log(
-    '\n' + (mode === 'verify' ? '📊 VERIFICATION SUMMARY' : '=== Ingestion Complete ===')
+    `Total processed: ${results.successCount + results.failureCount}/${groupsToProcess.length}`
   );
-  console.log(
-    `${mode === 'verify' ? '  Total tested' : 'Total scheme families processed'}: ${processedGroups}${limit ? `/${schemeGroups.length}` : ''}`
-  );
-  console.log(
-    `${mode === 'verify' ? '  Successful' : 'Successful fetches'}: ${successfulFetches} ✓`
-  );
-  console.log(`${mode === 'verify' ? '  Failed' : 'Failed fetches'}: ${failedFetches} ✗`);
-  console.log(
-    `${mode === 'verify' ? '  Success rate' : 'Total ISINs processed'}: ${mode === 'verify' ? `${((successfulFetches / processedGroups) * 100).toFixed(1)}%` : totalIsinsSaved}`
-  );
-
-  if (mode === 'verify' && limit) {
-    const totalIsins = schemeGroups.reduce((sum, g) => sum + g.allIsins.length, 0);
-    console.log(
-      `\n💡 If successful, this script will save holdings for ALL ${schemeGroups.length} scheme families`
-    );
-    console.log(`   across approximately ${totalIsins} ISINs`);
-  }
-
-  if (mode !== 'verify') {
-    console.log('\nHoldings ingestion finished.');
-  } else {
-    console.log('\n✅ Verification complete!\n');
-  }
+  console.log(`Successful: ${results.successCount} ✓`);
+  console.log(`Failed: ${results.failureCount} ✗`);
+  console.log(`Total ISINs processed: ${results.totalIsins}`);
+  console.log('='.repeat(60));
+  console.log('\nHoldings ingestion finished.');
 }
 
 // ===========================
@@ -443,22 +519,32 @@ async function ingestHoldings(options: IngestOptions) {
 // ===========================
 
 async function main() {
-  // Parse command line arguments
   const args = process.argv.slice(2);
-  const mode = args.includes('--verify') ? 'verify' : args.includes('--test') ? 'test' : 'full';
+
+  // Parse flags
   const dryRun = args.includes('--dry-run');
   const verbose = args.includes('--verbose') || args.includes('-v');
-  const useLocalCsv = args.includes('--local');
 
-  // Parse limit
-  let limit: number | undefined;
-  const limitIndex = args.findIndex((arg) => arg === '--limit' || arg === '-l');
-  if (limitIndex !== -1 && args[limitIndex + 1]) {
-    limit = parseInt(args[limitIndex + 1], 10);
-  } else if (mode === 'test') {
-    limit = 5; // Default for test mode
-  } else if (mode === 'verify') {
-    limit = 3; // Default for verify mode
+  // Parse --records <n>
+  let recordsLimit: number | undefined;
+  const recordsIdx = args.findIndex((a) => a === '--records');
+  if (recordsIdx !== -1 && args[recordsIdx + 1]) {
+    recordsLimit = parseInt(args[recordsIdx + 1], 10);
+    if (isNaN(recordsLimit)) {
+      console.error('Error: --records value must be a number');
+      process.exit(1);
+    }
+  }
+
+  // Parse --workers <n>
+  let workerCount = 5; // default
+  const workersIdx = args.findIndex((a) => a === '--workers');
+  if (workersIdx !== -1 && args[workersIdx + 1]) {
+    workerCount = parseInt(args[workersIdx + 1], 10);
+    if (isNaN(workerCount) || workerCount < 1) {
+      console.error('Error: --workers value must be a positive number');
+      process.exit(1);
+    }
   }
 
   // Show help
@@ -466,38 +552,31 @@ async function main() {
     console.log(`
 Usage: npm run ingest:holdings [options]
 
-Modes:
-  --verify          Verification mode (tests 3 groups, shows detailed output)
-  --test            Test mode (processes 5 groups with dry-run)
-  (default)         Full mode (processes all schemes)
-
 Options:
-  --dry-run         Don't save to Firestore (only fetch and log)
-  --verbose, -v     Show detailed logging
-  --local           Read CSV from local file instead of Firebase Storage
-  --limit, -l <n>   Limit number of scheme groups to process
-  --help, -h        Show this help message
+  --dry-run              Don't save to Firestore (test mode)
+  --verbose, -v          Show detailed logging
+  --records <n>          Limit number of scheme groups to process
+  --workers <n>          Number of parallel workers (default: 5)
+  --help, -h             Show this help message
 
 Examples:
-  npm run ingest:holdings                    # Full ingestion
-  npm run ingest:holdings -- --test          # Test with 5 groups
-  npm run ingest:holdings -- --verify        # Verify with 3 groups
-  npm run ingest:holdings -- --limit 10      # Process only 10 groups
-  npm run ingest:holdings -- --dry-run -v    # Dry run with verbose output
-  npm run ingest:holdings -- --local --test  # Test using local CSV
+  npm run ingest:holdings                              # Process all schemes
+  npm run ingest:holdings -- --dry-run                 # Dry run mode
+  npm run ingest:holdings -- --records 50              # Limit to 50 groups
+  npm run ingest:holdings -- --workers 10              # Use 10 parallel workers
+  npm run ingest:holdings -- --records 50 --workers 10 # Combined options
+  npm run ingest:holdings -- --dry-run --verbose       # Dry run with detailed logs
+  npm run ingest:holdings -- --records 10 -v           # 10 groups with verbose output
 `);
     return;
   }
 
-  const options: IngestOptions = {
-    mode,
-    limit,
-    dryRun: dryRun || mode === 'test' || mode === 'verify',
-    verbose: verbose || mode === 'verify',
-    useLocalCsv,
-  };
-
-  await ingestHoldings(options);
+  await ingestHoldings({
+    dryRun,
+    verbose,
+    recordsLimit,
+    workerCount,
+  });
 }
 
 main().catch((error) => {

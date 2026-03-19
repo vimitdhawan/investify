@@ -25,9 +25,7 @@
     "emulators:start": "npx firebase emulators:start --import=./firebase-data --export-on-exit=./firebase-data",
     "ingest:schemes": "node --env-file=.env.local -r tsx scripts/ingest-schemes.ts",
     "ingest:portfolio": "node --env-file=.env.local -r tsx scripts/ingest-portfolio.ts",
-    "ingest:holdings": "node --env-file=.env.local -r tsx scripts/ingest-holdings.ts",
-    "ingest:holdings:test": "node --env-file=.env.local -r tsx scripts/ingest-holdings.ts -- --test",
-    "ingest:holdings:verify": "node --env-file=.env.local -r tsx scripts/ingest-holdings.ts -- --verify --local"
+    "ingest:holdings": "node --env-file=.env.local -r tsx scripts/ingest-holdings.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
