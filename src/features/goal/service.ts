@@ -3,6 +3,7 @@ import type { Scheme } from '@/features/schemes/type';
 
 import { getGoal as getGoalFromRepo, getGoals } from './repository';
 import type { Goal, GoalView } from './type';
+import { calculateRequiredXIRR } from './utils';
 
 export async function fetchGoals(userId: string): Promise<GoalView[]> {
   const [goals, schemes] = await Promise.all([getGoals(userId), getSchemes(userId)]);
@@ -32,12 +33,31 @@ function processGoal(goal: Goal, assignedSchemes: Scheme[]): GoalView {
   // Projection logic
   const projectedDate = calculateProjectedDate(goal, assignedSchemes, currentAmount);
 
+  const requiredXirr = calculateRequiredXIRR(currentAmount, goal.targetAmount, goal.targetDate);
+
+  // Calculate current XIRR as a weighted average of assigned schemes
+  let currentXirr = 0;
+  if (assignedSchemes.length > 0) {
+    if (currentAmount > 0) {
+      currentXirr = assignedSchemes.reduce((sum, s) => {
+        const weight = (s.marketValue || 0) / currentAmount;
+        return sum + (s.xirrGainLoss || 0) * weight;
+      }, 0);
+    } else {
+      // If current value is 0, just use simple average
+      currentXirr =
+        assignedSchemes.reduce((sum, s) => sum + (s.xirrGainLoss || 0), 0) / assignedSchemes.length;
+    }
+  }
+
   return {
     ...goal,
     currentAmount,
     progressPercentage,
     remainingAmount,
     projectedDate,
+    requiredXirr,
+    currentXirr,
   };
 }
 
@@ -53,11 +73,20 @@ function calculateProjectedDate(
 
   if (positiveXirrSchemes.length === 0) return undefined;
 
-  // Use weighted average XIRR or just mean? Design says combined transactions XIRR.
-  // For simplicity here, let's use the average XIRR of assigned schemes.
-  const avgXirr =
-    positiveXirrSchemes.reduce((sum, s) => sum + (s.xirrGainLoss || 0), 0) /
-    positiveXirrSchemes.length;
+  // Use weighted average XIRR of positive schemes for projection
+  const positiveMarketValue = positiveXirrSchemes.reduce((sum, s) => sum + (s.marketValue || 0), 0);
+
+  let avgXirr = 0;
+  if (positiveMarketValue > 0) {
+    avgXirr = positiveXirrSchemes.reduce((sum, s) => {
+      const weight = (s.marketValue || 0) / positiveMarketValue;
+      return sum + (s.xirrGainLoss || 0) * weight;
+    }, 0);
+  } else {
+    avgXirr =
+      positiveXirrSchemes.reduce((sum, s) => sum + (s.xirrGainLoss || 0), 0) /
+      positiveXirrSchemes.length;
+  }
 
   if (avgXirr <= 0) return undefined;
 

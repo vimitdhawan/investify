@@ -3,12 +3,14 @@ export interface Goal {
   name: string;
   targetAmount: number;
   targetDate: Date;
-  currentAmount: number;
   schemeIds: string[];
-  projectedDate?: Date;
 }
 
 export interface GoalView extends Goal {
+  currentAmount: number;
   progressPercentage: number;
   remainingAmount: number;
+  projectedDate?: Date;
+  requiredXirr: number;
+  currentXirr: number;
 }

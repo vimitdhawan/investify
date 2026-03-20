@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation';
+
 import { GoalForm } from '@/features/goal/components/goal-form';
 import { getActiveSchemes } from '@/features/schemes/service';
 
@@ -7,7 +9,7 @@ export default async function CreateGoalPage() {
   const userId = await getSessionUserId();
 
   if (!userId) {
-    return <div>Unauthorized</div>;
+    redirect('/login');
   }
 
   const schemes = await getActiveSchemes(userId);
