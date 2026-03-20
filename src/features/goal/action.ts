@@ -35,7 +35,6 @@ export async function handleCreateGoal(
   try {
     await createGoal(userId, {
       ...validationResult.data,
-      currentAmount: 0, // Will be calculated by service
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to create goal';

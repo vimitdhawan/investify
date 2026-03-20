@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 import { ArrowLeft, Edit } from 'lucide-react';
 
@@ -20,7 +20,7 @@ export default async function GoalDetailsPage({ params }: { params: Promise<{ id
   const userId = await getSessionUserId();
 
   if (!userId) {
-    return <div>Unauthorized</div>;
+    redirect('/login');
   }
 
   const goal = await getGoalView(userId, id);
@@ -76,7 +76,7 @@ export default async function GoalDetailsPage({ params }: { params: Promise<{ id
               <Progress value={goal.progressPercentage} className="h-4" />
             </div>
 
-            <div className="grid gap-4 pt-4 sm:grid-cols-3">
+            <div className="grid gap-4 pt-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               <div className="rounded-lg border bg-card p-4">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Target Date
@@ -87,8 +87,32 @@ export default async function GoalDetailsPage({ params }: { params: Promise<{ id
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Projected Date
                 </p>
+                {goal.projectedDate ? (
+                  <p className="mt-1 text-lg font-bold text-primary">
+                    {formatDateToYYYYMMDD(goal.projectedDate)}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs font-medium text-destructive leading-tight">
+                    Negative Return From Schemes
+                  </p>
+                )}
+              </div>
+              <div className="rounded-lg border bg-card p-4">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Current XIRR
+                </p>
+                <p
+                  className={`mt-1 text-lg font-bold ${goal.currentXirr >= 0 ? 'text-green-600' : 'text-destructive'}`}
+                >
+                  {goal.currentXirr.toFixed(2)}%
+                </p>
+              </div>
+              <div className="rounded-lg border bg-card p-4">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Required XIRR
+                </p>
                 <p className="mt-1 text-lg font-bold text-primary">
-                  {goal.projectedDate ? formatDateToYYYYMMDD(goal.projectedDate) : 'N/A'}
+                  {goal.requiredXirr === Infinity ? 'N/A' : `${goal.requiredXirr.toFixed(2)}%`}
                 </p>
               </div>
               <div className="rounded-lg border bg-card p-4">
@@ -106,7 +130,7 @@ export default async function GoalDetailsPage({ params }: { params: Promise<{ id
         <Card>
           <CardHeader>
             <CardTitle>Assigned Schemes</CardTitle>
-            <CardDescription>Mutual funds contributing to this goal</CardDescription>
+            <CardDescription>Schemes contributing to this goal</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

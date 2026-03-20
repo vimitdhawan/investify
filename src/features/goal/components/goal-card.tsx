@@ -38,10 +38,19 @@ export function GoalCard({ goal }: { goal: GoalView }) {
               </div>
               <Progress value={goal.progressPercentage} className="h-2" />
             </div>
-            <div className="grid grid-cols-2 gap-4 pt-2 text-sm">
+
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-2 text-sm">
               <div>
                 <p className="text-muted-foreground">Current Value</p>
                 <p className="font-bold text-primary">₹{goal.currentAmount.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Current XIRR</p>
+                <p
+                  className={`font-bold ${goal.currentXirr >= 0 ? 'text-green-600' : 'text-destructive'}`}
+                >
+                  {goal.currentXirr.toFixed(2)}%
+                </p>
               </div>
               <div>
                 <p className="text-muted-foreground">Remaining</p>
@@ -49,14 +58,26 @@ export function GoalCard({ goal }: { goal: GoalView }) {
                   ₹{goal.remainingAmount.toLocaleString()}
                 </p>
               </div>
+              <div className="flex flex-col">
+                <p className="text-muted-foreground">Required XIRR</p>
+                <p className="font-bold text-primary">
+                  {goal.requiredXirr === Infinity ? 'N/A' : `${goal.requiredXirr.toFixed(2)}%`}
+                </p>
+              </div>
             </div>
           </div>
         </CardContent>
+
         <CardFooter className="border-t bg-muted/50 px-6 py-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
-            <span>
-              Projected: {goal.projectedDate ? formatDateToYYYYMMDD(goal.projectedDate) : 'N/A'}
+            <Calendar className="h-3 w-3 shrink-0" />
+            <span className="truncate">
+              Projected:{' '}
+              {goal.projectedDate ? (
+                formatDateToYYYYMMDD(goal.projectedDate)
+              ) : (
+                <span className="text-destructive font-medium">Negative Return From Schemes</span>
+              )}
             </span>
           </div>
         </CardFooter>

@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 import { GoalForm } from '@/features/goal/components/goal-form';
 import { getGoal } from '@/features/goal/repository';
@@ -11,9 +11,8 @@ export default async function EditGoalPage({ params }: { params: Promise<{ id: s
   const userId = await getSessionUserId();
 
   if (!userId) {
-    return <div>Unauthorized</div>;
+    redirect('/login');
   }
-
   const [goal, allSchemes] = await Promise.all([getGoal(userId, id), getSchemes(userId)]);
 
   if (!goal) {
