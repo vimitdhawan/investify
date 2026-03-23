@@ -32,6 +32,8 @@ export function calculateRealizedGainsDetailed(
   for (const sale of sales) {
     let unitsToSell = Math.abs(sale.units);
     const salePricePerUnit = sale.nav;
+    const totalSaleUnits = Math.abs(sale.units);
+    const totalTaxPaid = sale.capitalGainTax ?? 0;
 
     for (const purchase of purchases) {
       if (unitsToSell <= 0) break;
@@ -39,6 +41,12 @@ export function calculateRealizedGainsDetailed(
       if (purchase.remainingUnits > 0) {
         const unitsToProcess = Math.min(unitsToSell, purchase.remainingUnits);
         const gainLoss = unitsToProcess * (salePricePerUnit - purchase.nav);
+
+        // Proportionally distribute tax paid based on units
+        // If sale has 100 units with ₹10,000 tax, and this gain is for 60 units:
+        // taxPaid = (60 / 100) * 10,000 = ₹6,000
+        const proportionalTaxPaid =
+          totalSaleUnits > 0 ? (unitsToProcess / totalSaleUnits) * totalTaxPaid : 0;
 
         // Holding period in days
         const diffTime = sale.date.getTime() - purchase.date.getTime();
@@ -67,7 +75,7 @@ export function calculateRealizedGainsDetailed(
           isSTCG,
           isDebt,
           fiscalYear: getFiscalYear(sale.date),
-          taxPaid: sale.capitalGainTax ?? 0, // Extract capitalGainTax from sale transaction
+          taxPaid: proportionalTaxPaid, // Proportionally distributed tax paid
         });
 
         purchase.remainingUnits -= unitsToProcess;
