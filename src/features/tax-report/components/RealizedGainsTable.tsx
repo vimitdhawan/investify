@@ -71,13 +71,18 @@ export function RealizedGainsTable({ gains }: RealizedGainsTableProps) {
     return null;
   };
 
+  const truncateName = (name: string, maxLength: number = 40) => {
+    if (name.length <= maxLength) return name;
+    return name.substring(0, maxLength) + '...';
+  };
+
   return (
-    <div className="rounded-md border bg-card">
+    <div className="rounded-md border bg-card overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Scheme</TableHead>
-            <TableHead>Folio</TableHead>
+            <TableHead className="min-w-[200px] max-w-[300px]">Scheme</TableHead>
+            <TableHead className="min-w-[100px]">Folio</TableHead>
             <TableHead>Sale Date</TableHead>
             <TableHead className="text-right">Buy Amount</TableHead>
             <TableHead className="text-right">Sell Amount</TableHead>
@@ -96,7 +101,7 @@ export function RealizedGainsTable({ gains }: RealizedGainsTableProps) {
           ) : (
             sortedGroupedGains.map((gain, index) => (
               <TableRow key={`${gain.schemeName}-${gain.folioNumber}-${index}`}>
-                <TableCell className="font-medium">{gain.schemeName}</TableCell>
+                <TableCell className="font-medium">{truncateName(gain.schemeName)}</TableCell>
                 <TableCell className="text-muted-foreground">{gain.folioNumber}</TableCell>
                 <TableCell>{formatDateToYYYYMMDD(gain.saleDate)}</TableCell>
                 <TableCell className="text-right text-muted-foreground">
