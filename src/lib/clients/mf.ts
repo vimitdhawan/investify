@@ -1,4 +1,5 @@
 import { config } from '@/lib/config';
+import { firestore } from '@/lib/firebase';
 import { logger } from '@/lib/logger';
 
 export interface SchemeListItem {
@@ -30,9 +31,21 @@ interface SchemeMeta {
   isin_div_reinvestment: string | null;
 }
 
+interface NavCacheDoc<T> {
+  data: T;
+  cachedAt: number;
+}
+
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 1 day
+
 let cachedSchemeMap: Map<string, number> | null = null;
 
-export async function fetchWithRetry<T>(path: string, retries = 2, timeoutMs = 10000): Promise<T> {
+export async function fetchWithRetry<T>(
+  path: string,
+  retries = 3,
+  timeoutMs = 5000,
+  currentDelay = 100
+): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const url = `${config.mfApiBaseUrl}${path}`;
@@ -48,8 +61,9 @@ export async function fetchWithRetry<T>(path: string, retries = 2, timeoutMs = 1
     return await response.json();
   } catch (error: any) {
     if (retries > 0) {
-      logger.warn({ url, retriesLeft: retries }, 'NAV fetch failed, retrying');
-      return fetchWithRetry(path, retries - 1, timeoutMs);
+      logger.warn({ url, retries, nextRetryDelay: currentDelay }, 'Retrying fetch with backoff');
+      await new Promise((resolve) => setTimeout(resolve, currentDelay));
+      return fetchWithRetry(path, retries - 1, timeoutMs, currentDelay * 2);
     }
     logger.error({ url, error }, 'NAV fetch permanently failed');
     throw error;
@@ -58,34 +72,86 @@ export async function fetchWithRetry<T>(path: string, retries = 2, timeoutMs = 1
   }
 }
 
+async function getFromCache<T>(cacheKey: string): Promise<T | null> {
+  try {
+    const doc = await firestore.collection('nav_cache').doc(cacheKey).get();
+    if (doc.exists) {
+      const cacheData = doc.data() as NavCacheDoc<T>;
+      const now = Date.now();
+      if (now - cacheData.cachedAt < CACHE_TTL_MS) {
+        return cacheData.data;
+      }
+    }
+  } catch (error) {
+    logger.error({ cacheKey, error }, 'Error reading from cache');
+  }
+  return null;
+}
+
+async function saveToCache<T>(cacheKey: string, data: T): Promise<void> {
+  try {
+    await firestore.collection('nav_cache').doc(cacheKey).set({
+      data,
+      cachedAt: Date.now(),
+    });
+  } catch (error) {
+    logger.error({ cacheKey, error }, 'Error saving to cache');
+  }
+}
+
 export async function getLatestNavBySchemeId(schemeCode: string): Promise<SchemeNav | undefined> {
+  const cacheKey = `latest-${schemeCode}`;
+  const cachedData = await getFromCache<SchemeNav>(cacheKey);
+  if (cachedData) {
+    return cachedData;
+  }
+
   const res = await fetchWithRetry<Scheme>(`/mf/${schemeCode}/latest`);
   if (!res.data?.[0]) {
     logger.error({ schemeCode }, 'empty response from latest nav api');
     return;
   }
-  return res.data[0];
+
+  const latestNav = res.data[0];
+  await saveToCache(cacheKey, latestNav);
+  return latestNav;
 }
 
 export async function getHistoricalNavBySchemeId(schemeCode: string): Promise<SchemeNav[]> {
+  const cacheKey = `historical-${schemeCode}`;
+  const cachedData = await getFromCache<SchemeNav[]>(cacheKey);
+  if (cachedData) {
+    return cachedData;
+  }
+
   const res = await fetchWithRetry<Scheme>(`/mf/${schemeCode}`);
   if (!res.data) {
     logger.error({ schemeCode }, 'empty response from historical nav api');
     return [];
   }
+
+  await saveToCache(cacheKey, res.data);
   return res.data;
 }
 
 export async function getAmficCodeByIsin(isin: string): Promise<number | undefined> {
   if (!cachedSchemeMap) {
-    const schemes = await fetchWithRetry<SchemeListItem[]>(`/mf`);
-    cachedSchemeMap = new Map();
-    for (const scheme of schemes) {
-      if (scheme.isinGrowth) {
-        cachedSchemeMap.set(scheme.isinGrowth, scheme.schemeCode);
-      } else if (scheme.isinDivReinvestment) {
-        cachedSchemeMap.set(scheme.isinDivReinvestment, scheme.schemeCode);
+    const cacheKey = 'scheme-map';
+    const cachedData = await getFromCache<[string, number][]>(cacheKey);
+
+    if (cachedData) {
+      cachedSchemeMap = new Map(cachedData);
+    } else {
+      const schemes = await fetchWithRetry<SchemeListItem[]>(`/mf`);
+      cachedSchemeMap = new Map();
+      for (const scheme of schemes) {
+        if (scheme.isinGrowth) {
+          cachedSchemeMap.set(scheme.isinGrowth, scheme.schemeCode);
+        } else if (scheme.isinDivReinvestment) {
+          cachedSchemeMap.set(scheme.isinDivReinvestment, scheme.schemeCode);
+        }
       }
+      await saveToCache(cacheKey, Array.from(cachedSchemeMap.entries()));
     }
   }
 
