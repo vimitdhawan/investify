@@ -8,7 +8,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-import { type RealizedGainDetail } from '@/features/transactions/type';
+import { type GroupedGain, type RealizedGainDetail } from '@/features/tax-report/type';
 
 import { cn } from '@/lib/utils';
 import { formatDateToYYYYMMDD } from '@/lib/utils/date';
@@ -17,26 +17,15 @@ interface RealizedGainsTableProps {
   gains: RealizedGainDetail[];
 }
 
-interface GroupedGain {
-  schemeName: string;
-  saleDate: Date;
-  buyAmount: number;
-  sellAmount: number;
-  gainLoss: number;
-  isLTCG: boolean;
-  isSTCG: boolean;
-  isDebt: boolean;
-}
-
 export function RealizedGainsTable({ gains }: RealizedGainsTableProps) {
-  // Grouping logic
+  // Grouping logic - now includes folioNumber to keep different folios separate
   const groupedGainsMap = new Map<string, GroupedGain>();
 
   gains.forEach((gain) => {
     const saleDateStr = formatDateToYYYYMMDD(gain.saleDate);
     const taxType = gain.isLTCG ? 'LTCG' : gain.isSTCG ? 'STCG' : 'Debt';
-    // Group by Name, Date and Tax Type to consolidate separate folios or transactions
-    const key = `${gain.schemeName.trim()}-${saleDateStr}-${taxType}`;
+    // Group by Name, FolioNumber, Date and Tax Type
+    const key = `${gain.schemeName.trim()}-${gain.folioNumber}-${saleDateStr}-${taxType}`;
 
     const buyAmount = gain.purchasePrice * gain.units;
     const sellAmount = gain.salePrice * gain.units;
@@ -49,6 +38,7 @@ export function RealizedGainsTable({ gains }: RealizedGainsTableProps) {
     } else {
       groupedGainsMap.set(key, {
         schemeName: gain.schemeName,
+        folioNumber: gain.folioNumber,
         saleDate: gain.saleDate,
         buyAmount,
         sellAmount,
@@ -85,6 +75,7 @@ export function RealizedGainsTable({ gains }: RealizedGainsTableProps) {
         <TableHeader>
           <TableRow>
             <TableHead>Scheme</TableHead>
+            <TableHead>Folio</TableHead>
             <TableHead>Sale Date</TableHead>
             <TableHead className="text-right">Buy Amount</TableHead>
             <TableHead className="text-right">Sell Amount</TableHead>
@@ -95,14 +86,15 @@ export function RealizedGainsTable({ gains }: RealizedGainsTableProps) {
         <TableBody>
           {sortedGroupedGains.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="h-24 text-center">
+              <TableCell colSpan={7} className="h-24 text-center">
                 No realized gains found for this period.
               </TableCell>
             </TableRow>
           ) : (
             sortedGroupedGains.map((gain, index) => (
-              <TableRow key={`${gain.schemeName}-${index}`}>
+              <TableRow key={`${gain.schemeName}-${gain.folioNumber}-${index}`}>
                 <TableCell className="font-medium">{gain.schemeName}</TableCell>
+                <TableCell className="text-muted-foreground">{gain.folioNumber}</TableCell>
                 <TableCell>{formatDateToYYYYMMDD(gain.saleDate)}</TableCell>
                 <TableCell className="text-right text-muted-foreground">
                   {formatCurrency(gain.buyAmount)}

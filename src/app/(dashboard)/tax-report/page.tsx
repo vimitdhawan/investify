@@ -1,11 +1,11 @@
 import { redirect } from 'next/navigation';
 
 import { getSchemes } from '@/features/schemes/service';
-import { FiscalYearSelect } from '@/features/transactions/components/tax-report/FiscalYearSelect';
-import { RealizedGainsTable } from '@/features/transactions/components/tax-report/RealizedGainsTable';
-import { TaxSlabSelect } from '@/features/transactions/components/tax-report/TaxSlabSelect';
-import { TaxSummaryCards } from '@/features/transactions/components/tax-report/TaxSummaryCards';
-import { calculateRealizedGainsDetailed } from '@/features/transactions/service';
+import { FiscalYearSelect } from '@/features/tax-report/components/FiscalYearSelect';
+import { RealizedGainsTable } from '@/features/tax-report/components/RealizedGainsTable';
+import { TaxSlabSelect } from '@/features/tax-report/components/TaxSlabSelect';
+import { TaxSummaryCards } from '@/features/tax-report/components/TaxSummaryCards';
+import { calculateRealizedGainsDetailed } from '@/features/tax-report/service';
 
 import { getSessionUserId } from '@/lib/session';
 import { getCurrentFiscalYear } from '@/lib/utils/date';
@@ -28,7 +28,13 @@ export default async function TaxReportPage({
   const schemes = await getSchemes(userId);
 
   const allRealizedGains = schemes.flatMap((scheme) =>
-    calculateRealizedGainsDetailed(scheme.transactions, scheme.id, scheme.name, scheme.type)
+    calculateRealizedGainsDetailed(
+      scheme.transactions,
+      scheme.id,
+      scheme.name,
+      scheme.type,
+      scheme.folioNumber
+    )
   );
 
   // Filter by selected fiscal year

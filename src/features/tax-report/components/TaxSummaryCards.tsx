@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import { type RealizedGainDetail } from '@/features/transactions/type';
+import { type RealizedGainDetail } from '@/features/tax-report/type';
 
 import { cn } from '@/lib/utils';
 
