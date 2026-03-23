@@ -25,5 +25,5 @@ export async function getSchemesWithTransactions(userId: string): Promise<Scheme
       };
     })
   );
-  return resp;
+  return resp.filter((r) => r.amfi !== ''); // TODO: temporary fix until figure it out sif funds
 }

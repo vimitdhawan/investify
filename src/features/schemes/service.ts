@@ -148,10 +148,11 @@ function processSchemeWithAggregateTransactions(scheme: Scheme): Scheme {
   scheme.capitalGainTax = aggregated.capitalGainTax;
   if (scheme.isClosed) {
     scheme.navStatus = SchemeNavStatus.Stale;
+    scheme.investedAmount = aggregated.totalInvestedAmount;
     scheme.realizedGainLoss = scheme.withdrawAmount - scheme.investedAmount;
     return scheme;
   }
-  scheme.investedAmount = aggregated.investedAmount;
+  scheme.investedAmount = aggregated.currentInvestedAmount;
   scheme.units = aggregated.units;
   scheme.realizedGainLoss = aggregated.realizedGainLoss;
   return scheme;
