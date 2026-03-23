@@ -31,9 +31,9 @@ export async function getTransactionViews(
       stampDuty: t.stampDuty,
       sttTax: t.sttTax,
       capitalGainTax: t.capitalGainTax,
-      actualInvestment: t.amount,
     };
     if (investmentTypes.includes(t.type)) {
+      transactionView.actualInvestment = t.amount;
       transactionView.investedAmount = t.amount + (t.stampDuty ?? 0);
     } else {
       transactionView.withdrawAmount = t.amount;
@@ -162,12 +162,11 @@ export function calculateXIRR(
 
 export function aggregateTransactions(transactions: Transaction[]): AggregateTransaction {
   let unitsHeld = 0;
-  let totalCost = 0;
+  let currentInvestedAmount = 0;
   let realizedGainLoss = 0;
   let stampDuty = 0;
   let sttTax = 0;
   let capitalGainTax = 0;
-  //TODO: update logic for closed schemes
   const withdrawAmount: number = transactions // Declared withdrawAmount
     .filter((tx) => withdrawTypes.includes(tx.type))
     .reduce((sum, tx) => sum + tx.amount, 0); // Assuming tx.amount is correct for withdrawal
@@ -180,10 +179,11 @@ export function aggregateTransactions(transactions: Transaction[]): AggregateTra
         remainingUnits: p.units,
       };
     });
+  const totalInvestedAmount = purchases.reduce((sum, tx) => sum + tx.amount, 0) + stampDuty;
   unitsHeld = purchases.reduce((sum, tx) => sum + tx.units, 0);
   stampDuty = purchases.reduce((sum, tx) => sum + (tx.stampDuty ?? 0), 0);
 
-  totalCost = purchases.reduce((sum, tx) => sum + tx.amount, 0) + stampDuty;
+  currentInvestedAmount = purchases.reduce((sum, tx) => sum + tx.amount, 0) + stampDuty;
 
   const sales = transactions
     .filter((t) => withdrawTypes.includes(t.type))
@@ -200,7 +200,7 @@ export function aggregateTransactions(transactions: Transaction[]): AggregateTra
       if (purchase.remainingUnits! > 0) {
         const unitsToProcess = Math.min(unitsToSell, purchase.remainingUnits!);
         unitsHeld -= unitsToProcess;
-        totalCost -= unitsToProcess * purchase.nav;
+        currentInvestedAmount -= unitsToProcess * purchase.nav;
         realizedGainLoss += unitsToProcess * (salePricePerUnit - purchase.nav);
         purchase.remainingUnits! -= unitsToProcess;
         unitsToSell -= unitsToProcess;
@@ -211,7 +211,8 @@ export function aggregateTransactions(transactions: Transaction[]): AggregateTra
   }
   return {
     units: unitsHeld,
-    investedAmount: totalCost,
+    currentInvestedAmount: currentInvestedAmount,
+    totalInvestedAmount: totalInvestedAmount,
     realizedGainLoss,
     withdrawAmount,
     capitalGainTax,

@@ -62,7 +62,8 @@ export interface Transaction {
 
 export interface AggregateTransaction {
   units: number;
-  investedAmount: number;
+  totalInvestedAmount: number;
+  currentInvestedAmount: number;
   realizedGainLoss: number;
   withdrawAmount: number;
   capitalGainTax: number;
