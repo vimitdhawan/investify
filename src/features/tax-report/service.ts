@@ -67,6 +67,7 @@ export function calculateRealizedGainsDetailed(
           isSTCG,
           isDebt,
           fiscalYear: getFiscalYear(sale.date),
+          taxPaid: sale.capitalGainTax ?? 0, // Extract capitalGainTax from sale transaction
         });
 
         purchase.remainingUnits -= unitsToProcess;
@@ -89,7 +90,7 @@ export function filterGainsByFiscalYear(
 }
 
 /**
- * Calculates tax summary from realized gains
+ * Calculates tax summary from realized gains including tax already paid
  */
 export function calculateTaxSummary(
   gains: RealizedGainDetail[],
@@ -98,13 +99,21 @@ export function calculateTaxSummary(
   ltcgGains: number;
   stcgGains: number;
   debtGains: number;
-  estimatedTax: number;
+  ltcgTax: number;
+  stcgTax: number;
+  debtTax: number;
+  totalCalculatedTax: number;
+  totalTaxPaid: number;
+  taxDueOrRefund: number;
+  isRefund: boolean;
 } {
   let ltcgGains = 0;
   let stcgGains = 0;
   let debtGains = 0;
+  let totalTaxPaid = 0;
 
   for (const gain of gains) {
+    // Sum gains by type
     if (gain.isLTCG) {
       ltcgGains += gain.gainLoss;
     } else if (gain.isSTCG) {
@@ -112,20 +121,34 @@ export function calculateTaxSummary(
     } else if (gain.isDebt) {
       debtGains += gain.gainLoss;
     }
+
+    // Sum tax already paid
+    totalTaxPaid += gain.taxPaid;
   }
 
   // Tax calculation:
   // LTCG: 12.5% on gains above ₹1.25L exemption
   // STCG: 20% flat
   // Debt: User's tax slab rate
-  const ltcgTax = Math.max(0, ltcgGains - 125000) * 0.125;
+  const LTCG_REBATE = 125000;
+  const ltcgTaxable = Math.max(0, ltcgGains - LTCG_REBATE);
+  const ltcgTax = ltcgTaxable * 0.125;
   const stcgTax = Math.max(0, stcgGains) * 0.2;
   const debtTax = Math.max(0, debtGains) * (taxSlabPercentage / 100);
+
+  const totalCalculatedTax = ltcgTax + stcgTax + debtTax;
+  const taxDueOrRefund = totalCalculatedTax - totalTaxPaid;
 
   return {
     ltcgGains,
     stcgGains,
     debtGains,
-    estimatedTax: ltcgTax + stcgTax + debtTax,
+    ltcgTax,
+    stcgTax,
+    debtTax,
+    totalCalculatedTax,
+    totalTaxPaid,
+    taxDueOrRefund,
+    isRefund: taxDueOrRefund < 0,
   };
 }

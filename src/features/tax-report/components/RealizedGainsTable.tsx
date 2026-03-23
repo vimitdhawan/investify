@@ -35,6 +35,7 @@ export function RealizedGainsTable({ gains }: RealizedGainsTableProps) {
       existing.buyAmount += buyAmount;
       existing.sellAmount += sellAmount;
       existing.gainLoss += gain.gainLoss;
+      existing.taxPaid += gain.taxPaid; // Sum tax paid
     } else {
       groupedGainsMap.set(key, {
         schemeName: gain.schemeName,
@@ -43,6 +44,7 @@ export function RealizedGainsTable({ gains }: RealizedGainsTableProps) {
         buyAmount,
         sellAmount,
         gainLoss: gain.gainLoss,
+        taxPaid: gain.taxPaid, // Initialize tax paid
         isLTCG: gain.isLTCG,
         isSTCG: gain.isSTCG,
         isDebt: gain.isDebt,
@@ -80,13 +82,14 @@ export function RealizedGainsTable({ gains }: RealizedGainsTableProps) {
             <TableHead className="text-right">Buy Amount</TableHead>
             <TableHead className="text-right">Sell Amount</TableHead>
             <TableHead className="text-right">Gain / Loss</TableHead>
+            <TableHead className="text-right">Tax Paid</TableHead>
             <TableHead>Type</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {sortedGroupedGains.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="h-24 text-center">
+              <TableCell colSpan={8} className="h-24 text-center">
                 No realized gains found for this period.
               </TableCell>
             </TableRow>
@@ -107,6 +110,9 @@ export function RealizedGainsTable({ gains }: RealizedGainsTableProps) {
                   )}
                 >
                   {formatCurrency(gain.gainLoss)}
+                </TableCell>
+                <TableCell className="text-right text-muted-foreground">
+                  {formatCurrency(gain.taxPaid)}
                 </TableCell>
                 <TableCell>{getTaxBadge(gain)}</TableCell>
               </TableRow>
