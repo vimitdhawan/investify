@@ -45,31 +45,41 @@ export async function fetchSchemeNAVByDate(
 export async function getSchemes(userId: string): Promise<Scheme[]> {
   const schemes = await getSchemesWithTransactions(userId);
   if (!schemes.length) return [];
-  return await Promise.all(
-    schemes.map(async (scheme) => {
-      scheme.transactions = exludeReverseTransactions(scheme.transactions);
-      const schemeWithAggregateTx = processSchemeWithAggregateTransactions(scheme);
-      if (schemeWithAggregateTx.navStatus !== SchemeNavStatus.Pending) {
-        return schemeWithAggregateTx;
-      }
-      const amfiCode = await resolveAmfiCode(
-        schemeWithAggregateTx.amfi,
-        schemeWithAggregateTx.isin
-      );
-      if (!amfiCode) {
-        schemeWithAggregateTx.navStatus = SchemeNavStatus.Missing;
-        return schemeWithAggregateTx;
-      }
-      const nav = await getLatestNavBySchemeId(amfiCode);
-      if (!nav) {
-        schemeWithAggregateTx.navStatus = SchemeNavStatus.Missing;
-        return schemeWithAggregateTx;
-      }
-      const s = await processScheme(scheme, nav);
-      s.xirrGainLoss = calculateXIRR(scheme.transactions, s.marketValue, new Date()) ?? 0;
-      return s;
-    })
-  );
+
+  const result: Scheme[] = [];
+
+  for (const scheme of schemes) {
+    scheme.transactions = exludeReverseTransactions(scheme.transactions);
+    const schemeWithAggregateTx = processSchemeWithAggregateTransactions(scheme);
+
+    if (schemeWithAggregateTx.navStatus !== SchemeNavStatus.Pending) {
+      result.push(schemeWithAggregateTx);
+      continue;
+    }
+
+    const amfiCode = await resolveAmfiCode(schemeWithAggregateTx.amfi, schemeWithAggregateTx.isin);
+
+    if (!amfiCode) {
+      schemeWithAggregateTx.navStatus = SchemeNavStatus.Missing;
+      result.push(schemeWithAggregateTx);
+      continue;
+    }
+
+    const nav = await getLatestNavBySchemeId(amfiCode);
+
+    if (!nav) {
+      schemeWithAggregateTx.navStatus = SchemeNavStatus.Missing;
+      result.push(schemeWithAggregateTx);
+      continue;
+    }
+
+    const s = await processScheme(scheme, nav);
+    s.xirrGainLoss = calculateXIRR(scheme.transactions, s.marketValue, new Date()) ?? 0;
+
+    result.push(s);
+  }
+
+  return result;
 }
 
 export async function getActiveSchemes(userId: string): Promise<Scheme[]> {
