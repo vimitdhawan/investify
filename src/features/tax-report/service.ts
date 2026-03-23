@@ -160,23 +160,23 @@ export function calculateTaxSummary(
   }
 
   // Step 2: Apply loss set-off rules
-  // Rule: LTCL can offset LTCG first, excess LTCL can offset STCG
-  // Rule: STCL can only offset STCG, cannot offset LTCG
+  // Rule: LTCL can offset LTCG only
+  // Rule: STCL can offset STCG and LTCG
   // Rule: Debt loss can only offset Debt gain
 
-  // Calculate net LTCG after LTCL offset
-  let netLtcg = ltcgGains - ltcgLoss;
-  let excessLtcl = 0;
+  // Calculate net STCG after STCL offset
+  let netStcg = stcgGains - stcgLoss;
+  let excessStcl = 0;
 
-  if (netLtcg < 0) {
+  if (netStcg < 0) {
     // We have excess LTCL that can offset STCG
-    excessLtcl = Math.abs(netLtcg);
-    netLtcg = 0;
+    excessStcl = Math.abs(netStcg);
+    netStcg = 0;
   }
 
   // Calculate net STCG after STCL and excess LTCL offset
-  let netStcg = stcgGains - stcgLoss - excessLtcl;
-  netStcg = Math.max(0, netStcg); // Can't be negative
+  let netLtcg = ltcgGains - ltcgLoss - excessStcl;
+  netLtcg = Math.max(0, netLtcg); // Can't be negative
 
   // Calculate net Debt gain after Debt loss offset
   let netDebt = debtGains - debtLoss;
