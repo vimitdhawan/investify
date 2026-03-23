@@ -34,15 +34,30 @@ export interface GroupedGain {
 }
 
 export interface TaxSummary {
-  // Gains by type
+  // Gains by type (only positive)
   ltcgGains: number;
   stcgGains: number;
   debtGains: number;
 
+  // Losses by type (only negative, stored as positive)
+  ltcgLoss: number;
+  stcgLoss: number;
+  debtLoss: number;
+
+  // Net gains after loss set-off
+  netLtcg: number; // LTCG - LTCL
+  netStcg: number; // STCG - STCL - excess LTCL
+  netDebt: number; // Debt - Debt Loss
+
+  // Taxable amounts after rebate/exemptions
+  ltcgTaxable: number; // Max(0, netLtcg - ₹1.25L)
+  stcgTaxable: number;
+  debtTaxable: number;
+
   // Calculated taxes
-  ltcgTax: number; // 12.5% on (ltcgGains - ₹1.25L)
-  stcgTax: number; // 20% on stcgGains
-  debtTax: number; // (slab % / 100) on debtGains
+  ltcgTax: number; // 12.5% on ltcgTaxable
+  stcgTax: number; // 20% on stcgTaxable
+  debtTax: number; // (slab % / 100) on debtTaxable
   totalCalculatedTax: number; // ltcgTax + stcgTax + debtTax
 
   // Tax already paid

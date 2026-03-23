@@ -99,6 +99,7 @@ export function filterGainsByFiscalYear(
 
 /**
  * Calculates tax summary from realized gains including tax already paid
+ * Implements correct capital loss set-off rules as per Indian Income Tax
  */
 export function calculateTaxSummary(
   gains: RealizedGainDetail[],
@@ -107,6 +108,15 @@ export function calculateTaxSummary(
   ltcgGains: number;
   stcgGains: number;
   debtGains: number;
+  ltcgLoss: number;
+  stcgLoss: number;
+  debtLoss: number;
+  netLtcg: number;
+  netStcg: number;
+  netDebt: number;
+  ltcgTaxable: number;
+  stcgTaxable: number;
+  debtTaxable: number;
   ltcgTax: number;
   stcgTax: number;
   debtTax: number;
@@ -116,33 +126,78 @@ export function calculateTaxSummary(
   isRefund: boolean;
 } {
   let ltcgGains = 0;
+  let ltcgLoss = 0;
   let stcgGains = 0;
+  let stcgLoss = 0;
   let debtGains = 0;
+  let debtLoss = 0;
   let totalTaxPaid = 0;
 
+  // Step 1: Separate gains and losses by type
   for (const gain of gains) {
-    // Sum gains by type
     if (gain.isLTCG) {
-      ltcgGains += gain.gainLoss;
+      if (gain.gainLoss >= 0) {
+        ltcgGains += gain.gainLoss;
+      } else {
+        ltcgLoss += Math.abs(gain.gainLoss);
+      }
     } else if (gain.isSTCG) {
-      stcgGains += gain.gainLoss;
+      if (gain.gainLoss >= 0) {
+        stcgGains += gain.gainLoss;
+      } else {
+        stcgLoss += Math.abs(gain.gainLoss);
+      }
     } else if (gain.isDebt) {
-      debtGains += gain.gainLoss;
+      if (gain.gainLoss >= 0) {
+        debtGains += gain.gainLoss;
+      } else {
+        debtLoss += Math.abs(gain.gainLoss);
+      }
     }
 
     // Sum tax already paid
     totalTaxPaid += gain.taxPaid;
   }
 
-  // Tax calculation:
-  // LTCG: 12.5% on gains above ₹1.25L exemption
-  // STCG: 20% flat
-  // Debt: User's tax slab rate
+  // Step 2: Apply loss set-off rules
+  // Rule: LTCL can offset LTCG first, excess LTCL can offset STCG
+  // Rule: STCL can only offset STCG, cannot offset LTCG
+  // Rule: Debt loss can only offset Debt gain
+
+  // Calculate net LTCG after LTCL offset
+  let netLtcg = ltcgGains - ltcgLoss;
+  let excessLtcl = 0;
+
+  if (netLtcg < 0) {
+    // We have excess LTCL that can offset STCG
+    excessLtcl = Math.abs(netLtcg);
+    netLtcg = 0;
+  }
+
+  // Calculate net STCG after STCL and excess LTCL offset
+  let netStcg = stcgGains - stcgLoss - excessLtcl;
+  netStcg = Math.max(0, netStcg); // Can't be negative
+
+  // Calculate net Debt gain after Debt loss offset
+  let netDebt = debtGains - debtLoss;
+  netDebt = Math.max(0, netDebt); // Can't be negative
+
+  // Step 3: Apply rebate and calculate taxable amounts
   const LTCG_REBATE = 125000;
-  const ltcgTaxable = Math.max(0, ltcgGains - LTCG_REBATE);
-  const ltcgTax = ltcgTaxable * 0.125;
-  const stcgTax = Math.max(0, stcgGains) * 0.2;
-  const debtTax = Math.max(0, debtGains) * (taxSlabPercentage / 100);
+
+  // LTCG: Apply ₹1.25L rebate after loss set-off
+  const ltcgTaxable = Math.max(0, netLtcg - LTCG_REBATE);
+
+  // STCG: Already offset by losses
+  const stcgTaxable = netStcg;
+
+  // Debt: Already offset by losses
+  const debtTaxable = netDebt;
+
+  // Step 4: Calculate taxes
+  const ltcgTax = ltcgTaxable * 0.125; // 12.5%
+  const stcgTax = stcgTaxable * 0.2; // 20%
+  const debtTax = debtTaxable * (taxSlabPercentage / 100);
 
   const totalCalculatedTax = ltcgTax + stcgTax + debtTax;
   const taxDueOrRefund = totalCalculatedTax - totalTaxPaid;
@@ -151,6 +206,15 @@ export function calculateTaxSummary(
     ltcgGains,
     stcgGains,
     debtGains,
+    ltcgLoss,
+    stcgLoss,
+    debtLoss,
+    netLtcg,
+    netStcg,
+    netDebt,
+    ltcgTaxable,
+    stcgTaxable,
+    debtTaxable,
     ltcgTax,
     stcgTax,
     debtTax,

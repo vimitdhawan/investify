@@ -36,13 +36,18 @@ export function TaxSummaryCards({ taxSummary, taxSlabPercentage }: TaxSummaryCar
             <div
               className={cn(
                 'text-2xl font-bold',
-                taxSummary.ltcgGains < 0 ? 'text-red-500' : 'text-green-500'
+                taxSummary.netLtcg < 0 ? 'text-red-500' : 'text-green-500'
               )}
             >
-              {formatCurrency(taxSummary.ltcgGains)}
+              {formatCurrency(taxSummary.netLtcg)}
             </div>
+            {taxSummary.ltcgLoss > 0 && (
+              <p className="text-xs text-red-500 mt-0.5">
+                Loss: {formatCurrency(taxSummary.ltcgLoss)}
+              </p>
+            )}
             <p className="text-xs text-muted-foreground mt-1">
-              Est. Tax (12.5%):{' '}
+              Taxable: {formatCurrency(taxSummary.ltcgTaxable)} | Tax (12.5%):{' '}
               <span className="font-semibold text-foreground">
                 {formatCurrency(taxSummary.ltcgTax)}
               </span>
@@ -59,13 +64,18 @@ export function TaxSummaryCards({ taxSummary, taxSlabPercentage }: TaxSummaryCar
             <div
               className={cn(
                 'text-2xl font-bold',
-                taxSummary.stcgGains < 0 ? 'text-red-500' : 'text-green-500'
+                taxSummary.netStcg < 0 ? 'text-red-500' : 'text-green-500'
               )}
             >
-              {formatCurrency(taxSummary.stcgGains)}
+              {formatCurrency(taxSummary.netStcg)}
             </div>
+            {taxSummary.stcgLoss > 0 && (
+              <p className="text-xs text-red-500 mt-0.5">
+                Loss: {formatCurrency(taxSummary.stcgLoss)}
+              </p>
+            )}
             <p className="text-xs text-muted-foreground mt-1">
-              Est. Tax (20%):{' '}
+              Taxable: {formatCurrency(taxSummary.stcgTaxable)} | Tax (20%):{' '}
               <span className="font-semibold text-foreground">
                 {formatCurrency(taxSummary.stcgTax)}
               </span>
@@ -76,19 +86,24 @@ export function TaxSummaryCards({ taxSummary, taxSlabPercentage }: TaxSummaryCar
         {/* Slab Gains Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Slab Gains</CardTitle>
+            <CardTitle className="text-sm font-medium">Slab Gains (Debt)</CardTitle>
           </CardHeader>
           <CardContent>
             <div
               className={cn(
                 'text-2xl font-bold',
-                taxSummary.debtGains < 0 ? 'text-red-500' : 'text-green-500'
+                taxSummary.netDebt < 0 ? 'text-red-500' : 'text-green-500'
               )}
             >
-              {formatCurrency(taxSummary.debtGains)}
+              {formatCurrency(taxSummary.netDebt)}
             </div>
+            {taxSummary.debtLoss > 0 && (
+              <p className="text-xs text-red-500 mt-0.5">
+                Loss: {formatCurrency(taxSummary.debtLoss)}
+              </p>
+            )}
             <p className="text-xs text-muted-foreground mt-1">
-              Est. Tax ({taxSlabPercentage}%):{' '}
+              Taxable: {formatCurrency(taxSummary.debtTaxable)} | Tax ({taxSlabPercentage}%):{' '}
               <span className="font-semibold text-foreground">
                 {formatCurrency(taxSummary.debtTax)}
               </span>
@@ -103,13 +118,23 @@ export function TaxSummaryCards({ taxSummary, taxSlabPercentage }: TaxSummaryCar
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Tax Due</CardTitle>
-            <div className="text-xs text-muted-foreground">LTCG + STCG + Slab</div>
+            <div className="text-xs text-muted-foreground">After loss set-off & rebate</div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-500">
               {formatCurrency(taxSummary.totalCalculatedTax)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Before adjusting for tax paid</p>
+            <div className="mt-2 space-y-0.5">
+              <p className="text-xs text-muted-foreground">
+                LTCG: {formatCurrency(taxSummary.ltcgTax)}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                STCG: {formatCurrency(taxSummary.stcgTax)}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Slab: {formatCurrency(taxSummary.debtTax)}
+              </p>
+            </div>
           </CardContent>
         </Card>
 
