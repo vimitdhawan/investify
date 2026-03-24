@@ -20,7 +20,7 @@ export interface RealizedGainDetail {
   taxPaid: number; // capitalGainTax from the sale transaction
 }
 
-export interface GroupedGain {
+export interface RealizedGainLoss {
   schemeName: string;
   folioNumber: string;
   saleDate: Date;

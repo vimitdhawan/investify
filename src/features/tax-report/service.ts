@@ -1,9 +1,9 @@
 import { SchemeType } from '@/features/schemes/type';
 import { type Transaction, investmentTypes, withdrawTypes } from '@/features/transactions/type';
 
-import { getFiscalYear } from '@/lib/utils/date';
+import { formatDateToYYYYMMDD, getFiscalYear } from '@/lib/utils/date';
 
-import { type RealizedGainDetail } from './type';
+import { type RealizedGainDetail, type RealizedGainLoss } from './type';
 
 /**
  * Calculates detailed realized gains using FIFO logic.
@@ -98,11 +98,54 @@ export function filterGainsByFiscalYear(
 }
 
 /**
+ * Groups unit-level realized gains into aggregated entries by scheme, folio, sale date, and tax type
+ */
+export function groupRealizedGains(gains: RealizedGainDetail[]): RealizedGainLoss[] {
+  const groupedGainsMap = new Map<string, RealizedGainLoss>();
+
+  gains.forEach((gain) => {
+    const saleDateStr = formatDateToYYYYMMDD(gain.saleDate);
+    const taxType = gain.isLTCG ? 'LTCG' : gain.isSTCG ? 'STCG' : 'Debt';
+    // Group by Name, FolioNumber, Date and Tax Type
+    const key = `${gain.schemeName.trim()}-${gain.folioNumber}-${saleDateStr}-${taxType}`;
+
+    const buyAmount = gain.purchasePrice * gain.units;
+    const sellAmount = gain.salePrice * gain.units;
+
+    if (groupedGainsMap.has(key)) {
+      const existing = groupedGainsMap.get(key)!;
+      existing.buyAmount += buyAmount;
+      existing.sellAmount += sellAmount;
+      existing.gainLoss += gain.gainLoss;
+      existing.taxPaid += gain.taxPaid;
+    } else {
+      groupedGainsMap.set(key, {
+        schemeName: gain.schemeName,
+        folioNumber: gain.folioNumber,
+        saleDate: gain.saleDate,
+        buyAmount,
+        sellAmount,
+        gainLoss: gain.gainLoss,
+        taxPaid: gain.taxPaid,
+        isLTCG: gain.isLTCG,
+        isSTCG: gain.isSTCG,
+        isDebt: gain.isDebt,
+      });
+    }
+  });
+
+  return Array.from(groupedGainsMap.values());
+}
+
+/**
  * Calculates tax summary from realized gains including tax already paid
  * Implements correct capital loss set-off rules as per Indian Income Tax
+ *
+ * Accepts either unit-level RealizedGainDetail[] or grouped RealizedGainLoss[]
+ * For better performance, use grouped data when available.
  */
 export function calculateTaxSummary(
-  gains: RealizedGainDetail[],
+  gains: RealizedGainLoss[],
   taxSlabPercentage: number
 ): {
   ltcgGains: number;
