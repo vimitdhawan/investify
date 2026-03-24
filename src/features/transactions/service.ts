@@ -1,10 +1,8 @@
 import xirr from 'xirr';
 
-import { SchemeType } from '@/features/schemes/type';
 import { getTransactionsByScheme } from '@/features/transactions/repository';
 import {
   type AggregateTransaction,
-  type RealizedGainDetail,
   type Transaction,
   TransactionType,
   type TransactionView,
@@ -13,7 +11,7 @@ import {
 } from '@/features/transactions/type';
 
 import { logger } from '@/lib/logger';
-import { formatDateToYYYYMMDD, getFiscalYear } from '@/lib/utils/date';
+import { formatDateToYYYYMMDD } from '@/lib/utils/date';
 
 export async function getTransactionViews(
   userId: string,
@@ -221,75 +219,4 @@ export function aggregateTransactions(transactions: Transaction[]): AggregateTra
     stampDuty,
     sttTax,
   };
-}
-
-/**
- * Calculates detailed realized gains using FIFO logic.
- */
-export function calculateRealizedGainsDetailed(
-  transactions: Transaction[],
-  schemeId: string,
-  schemeName: string,
-  schemeType: SchemeType
-): RealizedGainDetail[] {
-  const realizedGains: RealizedGainDetail[] = [];
-
-  const purchases = transactions
-    .filter((t) => investmentTypes.includes(t.type) && t.units > 0)
-    .sort((a, b) => a.date.getTime() - b.date.getTime())
-    .map((p) => ({
-      ...p,
-      remainingUnits: p.units,
-    }));
-
-  const sales = transactions
-    .filter((t) => withdrawTypes.includes(t.type))
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
-
-  for (const sale of sales) {
-    let unitsToSell = Math.abs(sale.units);
-    const salePricePerUnit = sale.nav;
-
-    for (const purchase of purchases) {
-      if (unitsToSell <= 0) break;
-
-      if (purchase.remainingUnits > 0) {
-        const unitsToProcess = Math.min(unitsToSell, purchase.remainingUnits);
-        const gainLoss = unitsToProcess * (salePricePerUnit - purchase.nav);
-
-        // Holding period in days
-        const diffTime = sale.date.getTime() - purchase.date.getTime();
-        const holdingPeriodDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-        // Taxation logic
-        // Default to Debt if type is missing or not Equity/Hybrid
-        const isDebt = schemeType === SchemeType.Other || schemeType === SchemeType.Debt;
-        const isLTCG = !isDebt && holdingPeriodDays > 365;
-        const isSTCG = !isDebt && !isLTCG;
-
-        realizedGains.push({
-          id: `${sale.id}-${purchase.id}`,
-          schemeId,
-          schemeName,
-          schemeType,
-          units: unitsToProcess,
-          purchaseDate: purchase.date,
-          saleDate: sale.date,
-          purchasePrice: purchase.nav,
-          salePrice: sale.nav,
-          gainLoss,
-          holdingPeriodDays,
-          isLTCG,
-          isSTCG,
-          isDebt,
-          fiscalYear: getFiscalYear(sale.date),
-        });
-
-        purchase.remainingUnits -= unitsToProcess;
-        unitsToSell -= unitsToProcess;
-      }
-    }
-  }
-
-  return realizedGains;
 }
