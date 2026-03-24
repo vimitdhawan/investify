@@ -2,9 +2,9 @@
 
 ## ADDED Requirements
 
-### Requirement: Onboarding Page Access & Redirection
+### 1. Onboarding Page Access & Redirection
 
-The system SHALL ensure that a user can only access the onboarding page if they haven't already set up their portfolio.
+As a user, I should only be able to access the onboarding page if I haven't already set up my portfolio.
 
 #### Scenario: Redirect after Signup
 
@@ -24,9 +24,9 @@ The system SHALL ensure that a user can only access the onboarding page if they 
 - **When** I attempt to access `/onboard`
 - **Then** I should be redirected to `/dashboard`
 
-### Requirement: Portfolio PDF Upload & Processing
+### 2. Portfolio PDF Upload & Processing
 
-The system SHALL allow a user on the onboarding page to upload their CAS PDF so that the portfolio is processed in the background while they continue to the dashboard.
+As a user on the onboarding page, I should be able to upload my CAS PDF so that my portfolio is processed in the background while I can continue to the dashboard.
 
 #### Scenario: Upload PDF and Redirect to Dashboard
 

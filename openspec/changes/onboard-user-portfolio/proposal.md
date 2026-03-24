@@ -2,34 +2,37 @@
 
 ## Summary
 
-Add a secure onboarding experience where new users can upload their Mutual Fund CAS PDF. Instead of a synchronous API, we will use a **Server Action** to upload the file to Firebase Storage and track the parsing progress via Firestore. A background process will then invoke `casparser` (Python) to extract data, map it, and ingest it into the user's portfolio.
+Add a secure onboarding experience where new users can upload their Mutual Fund CAS PDF. We will use a **Server Action** to upload the file to Firebase Storage and track the parsing progress via Firestore. A background process will then invoke `casparser` (Python) to extract data, map it to our internal `Portfolio` model, and ingest it.
 
 ## Problem Statement
 
-Users need an easy way to import their historical data from CAS PDFs. PDF parsing can be time-consuming, so a robust asynchronous flow with progress tracking is needed to ensure a smooth user experience.
+Users need an easy way to import their historical data from CAS PDFs. PDF parsing can be time-consuming. We need a flow that handles this asynchronously and provides immediate feedback while the heavy lifting happens in the background.
 
 ## Proposed Solution
 
-1. **Onboarding Route**: New or un-onboarded users are directed to `/onboard`.
-2. **Server Action**: A `handlePortfolioUpload` action will:
+1. **Onboarding Route**: New or un-onboarded users are directed to `/onboard`. This route is only accessible if the user has not yet completed onboarding (i.e., no portfolio exists).
+2. **Onboarding Feature**: All UI components and logic for the onboarding flow will be located in `src/features/onboarding`.
+3. **Server Action**: A `handlePortfolioUpload` action will:
    - Receive the PDF file and password.
    - Upload the file to Firebase Storage (`users/{userId}/onboarding/statement.pdf`).
    - Update the user's Firestore document with `{ onboardingStatus: 'processing' }`.
-3. **Background Processing**: Trigger the parsing logic "behind the scenes".
+   - Immediately redirect the user to the dashboard.
+4. **Background Processing**: Trigger the parsing logic "behind the scenes".
    - Run a Python script (`casparser`) via `child_process.spawn`.
-   - Map the output to our internal `PortfolioDTO` format.
+   - The output will follow the `casparser` DTO structure.
+   - Map the DTO directly to our internal `Portfolio` type using a new transformer.
    - Ingest data using the `ingestion-service`.
    - On success: Update `{ onboardingStatus: 'completed' }`.
    - On failure: Update `{ onboardingStatus: 'failed', onboardingError: '...' }`.
-4. **UI Updates**:
-   - The onboarding page will show a "Processing..." view while the status is `'processing'`.
-   - Real-time updates via Firestore listeners will automatically transition the user to the dashboard upon completion.
+5. **UI Updates**:
+   - If a user is in the `'processing'` state, the dashboard will display a non-intrusive message: "Processing your portfolio, please wait, it can take 5-10 minutes."
+   - If a user attempts to access `/onboard` after completion, they are redirected to the dashboard.
 
-## Alternative Considerations
+## Data Mapping
 
-- **Synchronous API**: Rejected in favor of an Action-based flow with status tracking to prevent timeouts on large PDFs and provide a better UX during longer processing times.
+The system will ingest data directly from the `casparser` JSON output, transforming it into our internal `Portfolio`, `Scheme`, and `Transaction` models.
 
 ## Risks & Mitigations
 
-- **Privacy**: PDFs are stored in private Firebase Storage paths with strict security rules. They are deleted immediately after successful ingestion.
-- **In-process Failures**: If the server restarts during parsing, the status remains `'processing'`. A cleanup/retry mechanism may be needed for long-stale tasks.
+- **Privacy**: PDFs are stored in private Firebase Storage paths and deleted immediately after processing.
+- **Processing Time**: Users are informed of the 5-10 minute wait time to manage expectations.
