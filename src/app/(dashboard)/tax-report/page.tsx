@@ -1,11 +1,15 @@
 import { redirect } from 'next/navigation';
 
 import { getSchemes } from '@/features/schemes/service';
-import { FiscalYearSelect } from '@/features/transactions/components/tax-report/FiscalYearSelect';
-import { RealizedGainsTable } from '@/features/transactions/components/tax-report/RealizedGainsTable';
-import { TaxSlabSelect } from '@/features/transactions/components/tax-report/TaxSlabSelect';
-import { TaxSummaryCards } from '@/features/transactions/components/tax-report/TaxSummaryCards';
-import { calculateRealizedGainsDetailed } from '@/features/transactions/service';
+import { FiscalYearSelect } from '@/features/tax-report/components/FiscalYearSelect';
+import { RealizedGainsTable } from '@/features/tax-report/components/RealizedGainsTable';
+import { TaxSlabSelect } from '@/features/tax-report/components/TaxSlabSelect';
+import { TaxSummaryCards } from '@/features/tax-report/components/TaxSummaryCards';
+import {
+  calculateRealizedGainsDetailed,
+  calculateTaxSummary,
+  groupRealizedGains,
+} from '@/features/tax-report/service';
 
 import { getSessionUserId } from '@/lib/session';
 import { getCurrentFiscalYear } from '@/lib/utils/date';
@@ -28,11 +32,23 @@ export default async function TaxReportPage({
   const schemes = await getSchemes(userId);
 
   const allRealizedGains = schemes.flatMap((scheme) =>
-    calculateRealizedGainsDetailed(scheme.transactions, scheme.id, scheme.name, scheme.type)
+    calculateRealizedGainsDetailed(
+      scheme.transactions,
+      scheme.id,
+      scheme.name,
+      scheme.type,
+      scheme.folioNumber
+    )
   );
 
   // Filter by selected fiscal year
   const filteredGains = allRealizedGains.filter((g) => g.fiscalYear === currentFY);
+
+  // Group realized gains for display and summary calculation
+  const groupedGains = groupRealizedGains(filteredGains);
+
+  // Calculate tax summary using grouped data (includes tax paid from transactions)
+  const taxSummary = calculateTaxSummary(groupedGains, taxSlabPercentage);
 
   // Get all available fiscal years for the dropdown
   const availableFYs = Array.from(new Set(allRealizedGains.map((g) => g.fiscalYear)))
@@ -59,11 +75,11 @@ export default async function TaxReportPage({
         </div>
       </div>
 
-      <TaxSummaryCards gains={filteredGains} taxSlabPercentage={taxSlabPercentage} />
+      <TaxSummaryCards taxSummary={taxSummary} taxSlabPercentage={taxSlabPercentage} />
 
       <div className="flex flex-col gap-4">
         <h2 className="text-xl font-semibold">Detailed Realized Gains</h2>
-        <RealizedGainsTable gains={filteredGains} />
+        <RealizedGainsTable gains={groupedGains} />
       </div>
     </div>
   );
