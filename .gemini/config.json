@@ -3,5 +3,6 @@
     "write": "allow",
     "execute": "allow"
   },
-  "confirmations": false
+  "confirmations": false,
+  "autoApprove": true
 }

@@ -1,59 +1,80 @@
-# Design: Asynchronous Portfolio Ingestion Service
+# Design: Onboarding Flow & Ingestion Service
 
 ## Architecture Overview
 
-The system provides a non-blocking onboarding experience by offloading the PDF parsing to a server-side process, while the UI reflects the status in real-time using Firestore.
+The system provides an asynchronous onboarding experience. After a user uploads their CAS PDF, the system immediately redirects them to the dashboard and processes the file in the background.
 
 ## Components
 
-### 1. Ingestion Refactoring
+### 1. Onboarding Feature (`src/features/onboarding`)
 
-Extract logic from `scripts/ingest-portfolio.ts` into `src/features/portfolio/ingestion-service.ts`.
+- **Purpose**: Dedicated space for all onboarding-related logic and components.
+- **Access Policy**: The `/onboard` route is only accessible to users with no portfolio and whose `onboardingStatus` is not `'completed'`.
 
-- **Functionality**: `ingestPortfolioData(portfolioData, userId)` handles Firestore batch operations.
+### 2. Ingestion Service (`src/features/onboarding/service.ts`)
 
-### 2. Upload & Processing Flow
+Extract logic from `scripts/ingest-portfolio.ts` into a permanent service.
 
-1. **Frontend**: The user uploads a PDF and password to a **Server Action**.
+- **`ingestPortfolioData(portfolio, userId)`**: Handles Firestore batch operations to save the transformed `Portfolio` object.
+
+### 3. Upload & Processing Flow
+
+1. **Frontend**: User uploads PDF and enters password in the `/onboard` form.
 2. **Server Action (`handlePortfolioUpload`)**:
-   - **Step A**: Save the PDF to Firebase Storage at `users/{userId}/onboarding/statement.pdf`.
-   - **Step B**: Update the user document in Firestore:
+   - **Step A**: Save PDF to Firebase Storage at `users/{userId}/onboarding/statement.pdf`.
+   - **Step B**: Update Firestore:
      ```json
      {
        "onboardingStatus": "processing",
        "onboardingStartedAt": "timestamp"
      }
      ```
-   - **Step C**: Trigger the parsing logic "behind the scenes". This could be done by awaiting a separate function that starts the `child_process.spawn`.
+   - **Step C**: Trigger the background process (e.g., via a non-awaited async function or a worker).
+   - **Step D**: Redirect user to `/dashboard`.
 
-### 3. Background Processing Logic
+### 4. Background Processing Logic
 
-The background task will:
+- **Python Bridge**: Execute `python scripts/parse_cas.py` to parse the PDF.
+- **DTO Transformation**: Use `src/features/onboarding/casparser-transformer.ts` to map the `casparser` DTO to our internal `Portfolio` model.
+- **Ingestion**: Call the `ingestion-service` to commit data to Firestore.
+- **Cleanup**: Delete the PDF from Firebase Storage.
+- **Status Update**: Update `onboardingStatus` to `'completed'` or `'failed'`.
 
-- **Download PDF**: Retrieve the file from Firebase Storage.
-- **Parse**: Execute the Python bridge script:
-  ```bash
-  python scripts/parse_cas.py --pdf <temp_path> --password <password>
-  ```
-- **Transform**: Convert `casparser` JSON to internal `PortfolioDTO`.
-- **Ingest**: Call `ingestPortfolioData`.
-- **Cleanup**: Delete the PDF from Firebase Storage and temporary local storage.
-- **Status Update**: On completion or failure, update `onboardingStatus` accordingly.
+### 5. UI/UX Strategy
 
-### 4. UI/UX Strategy
-
-- **Onboarding Page**:
-  - **Upload State**: Shows the file upload form.
-  - **Processing State**: When `onboardingStatus === 'processing'`, show a full-page loading state ("Processing your portfolio...").
-  - **Error State**: Displays a descriptive error message with a "Retry" button.
-- **Real-time Navigation**: The page uses a Firestore listener to detect when `onboardingStatus` becomes `'completed'` and automatically redirects to the dashboard.
+- **Dashboard Notification**: When `onboardingStatus === 'processing'`, the dashboard displays: "Processing your portfolio, please wait, it can take 5-10 minutes."
+- **Onboarding Page**: Contains the upload form and handles errors if the initial upload/start fails.
 
 ## Data Mapping Detail
 
-The transformation will use `src/features/portfolio/casparser-transformer.ts` to map fields:
+The transformation will map the `casparser` DTO:
 
-- `investor_info` -> `investor`
-- `statement_period` -> `meta.statement_period`
-- `folios` -> `mutual_funds`
-- `schemes` (inside folios) -> `schemes`
-- `transactions` (inside schemes) -> `transactions`
+```typescript
+export interface CasParserDTO {
+  statement_period: { from: string; to: string };
+  file_type: string;
+  cas_type: string;
+  investor_info: { email: string; name: string; mobile: string; address: string };
+  folios: Array<{
+    folio: string;
+    amc: string;
+    PAN: string;
+    schemes: Array<{
+      scheme: string;
+      isin: string;
+      amfi: string;
+      valuation: { date: string; nav: number; value: number; cost: number };
+      transactions: Array<{
+        date: string;
+        description: string;
+        amount: number;
+        units: number;
+        nav: number;
+        type: string;
+      }>;
+    }>;
+  }>;
+}
+```
+
+The transformer will map this directly to the `Portfolio` type.
