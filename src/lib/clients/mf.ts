@@ -100,65 +100,121 @@ async function saveToCache<T>(cacheKey: string, data: T): Promise<void> {
 }
 
 export async function getLatestNavBySchemeId(schemeCode: string): Promise<SchemeNav | undefined> {
-  const cacheKey = `latest-${schemeCode}`;
-  const cachedData = await getFromCache<SchemeNav>(cacheKey);
-  if (cachedData) {
-    return cachedData;
-  }
+  try {
+    const doc = await firestore.collection('mf_schemes_latest').doc(schemeCode).get();
 
-  const res = await fetchWithRetry<Scheme>(`/mf/${schemeCode}/latest`);
-  if (!res.data?.[0]) {
-    logger.error({ schemeCode }, 'empty response from latest nav api');
+    if (!doc.exists) {
+      logger.error({ schemeCode }, 'scheme not found in Firestore');
+      return;
+    }
+
+    const data = doc.data();
+    return {
+      date: data?.navDate,
+      nav: data?.nav,
+    };
+  } catch (error) {
+    logger.error({ schemeCode, error }, 'Error fetching latest NAV from Firestore');
     return;
   }
-
-  const latestNav = res.data[0];
-  await saveToCache(cacheKey, latestNav);
-  return latestNav;
 }
+
+// OLD IMPLEMENTATION (using external API):
+// export async function getLatestNavBySchemeId(schemeCode: string): Promise<SchemeNav | undefined> {
+//   const cacheKey = `latest-${schemeCode}`;
+//   const cachedData = await getFromCache<SchemeNav>(cacheKey);
+//   if (cachedData) {
+//     return cachedData;
+//   }
+//
+//   const res = await fetchWithRetry<Scheme>(`/mf/${schemeCode}/latest`);
+//   if (!res.data?.[0]) {
+//     logger.error({ schemeCode }, 'empty response from latest nav api');
+//     return;
+//   }
+//
+//   const latestNav = res.data[0];
+//   await saveToCache(cacheKey, latestNav);
+//   return latestNav;
+// }
 
 export async function getHistoricalNavBySchemeId(schemeCode: string): Promise<SchemeNav[]> {
-  const cacheKey = `historical-${schemeCode}`;
-  const cachedData = await getFromCache<SchemeNav[]>(cacheKey);
-  if (cachedData) {
-    return cachedData;
-  }
+  try {
+    const doc = await firestore.collection('mf_schemes_history').doc(schemeCode).get();
 
-  const res = await fetchWithRetry<Scheme>(`/mf/${schemeCode}`);
-  if (!res.data) {
-    logger.error({ schemeCode }, 'empty response from historical nav api');
+    if (!doc.exists) {
+      logger.error({ schemeCode }, 'scheme history not found in Firestore');
+      return [];
+    }
+
+    const data = doc.data();
+    return data?.navHistory || [];
+  } catch (error) {
+    logger.error({ schemeCode, error }, 'Error fetching historical NAV from Firestore');
     return [];
   }
-
-  await saveToCache(cacheKey, res.data);
-  return res.data;
 }
+
+// OLD IMPLEMENTATION (using external API):
+// export async function getHistoricalNavBySchemeId(schemeCode: string): Promise<SchemeNav[]> {
+//   const cacheKey = `historical-${schemeCode}`;
+//   const cachedData = await getFromCache<SchemeNav[]>(cacheKey);
+//   if (cachedData) {
+//     return cachedData;
+//   }
+//
+//   const res = await fetchWithRetry<Scheme>(`/mf/${schemeCode}`);
+//   if (!res.data) {
+//     logger.error({ schemeCode }, 'empty response from historical nav api');
+//     return [];
+//   }
+//
+//   await saveToCache(cacheKey, res.data);
+//   return res.data;
+// }
 
 export async function getAmficCodeByIsin(isin: string): Promise<number | undefined> {
-  if (!cachedSchemeMap) {
-    const cacheKey = 'scheme-map';
-    const cachedData = await getFromCache<[string, number][]>(cacheKey);
+  try {
+    const doc = await firestore.collection('mf_isin_map').doc(isin).get();
 
-    if (cachedData) {
-      cachedSchemeMap = new Map(cachedData);
-    } else {
-      const schemes = await fetchWithRetry<SchemeListItem[]>(`/mf`);
-      cachedSchemeMap = new Map();
-      for (const scheme of schemes) {
-        if (scheme.isinGrowth) {
-          cachedSchemeMap.set(scheme.isinGrowth, scheme.schemeCode);
-        } else if (scheme.isinDivReinvestment) {
-          cachedSchemeMap.set(scheme.isinDivReinvestment, scheme.schemeCode);
-        }
-      }
-      await saveToCache(cacheKey, Array.from(cachedSchemeMap.entries()));
+    if (!doc.exists) {
+      logger.error({ isin }, 'scheme not found for ISIN');
+      return;
     }
-  }
 
-  const schemeCode = cachedSchemeMap.get(isin);
-  if (!schemeCode) {
-    logger.error({ isin }, 'scheme not found for ISIN');
+    return doc.data()?.schemeCode;
+  } catch (error) {
+    logger.error({ isin, error }, 'Error fetching scheme code from Firestore');
     return;
   }
-  return schemeCode;
 }
+
+// OLD IMPLEMENTATION (using external API):
+// export async function getAmficCodeByIsin(isin: string): Promise<number | undefined> {
+//   if (!cachedSchemeMap) {
+//     const cacheKey = 'scheme-map';
+//     const cachedData = await getFromCache<[string, number][]>(cacheKey);
+//
+//     if (cachedData) {
+//       cachedSchemeMap = new Map(cachedData);
+//     } else {
+//       const schemes = await fetchWithRetry<SchemeListItem[]>(`/mf`);
+//       cachedSchemeMap = new Map();
+//       for (const scheme of schemes) {
+//         if (scheme.isinGrowth) {
+//           cachedSchemeMap.set(scheme.isinGrowth, scheme.schemeCode);
+//         } else if (scheme.isinDivReinvestment) {
+//           cachedSchemeMap.set(scheme.isinDivReinvestment, scheme.schemeCode);
+//         }
+//       }
+//       await saveToCache(cacheKey, Array.from(cachedSchemeMap.entries()));
+//     }
+//   }
+//
+//   const schemeCode = cachedSchemeMap.get(isin);
+//   if (!schemeCode) {
+//     logger.error({ isin }, 'scheme not found for ISIN');
+//     return;
+//   }
+//   return schemeCode;
+// }
