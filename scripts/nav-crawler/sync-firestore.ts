@@ -6,7 +6,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { firestore } from '@/lib/firebase';
 
 import { FIRESTORE_CONFIG } from './config';
-import { NavHistoryEntry, ParsedNavLine } from './types';
+import type { NavHistoryEntry, ParsedNavLine } from './types';
 import { ProgressLogger, chunk, formatTimestamp } from './utils';
 
 /**

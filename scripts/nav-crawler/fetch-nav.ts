@@ -3,7 +3,7 @@
  */
 import { AMFI_CONFIG } from './config';
 import { parseNavAllText } from './parse-nav';
-import { ParsedNavLine } from './types';
+import type { ParsedNavLine } from './types';
 import { fetchWithRetry, formatTimestamp } from './utils';
 
 /**

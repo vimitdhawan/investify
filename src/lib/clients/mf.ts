@@ -31,15 +31,6 @@ interface SchemeMeta {
   isin_div_reinvestment: string | null;
 }
 
-interface NavCacheDoc<T> {
-  data: T;
-  cachedAt: number;
-}
-
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 1 day
-
-let cachedSchemeMap: Map<string, number> | null = null;
-
 export async function fetchWithRetry<T>(
   path: string,
   retries = 3,
@@ -69,33 +60,6 @@ export async function fetchWithRetry<T>(
     throw error;
   } finally {
     clearTimeout(timeout);
-  }
-}
-
-async function getFromCache<T>(cacheKey: string): Promise<T | null> {
-  try {
-    const doc = await firestore.collection('nav_cache').doc(cacheKey).get();
-    if (doc.exists) {
-      const cacheData = doc.data() as NavCacheDoc<T>;
-      const now = Date.now();
-      if (now - cacheData.cachedAt < CACHE_TTL_MS) {
-        return cacheData.data;
-      }
-    }
-  } catch (error) {
-    logger.error({ cacheKey, error }, 'Error reading from cache');
-  }
-  return null;
-}
-
-async function saveToCache<T>(cacheKey: string, data: T): Promise<void> {
-  try {
-    await firestore.collection('nav_cache').doc(cacheKey).set({
-      data,
-      cachedAt: Date.now(),
-    });
-  } catch (error) {
-    logger.error({ cacheKey, error }, 'Error saving to cache');
   }
 }
 

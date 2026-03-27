@@ -8,10 +8,9 @@ import * as path from 'path';
 
 import { AMFI_CONFIG } from './config';
 import { fetchAmfiNav } from './fetch-nav';
-import { bulkInitializeSchemeHistory } from './sync-firestore';
-import { syncLatestNavToFirestore } from './sync-firestore';
-import { NavHistoryEntry } from './types';
-import { ProgressLogger, formatTimestamp } from './utils';
+import { bulkInitializeSchemeHistory, syncLatestNavToFirestore } from './sync-firestore';
+import type { NavHistoryEntry } from './types';
+import { formatTimestamp } from './utils';
 
 // We'll use parquetjs to read the parquet file
 // Note: This needs to be installed: npm install parquetjs
@@ -50,8 +49,6 @@ async function parseParquetFile(
   const schemeMap = new Map<number, { schemeName: string; navHistory: NavHistoryEntry[] }>();
   let record: ParquetRow | null = null;
   let recordCount = 0;
-
-  const progress = new ProgressLogger(1, 'Parsing records');
 
   while ((record = (await cursor.next()) as any)) {
     if (!record) break;

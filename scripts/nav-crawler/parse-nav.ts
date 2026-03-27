@@ -2,7 +2,7 @@
  * Parser for AMFI NAVAll.txt file
  */
 import { PARSER_CONFIG } from './config';
-import { ParsedNavLine } from './types';
+import type { ParsedNavLine } from './types';
 import { isValidSchemeCode, normalizeIsin } from './utils';
 
 /**
