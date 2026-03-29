@@ -7,8 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { AMFI_CONFIG } from './config';
-import { fetchAmfiNav } from './fetch-nav';
-import { bulkInitializeSchemeHistory, syncLatestNavToFirestore } from './sync-firestore';
+import { bulkInitializeSchemeHistory } from './sync-firestore';
 import type { NavHistoryEntry } from './types';
 import { formatTimestamp } from './utils';
 
@@ -27,10 +26,8 @@ async function downloadParquetFile(url: string, outputPath: string): Promise<voi
   console.log(`[${formatTimestamp()}] Downloaded ${fileSizeMB} MB to ${outputPath}`);
 }
 
-async function parseParquetFile(
-  filePath: string
-): Promise<Map<number, { schemeName: string; navHistory: NavHistoryEntry[] }>> {
-  console.log(`[${formatTimestamp()}] Parsing parquet file...`);
+async function parseAndImportParquetFile(filePath: string): Promise<void> {
+  console.log(`[${formatTimestamp()}] Parsing and importing parquet file...`);
 
   // Use hyparquet for reading parquet files
   const { parquetReadObjects, asyncBufferFromFile } = await import('hyparquet');
@@ -41,8 +38,12 @@ async function parseParquetFile(
     columns: ['Scheme_Code', 'Date', 'NAV'],
   });
 
+  // Process in chunks to avoid memory and payload size issues
+  // Firestore has a 10MB payload limit per batch
+  const CHUNK_SIZE = 10; // Process 10 schemes at a time (smaller to stay under 10MB limit)
   const schemeMap = new Map<number, { schemeName: string; navHistory: NavHistoryEntry[] }>();
   let recordCount = 0;
+  let importedSchemes = 0;
 
   for (const row of rows) {
     recordCount++;
@@ -57,39 +58,37 @@ async function parseParquetFile(
 
     if (!schemeMap.has(schemeCode)) {
       schemeMap.set(schemeCode, {
-        schemeName: `Scheme ${schemeCode}`, // We'll update this with actual name later
+        schemeName: `Scheme ${schemeCode}`,
         navHistory: [],
       });
     }
 
     const scheme = schemeMap.get(schemeCode)!;
     scheme.navHistory.push({ date, nav });
-  }
 
-  console.log(
-    `[${formatTimestamp()}] Parsed ${recordCount} NAV records for ${schemeMap.size} schemes`
-  );
-
-  return schemeMap;
-}
-
-async function enrichWithSchemeNames(
-  schemeMap: Map<number, { schemeName: string; navHistory: NavHistoryEntry[] }>
-): Promise<void> {
-  console.log(`[${formatTimestamp()}] Enriching with scheme names from AMFI...`);
-
-  const navRecords = await fetchAmfiNav();
-
-  let enrichedCount = 0;
-  for (const record of navRecords) {
-    const scheme = schemeMap.get(record.schemeCode);
-    if (scheme) {
-      scheme.schemeName = record.schemeName;
-      enrichedCount++;
+    // When we have accumulated CHUNK_SIZE schemes, import them
+    if (schemeMap.size >= CHUNK_SIZE) {
+      await bulkInitializeSchemeHistory(schemeMap);
+      importedSchemes += schemeMap.size;
+      console.log(
+        `[${formatTimestamp()}] Imported ${importedSchemes} schemes (${schemeMap.size} in this batch)`
+      );
+      schemeMap.clear();
     }
   }
 
-  console.log(`[${formatTimestamp()}] Enriched ${enrichedCount} schemes with names`);
+  // Import remaining schemes
+  if (schemeMap.size > 0) {
+    await bulkInitializeSchemeHistory(schemeMap);
+    importedSchemes += schemeMap.size;
+    console.log(
+      `[${formatTimestamp()}] Imported ${importedSchemes} schemes (${schemeMap.size} in final batch)`
+    );
+  }
+
+  console.log(
+    `[${formatTimestamp()}] Parsed ${recordCount} NAV records for ${importedSchemes} total schemes`
+  );
 }
 
 async function main() {
@@ -113,19 +112,8 @@ async function main() {
       console.log(`[${formatTimestamp()}] Using existing parquet file: ${parquetPath}`);
     }
 
-    // Step 2: Parse parquet file
-    const schemeMap = await parseParquetFile(parquetPath);
-
-    // Step 3: Enrich with scheme names from AMFI
-    await enrichWithSchemeNames(schemeMap);
-
-    // Step 4: Bulk import to Firestore
-    await bulkInitializeSchemeHistory(schemeMap);
-
-    // Step 5: Sync latest NAV data
-    console.log(`[${formatTimestamp()}] Syncing latest NAV data...`);
-    const latestNavRecords = await fetchAmfiNav();
-    await syncLatestNavToFirestore(latestNavRecords);
+    // Step 2: Parse and import parquet file (processes in chunks to avoid memory issues)
+    await parseAndImportParquetFile(parquetPath);
 
     console.log(`[${formatTimestamp()}] ========================================`);
     console.log(`[${formatTimestamp()}] Historical NAV Import completed successfully`);
