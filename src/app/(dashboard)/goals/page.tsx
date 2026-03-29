@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 import { Plus } from 'lucide-react';
 
@@ -14,9 +15,8 @@ import { getSessionUserId } from '@/lib/session';
 
 export default async function GoalsPage() {
   const userId = await getSessionUserId();
-
   if (!userId) {
-    return <div>Unauthorized</div>;
+    redirect('/login');
   }
 
   return (
