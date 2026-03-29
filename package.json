@@ -26,8 +26,6 @@
     "ingest:schemes": "node --env-file=.env.local -r tsx scripts/ingest-schemes.ts",
     "ingest:portfolio": "node --env-file=.env.local -r tsx scripts/ingest-portfolio.ts",
     "ingest:holdings": "node --env-file=.env.local -r tsx scripts/ingest-holdings.ts",
-    "ingest:holdings:test": "node --env-file=.env.local -r tsx scripts/ingest-holdings.ts -- --test",
-    "ingest:holdings:verify": "node --env-file=.env.local -r tsx scripts/ingest-holdings.ts -- --verify --local",
     "nav:sync": "node --env-file=.env.local -r tsx scripts/nav-crawler/index.ts",
     "nav:import": "node --env-file=.env.local -r tsx scripts/nav-crawler/import-historical.ts"
   },
