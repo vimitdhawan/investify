@@ -1,9 +1,14 @@
-import { SchemeType } from '@/features/schemes/type';
-import { type Transaction, investmentTypes, withdrawTypes } from '@/features/transactions/type';
+import { type Scheme, SchemeType } from '@/features/schemes/type';
+import {
+  type Transaction,
+  TransactionType,
+  investmentTypes,
+  withdrawTypes,
+} from '@/features/transactions/type';
 
 import { formatDateToYYYYMMDD, getFiscalYear } from '@/lib/utils/date';
 
-import { type RealizedGainDetail, type RealizedGainLoss } from './type';
+import { type RealizedGainDetail, type RealizedGainLoss, type SimulationResult } from './type';
 
 /**
  * Calculates detailed realized gains using FIFO logic.
@@ -17,7 +22,13 @@ export function calculateRealizedGainsDetailed(
 ): RealizedGainDetail[] {
   const realizedGains: RealizedGainDetail[] = [];
 
-  const purchases = transactions
+  // Ensure all dates are actual Date objects (they might be strings if coming from a Server Action)
+  const normalizedTransactions = transactions.map((t) => ({
+    ...t,
+    date: new Date(t.date),
+  }));
+
+  const purchases = normalizedTransactions
     .filter((t) => investmentTypes.includes(t.type) && t.units > 0)
     .sort((a, b) => a.date.getTime() - b.date.getTime())
     .map((p) => ({
@@ -25,7 +36,7 @@ export function calculateRealizedGainsDetailed(
       remainingUnits: p.units,
     }));
 
-  const sales = transactions
+  const sales = normalizedTransactions
     .filter((t) => withdrawTypes.includes(t.type))
     .sort((a, b) => a.date.getTime() - b.date.getTime());
 
@@ -104,7 +115,8 @@ export function groupRealizedGains(gains: RealizedGainDetail[]): RealizedGainLos
   const groupedGainsMap = new Map<string, RealizedGainLoss>();
 
   gains.forEach((gain) => {
-    const saleDateStr = formatDateToYYYYMMDD(gain.saleDate);
+    const saleDate = new Date(gain.saleDate);
+    const saleDateStr = formatDateToYYYYMMDD(saleDate);
     const taxType = gain.isLTCG ? 'LTCG' : gain.isSTCG ? 'STCG' : 'Debt';
     // Group by Name, FolioNumber, Date and Tax Type
     const key = `${gain.schemeName.trim()}-${gain.folioNumber}-${saleDateStr}-${taxType}`;
@@ -122,7 +134,7 @@ export function groupRealizedGains(gains: RealizedGainDetail[]): RealizedGainLos
       groupedGainsMap.set(key, {
         schemeName: gain.schemeName,
         folioNumber: gain.folioNumber,
-        saleDate: gain.saleDate,
+        saleDate: saleDate,
         buyAmount,
         sellAmount,
         gainLoss: gain.gainLoss,
@@ -265,5 +277,65 @@ export function calculateTaxSummary(
     totalTaxPaid,
     taxDueOrRefund,
     isRefund: taxDueOrRefund < 0,
+  };
+}
+
+/**
+ * Simulates a withdrawal to calculate potential realized gains.
+ */
+export function simulateWithdrawal(
+  scheme: Scheme,
+  unitsToRedeem: number,
+  currentNav: number
+): SimulationResult {
+  const mockSaleId = `mock-sale-${Date.now()}`;
+  const mockSale: Transaction = {
+    id: mockSaleId,
+    date: new Date(),
+    schemeId: scheme.id,
+    description: 'Simulated Redemption',
+    type: TransactionType.Redemption,
+    nav: currentNav,
+    units: -unitsToRedeem, // Redemption units are typically negative in our system
+    amount: unitsToRedeem * currentNav,
+  };
+
+  // Combine mock sale with existing transactions
+  const transactions = scheme.transactions || [];
+  const allTransactions = [...transactions, mockSale];
+
+  // Calculate detailed realized gains
+  const detailedGains = calculateRealizedGainsDetailed(
+    allTransactions,
+    scheme.id,
+    scheme.name,
+    scheme.type,
+    scheme.folioNumber
+  );
+
+  // Filter for gains associated with our mock sale
+  const simulationGains = detailedGains.filter((g) => g.id.startsWith(mockSaleId));
+
+  let ltcg = 0;
+  let stcg = 0;
+  let debt = 0;
+  let totalGain = 0;
+
+  simulationGains.forEach((g) => {
+    if (g.isLTCG) ltcg += g.gainLoss;
+    else if (g.isSTCG) stcg += g.gainLoss;
+    else if (g.isDebt) debt += g.gainLoss;
+    totalGain += g.gainLoss;
+  });
+
+  return {
+    units: unitsToRedeem,
+    amount: unitsToRedeem * currentNav,
+    nav: currentNav,
+    ltcg,
+    stcg,
+    debt,
+    totalGain,
+    details: simulationGains,
   };
 }
