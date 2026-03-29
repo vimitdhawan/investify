@@ -49,23 +49,25 @@ export function SchemeList({
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <div className="flex flex-wrap gap-4 justify-between items-end">
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium">Folio</label>
-          <Select value={selectedFolio} onValueChange={setSelectedFolio}>
-            <SelectTrigger className="w-[350px]">
-              <SelectValue placeholder="Select a folio" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All">All Folios</SelectItem>
-              {folios.map(({ folio, amc }) => (
-                <SelectItem key={folio} value={folio}>{`${amc} - ${folio}`}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-end">
+        <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 w-full sm:w-auto">
+          <div className="flex flex-col gap-2 w-full sm:w-auto">
+            <label className="text-sm font-medium">Folio</label>
+            <Select value={selectedFolio} onValueChange={setSelectedFolio}>
+              <SelectTrigger className="w-full sm:w-[350px]">
+                <SelectValue placeholder="Select a folio" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Folios</SelectItem>
+                {folios.map(({ folio, amc }) => (
+                  <SelectItem key={folio} value={folio}>{`${amc} - ${folio}`}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         {/* New Switch for Closed Schemes */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 pb-2">
           <Switch
             id="show-closed-schemes"
             checked={showClosedSchemes}

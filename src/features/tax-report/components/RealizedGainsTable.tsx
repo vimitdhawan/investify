@@ -19,7 +19,9 @@ interface RealizedGainsTableProps {
 
 export function RealizedGainsTable({ gains }: RealizedGainsTableProps) {
   // Sort grouped gains by sale date (most recent first)
-  const sortedGroupedGains = [...gains].sort((a, b) => b.saleDate.getTime() - a.saleDate.getTime());
+  const sortedGroupedGains = [...gains].sort(
+    (a, b) => new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime()
+  );
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -68,7 +70,7 @@ export function RealizedGainsTable({ gains }: RealizedGainsTableProps) {
               <TableRow key={`${gain.schemeName}-${gain.folioNumber}-${index}`}>
                 <TableCell className="font-medium">{truncateName(gain.schemeName)}</TableCell>
                 <TableCell className="text-muted-foreground">{gain.folioNumber}</TableCell>
-                <TableCell>{formatDateToYYYYMMDD(gain.saleDate)}</TableCell>
+                <TableCell>{formatDateToYYYYMMDD(new Date(gain.saleDate))}</TableCell>
                 <TableCell className="text-right text-muted-foreground">
                   {formatCurrency(gain.buyAmount)}
                 </TableCell>

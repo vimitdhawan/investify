@@ -8,21 +8,13 @@ TBD - created by archiving change calculate-tax-report. Update Purpose after arc
 
 ### Requirement: Calculate Realized Gains using FIFO with Holding Periods
 
-The system MUST correctly match sale transactions with corresponding purchase transactions in a first-in-first-out manner to determine the holding period for each realized unit.
+The system SHALL support simulation of realized gains by allowing mock sale transactions to be processed through the standard FIFO engine.
 
-#### Scenario: Sale matches exactly one purchase
+#### Scenario: Simulated sale for withdrawal calculation
 
-- **Given** a user has purchased 100 units of an Equity fund on 2022-01-01 and sold 100 units on 2023-01-02.
-- **When** the tax report for FY 2022-23 is requested.
-- **Then** the system should show 100 realized units with a holding period of 366 days and categorize them as LTCG.
-
-#### Scenario: Sale matches multiple purchases (FIFO)
-
-- **Given** a user has purchased 50 units on 2022-01-01 and another 50 units on 2022-06-01.
-- **When** the user sells 75 units on 2023-02-01.
-- **Then** the report should show two entries for this sale:
-  - 50 units with holding period > 1 year (LTCG).
-  - 25 units with holding period < 1 year (STCG).
+- **Given** a set of existing purchase transactions.
+- **When** a "mock" sale transaction for today is provided with a specific unit count and NAV.
+- **Then** the system should return the calculated LTCG, STCG, or Debt gains for those units as if the sale had occurred today.
 
 ### Requirement: Categorize Gains by Asset Type and Holding Period
 
@@ -134,3 +126,25 @@ The system SHALL define a `RealizedGainLoss` type to represent grouped realized 
   - `gainLoss`: Sum of all individual gain/loss amounts
   - `taxPaid`: Sum of all tax paid amounts
   - `isLTCG`, `isSTCG`, `isDebt`: Boolean flags indicating the tax type
+
+### Requirement: Potential Withdrawal (What-if) Analysis
+
+The system SHALL provide a "What-if" calculator to help users estimate the tax impact of a potential redemption.
+
+#### Scenario: User inputs units to withdraw
+
+- **Given** the user has 1000 units of a scheme.
+- **When** the user enters 500 units into the Withdrawal Calculator.
+- **Then** the system SHALL display the estimated gain breakdown (LTCG/STCG/Debt) for those 500 units based on the current NAV.
+
+#### Scenario: User inputs amount to withdraw
+
+- **Given** the user has units worth ₹1,00,000 at current NAV.
+- **When** the user enters ₹50,000 as the target withdrawal amount.
+- **Then** the system SHALL automatically calculate the required units and display the estimated tax impact.
+
+#### Scenario: Prevent over-withdrawal
+
+- **Given** the user has 100 units of a scheme.
+- **When** the user attempts to enter 150 units for simulation.
+- **Then** the system SHALL display a validation error or cap the input to the current balance.

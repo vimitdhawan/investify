@@ -67,3 +67,14 @@ export interface TaxSummary {
   taxDueOrRefund: number; // totalCalculatedTax - totalTaxPaid (positive = due, negative = refund)
   isRefund: boolean; // true if taxDueOrRefund < 0
 }
+
+export interface SimulationResult {
+  units: number;
+  amount: number;
+  nav: number;
+  ltcg: number;
+  stcg: number;
+  debt: number;
+  totalGain: number;
+  details: RealizedGainDetail[];
+}
