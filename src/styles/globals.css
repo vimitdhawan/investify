@@ -1,0 +1,42 @@
+/* ==========================================
+   Global Styles Entry Point
+   Main stylesheet for the application
+
+   Import Order:
+   1. Tailwind CSS framework
+   2. Animation utilities
+   3. Custom dark mode variant
+   4. Design tokens (color, spacing, typography)
+   5. Theme overrides (light/dark mode)
+   6. Base layer (global element defaults)
+   ========================================== */
+
+/* ========================================
+   1. Tailwind CSS Framework
+   ======================================== */
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* ========================================
+   2. Custom Dark Mode Variant
+   Enables dark: prefix in Tailwind
+   Scoped to .dark class for better control
+   ======================================== */
+@custom-variant dark (&:is(.dark *));
+
+/* ========================================
+   3. Design System Imports
+   ======================================== */
+
+/* Design Tokens - Core values (colors, spacing, fonts) */
+@import './tokens.css';
+
+/* Theme Definitions - Light and dark mode color overrides */
+@import './themes.css';
+
+/* Base Styles - Global element defaults */
+@import './base.css';
+
+/* ========================================
+   End of Global Styles
+   ======================================== */
