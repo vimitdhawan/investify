@@ -4,6 +4,10 @@
 
 export const AMFI_CONFIG = {
   // AMFI NAV data URL - updated daily around 8-9 PM IST
+  // NOTE: This URL is blocked outside India. Use one of these alternatives:
+  // Option 1: Manual upload - place NAVAll.txt in temp/navall-manual.txt
+  // Option 2: Proxy service - set AMFI_PROXY_URL environment variable
+  // Option 3: HTTP proxy - set HTTP_PROXY or HTTPS_PROXY environment variable
   NAV_ALL_URL: 'https://www.amfiindia.com/spages/NAVAll.txt',
 
   // GitHub repository for historical data
@@ -16,6 +20,13 @@ export const AMFI_CONFIG = {
   // Retry settings
   MAX_RETRIES: 3,
   RETRY_DELAY_MS: 2000,
+
+  // Proxy URL for fetching AMFI data (set via environment variable)
+  // Example: AMFI_PROXY_URL=https://your-proxy-service.com/fetch?url=
+  PROXY_URL: process.env.AMFI_PROXY_URL,
+
+  // Manual upload path for testing without internet access
+  MANUAL_NAV_PATH: 'temp/navall-manual.txt',
 };
 
 export const FIRESTORE_CONFIG = {

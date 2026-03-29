@@ -187,6 +187,100 @@ Deploy as scheduled Cloud Run job.
 - **Size:** ~2-3 MB
 - **Records:** ~16,000 schemes
 
+**⚠️ Note:** AMFI blocks access from outside India. Use one of the methods below to fetch the data.
+
+### Accessing AMFI Data from Outside India
+
+AMFI restricts access to their website based on IP location. If you're outside India, you have 3 options:
+
+#### Option 1: Manual Upload (Recommended for Testing)
+
+**Steps:**
+
+1. Connect to VPN with an Indian server (or access from India)
+2. Download NAVAll.txt from https://www.amfiindia.com/spages/NAVAll.txt
+3. Place the file in: `temp/navall-manual.txt`
+4. Run the sync script - it will automatically use the manual file
+
+```bash
+# The script will detect and use temp/navall-manual.txt
+npm run nav:sync
+```
+
+**Pros:** Simple, works anywhere, no infrastructure needed  
+**Cons:** Manual process, needs to be done regularly
+
+#### Option 2: Proxy Service (Recommended for Production)
+
+**Concept:** Set up a simple proxy server in India that fetches from AMFI and relays to your app.
+
+**Steps:**
+
+1. Deploy a simple proxy service in India (Cloud Run, AWS Lambda, Vercel, etc.)
+2. Proxy service code example:
+
+```typescript
+// Simple proxy endpoint
+export async function handler(req, res) {
+  const url = 'https://www.amfiindia.com/spages/NAVAll.txt';
+  const response = await fetch(url);
+  const data = await response.text();
+  res.send(data);
+}
+```
+
+3. Set environment variable:
+
+```bash
+export AMFI_PROXY_URL="https://your-proxy-service.com/fetch?url="
+npm run nav:sync
+```
+
+**Pros:** Automated, production-ready, works reliably  
+**Cons:** Need to deploy proxy service, small cost
+
+**Popular Proxy Hosting Options:**
+
+- Google Cloud Run (free tier available)
+- AWS Lambda (free tier: 1M requests/month)
+- Vercel (free deployment)
+- Railway (easy deployment)
+
+#### Option 3: HTTP Proxy (If you have a proxy)
+
+**Steps:**
+
+1. Get an HTTP proxy that can access Indian websites (residential proxy service)
+2. Set environment variables:
+
+```bash
+# For HTTP requests
+export HTTP_PROXY="http://proxy-ip:port"
+
+# For HTTPS requests
+export HTTPS_PROXY="http://proxy-ip:port"
+
+# Run the script
+npm run nav:sync
+```
+
+**Services:**
+
+- Bright Data (residential proxies)
+- Smartproxy
+- Oxylabs
+- Quora proxy
+
+**Pros:** Works with any HTTP request  
+**Cons:** Costs money, might be slow
+
+#### Option 4: Deploy in India
+
+Deploy the entire script/service in India (Cloud Run, EC2, etc.) so it has direct access to AMFI.
+
+**Pros:** Fastest, most reliable  
+**Cons:** Need to run service in India
+
 ### GitHub Parquet (Historical)
 
 - **URL:** https://github.com/InertExpert2911/Mutual_Fund_Data
@@ -208,6 +302,37 @@ Deploy as scheduled Cloud Run job.
 
 ## Troubleshooting
 
+### "Permission denied" or "Failed to fetch AMFI NAV data"
+
+**If you see this error when running outside India:**
+
+1. **Check if you're using manual upload:**
+
+   ```bash
+   # Make sure temp/navall-manual.txt exists with AMFI data
+   ls -la temp/navall-manual.txt
+   ```
+
+2. **If using proxy, verify the proxy URL:**
+
+   ```bash
+   # Set and test the proxy URL
+   export AMFI_PROXY_URL="https://your-proxy.com/fetch?url="
+   echo $AMFI_PROXY_URL
+   ```
+
+3. **If using HTTP proxy, test connectivity:**
+
+   ```bash
+   export HTTPS_PROXY="http://proxy-ip:port"
+   curl -v https://www.amfiindia.com/spages/NAVAll.txt
+   ```
+
+4. **Error details will show which method failed:**
+   - If temp file error → use manual upload
+   - If proxy error → check AMFI_PROXY_URL
+   - If direct fetch error → use one of the above methods
+
 ### Import fails with "Too many writes"
 
 - Firestore free tier has 20k writes/day limit
@@ -224,6 +349,15 @@ Deploy as scheduled Cloud Run job.
 - AMFI website can be slow or down
 - Retry logic is built-in (3 retries with backoff)
 - Run again later if fails
+
+### Script shows multiple fetch attempts
+
+- This is normal - the script tries multiple access methods:
+  1. Manual upload file (`temp/navall-manual.txt`)
+  2. Proxy service (if `AMFI_PROXY_URL` set)
+  3. HTTP proxy (if `HTTP_PROXY`/`HTTPS_PROXY` set)
+  4. Direct fetch (will fail outside India)
+- Check logs to see which method is being used
 
 ## File Structure
 

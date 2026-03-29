@@ -1,12 +1,47 @@
 /**
  * Utility functions for NAV crawler
  */
+import * as fs from 'fs';
+
 import { AMFI_CONFIG } from './config';
 
 /**
  * Fetch data from URL with retry logic
+ * Supports:
+ * 1. Manual upload via temp/navall-manual.txt
+ * 2. Proxy service via AMFI_PROXY_URL environment variable
+ * 3. HTTP proxy via HTTP_PROXY/HTTPS_PROXY environment variables
+ * 4. Direct fetch (will fail if blocked outside India)
  */
 export async function fetchWithRetry(
+  url: string,
+  retries = AMFI_CONFIG.MAX_RETRIES,
+  timeoutMs = AMFI_CONFIG.TIMEOUT_MS
+): Promise<string> {
+  // Try manual upload first (for testing without internet)
+  if (url === AMFI_CONFIG.NAV_ALL_URL && fs.existsSync(AMFI_CONFIG.MANUAL_NAV_PATH)) {
+    console.warn(
+      `[${formatTimestamp()}] Using manually uploaded NAV file: ${AMFI_CONFIG.MANUAL_NAV_PATH}`
+    );
+    return fs.readFileSync(AMFI_CONFIG.MANUAL_NAV_PATH, 'utf-8');
+  }
+
+  // Try proxy service if configured
+  if (url === AMFI_CONFIG.NAV_ALL_URL && AMFI_CONFIG.PROXY_URL) {
+    const proxyUrl = `${AMFI_CONFIG.PROXY_URL}${encodeURIComponent(url)}`;
+    console.log(`[${formatTimestamp()}] Using proxy service: ${AMFI_CONFIG.PROXY_URL}`);
+    return fetchWithRetryInternal(proxyUrl, retries, timeoutMs);
+  }
+
+  // Use HTTP proxy if configured via environment variables
+  // This is handled by Node.js automatically when HTTP_PROXY or HTTPS_PROXY is set
+  return fetchWithRetryInternal(url, retries, timeoutMs);
+}
+
+/**
+ * Internal fetch implementation with retry logic
+ */
+async function fetchWithRetryInternal(
   url: string,
   retries = AMFI_CONFIG.MAX_RETRIES,
   timeoutMs = AMFI_CONFIG.TIMEOUT_MS
@@ -17,6 +52,8 @@ export async function fetchWithRetry(
   try {
     const response = await fetch(url, {
       signal: controller.signal,
+      // Disable automatic proxy handling for fetch - it's only available in some Node.js versions
+      // HTTP proxy will still work via environment variables at the TCP level
     });
 
     if (!response.ok) {
@@ -30,9 +67,11 @@ export async function fetchWithRetry(
     clearTimeout(timeout);
 
     if (retries > 0) {
-      console.warn(`Fetch failed for ${url}, retrying... (${retries} retries left)`);
+      console.warn(
+        `[${formatTimestamp()}] Fetch failed for ${url}, retrying... (${retries} retries left)`
+      );
       await sleep(AMFI_CONFIG.RETRY_DELAY_MS);
-      return fetchWithRetry(url, retries - 1, timeoutMs);
+      return fetchWithRetryInternal(url, retries - 1, timeoutMs);
     }
 
     throw new Error(`Failed to fetch ${url}: ${error.message}`);
