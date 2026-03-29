@@ -12,15 +12,6 @@ import { bulkInitializeSchemeHistory, syncLatestNavToFirestore } from './sync-fi
 import type { NavHistoryEntry } from './types';
 import { formatTimestamp } from './utils';
 
-// We'll use parquetjs to read the parquet file
-// Note: This needs to be installed: npm install parquetjs
-
-interface ParquetRow {
-  Scheme_Code: number;
-  Date: string;
-  NAV: number;
-}
-
 async function downloadParquetFile(url: string, outputPath: string): Promise<void> {
   console.log(`[${formatTimestamp()}] Downloading parquet file from: ${url}`);
 
@@ -41,26 +32,28 @@ async function parseParquetFile(
 ): Promise<Map<number, { schemeName: string; navHistory: NavHistoryEntry[] }>> {
   console.log(`[${formatTimestamp()}] Parsing parquet file...`);
 
-  // Import parquetjs dynamically
-  const parquet = await import('parquetjs');
-  const reader = await parquet.ParquetReader.openFile(filePath);
-  const cursor = reader.getCursor();
+  // Use hyparquet for reading parquet files
+  const { parquetReadObjects, asyncBufferFromFile } = await import('hyparquet');
+  const file = await asyncBufferFromFile(filePath);
+
+  const rows = await parquetReadObjects({
+    file,
+    columns: ['Scheme_Code', 'Date', 'NAV'],
+  });
 
   const schemeMap = new Map<number, { schemeName: string; navHistory: NavHistoryEntry[] }>();
-  let record: ParquetRow | null = null;
   let recordCount = 0;
 
-  while ((record = (await cursor.next()) as any)) {
-    if (!record) break;
+  for (const row of rows) {
     recordCount++;
 
     if (recordCount % 100000 === 0) {
       console.log(`[${formatTimestamp()}] Processed ${recordCount} records...`);
     }
 
-    const schemeCode = record.Scheme_Code;
-    const date = record.Date; // Format: YYYY-MM-DD
-    const nav = record.NAV.toString();
+    const schemeCode = row.Scheme_Code as unknown as number;
+    const date = row.Date as unknown as string; // Format: YYYY-MM-DD
+    const nav = String(row.NAV);
 
     if (!schemeMap.has(schemeCode)) {
       schemeMap.set(schemeCode, {
@@ -72,8 +65,6 @@ async function parseParquetFile(
     const scheme = schemeMap.get(schemeCode)!;
     scheme.navHistory.push({ date, nav });
   }
-
-  await reader.close();
 
   console.log(
     `[${formatTimestamp()}] Parsed ${recordCount} NAV records for ${schemeMap.size} schemes`
@@ -143,8 +134,13 @@ async function main() {
   } catch (error: any) {
     console.error(`[${formatTimestamp()}] ========================================`);
     console.error(`[${formatTimestamp()}] Historical NAV Import failed`);
-    console.error(`[${formatTimestamp()}] Error: ${error.message}`);
-    console.error(`[${formatTimestamp()}] Stack:`, error.stack);
+    console.error(`[${formatTimestamp()}] Error: ${error?.message || String(error)}`);
+    console.error(`[${formatTimestamp()}] Stack:`, error?.stack || 'No stack trace');
+    if (error instanceof Error) {
+      console.error(`[${formatTimestamp()}] Full error:`, error);
+    } else {
+      console.error(`[${formatTimestamp()}] Full error object:`, error);
+    }
     console.error(`[${formatTimestamp()}] ========================================`);
     process.exit(1);
   }
