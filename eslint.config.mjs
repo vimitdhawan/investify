@@ -14,6 +14,9 @@ const eslintConfig = defineConfig([
     rules: {
       'prettier/prettier': 'error',
 
+      // Note: Tailwind ESLint plugin not yet compatible with Tailwind v4
+      // Will add when eslint-plugin-tailwindcss supports v4
+
       // TypeScript specific rules
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-unused-vars': [

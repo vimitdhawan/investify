@@ -1,0 +1,196 @@
+/* ==========================================
+   Theme: Light Mode (Default)
+   High contrast, optimized for daytime use
+   ========================================== */
+
+:root {
+  /* ========================================
+     Background & Text Colors
+     Foundation colors for the interface
+     ======================================== */
+
+  --background: oklch(1 0 0); /* Pure white - maximum brightness */
+  --foreground: oklch(0.145 0 0); /* Near black - high contrast text */
+
+  /* ========================================
+     Surface Colors
+     Elevated elements like cards and popovers
+     ======================================== */
+
+  --card: oklch(1 0 0); /* White - same as background for flat design */
+  --card-foreground: oklch(0.145 0 0); /* Near black text on cards */
+
+  --popover: oklch(1 0 0); /* White - floating elements */
+  --popover-foreground: oklch(0.145 0 0); /* Near black text in popovers */
+
+  /* ========================================
+     Interactive Colors
+     Buttons, links, and primary actions
+     ======================================== */
+
+  --primary: oklch(0.205 0 0); /* Dark neutral - primary actions (buttons) */
+  --primary-foreground: oklch(0.985 0 0); /* Near white - text on primary */
+
+  --secondary: oklch(0.97 0 0); /* Very light gray - secondary actions */
+  --secondary-foreground: oklch(0.205 0 0); /* Dark text on secondary */
+
+  --accent: oklch(0.97 0 0); /* Very light gray - hover states, highlights */
+  --accent-foreground: oklch(0.205 0 0); /* Dark text on accent */
+
+  /* ========================================
+     Muted Colors
+     Subtle backgrounds and disabled states
+     ======================================== */
+
+  --muted: oklch(0.97 0 0); /* Very light gray - muted backgrounds */
+  --muted-foreground: oklch(0.556 0 0); /* Medium gray - secondary text */
+
+  /* ========================================
+     Feedback Colors
+     Semantic colors for user feedback
+     ======================================== */
+
+  --destructive: oklch(0.577 0.245 27.325); /* Red (hue ~27°) - errors, deletion */
+
+  --gain: oklch(0.6 0.15 140); /* Green (hue 140°) - positive returns, profit */
+  --loss: var(--destructive); /* Red - negative returns, losses */
+
+  --info: oklch(0.479 0.086 220.276); /* Cyan (hue ~220°) - informational messages */
+  --info-foreground: oklch(0.145 0 0); /* Dark text on info background */
+
+  /* ========================================
+     Form Elements
+     Input fields, borders, focus rings
+     ======================================== */
+
+  --border: oklch(0.922 0 0); /* Light gray - borders, dividers */
+  --input: oklch(0.922 0 0); /* Light gray - input field borders */
+  --ring: oklch(0.708 0 0); /* Medium gray - focus rings */
+
+  /* ========================================
+     Data Visualization (Charts)
+     Distinct colors for chart data series
+     ======================================== */
+
+  --chart-1: oklch(0.646 0.222 41.116); /* Orange - warm accent */
+  --chart-2: oklch(0.6 0.118 184.704); /* Teal - cool accent */
+  --chart-3: oklch(0.398 0.07 227.392); /* Blue - primary chart color */
+  --chart-4: oklch(0.828 0.189 84.429); /* Yellow - highlight color */
+  --chart-5: oklch(0.769 0.188 70.08); /* Lime - fresh accent */
+
+  /* ========================================
+     Sidebar Component
+     Navigation sidebar colors
+     ======================================== */
+
+  --sidebar: oklch(0.985 0 0); /* Very light gray - sidebar background */
+  --sidebar-foreground: oklch(0.145 0 0); /* Dark text in sidebar */
+
+  --sidebar-primary: oklch(0.205 0 0); /* Dark - active/selected items */
+  --sidebar-primary-foreground: oklch(0.985 0 0); /* Light text on selected */
+
+  --sidebar-accent: oklch(0.97 0 0); /* Light gray - hover states */
+  --sidebar-accent-foreground: oklch(0.205 0 0); /* Dark text on hover */
+
+  --sidebar-border: oklch(0.922 0 0); /* Light gray - sidebar borders */
+  --sidebar-ring: oklch(0.708 0 0); /* Medium gray - focus rings */
+}
+
+/* ==========================================
+   Theme: Dark Mode
+   Reduced brightness for comfortable night viewing
+   Applied via .dark class on <html> or <body>
+   ========================================== */
+
+.dark {
+  /* ========================================
+     Background & Text Colors
+     Inverted from light mode for dark UI
+     ======================================== */
+
+  --background: oklch(0.25 0 0); /* Very dark gray - comfortable dark background */
+  --foreground: oklch(0.98 0 0); /* Near white - high contrast on dark */
+
+  /* ========================================
+     Surface Colors
+     Slightly lighter than background for depth
+     ======================================== */
+
+  --card: oklch(0.3 0 0); /* Dark gray - elevated cards */
+  --card-foreground: oklch(0.98 0 0); /* Near white text on cards */
+
+  --popover: oklch(0.3 0 0); /* Dark gray - floating elements */
+  --popover-foreground: oklch(0.98 0 0); /* Near white text in popovers */
+
+  /* ========================================
+     Interactive Colors
+     Inverted brightness for dark mode
+     ======================================== */
+
+  --primary: oklch(0.98 0 0); /* Near white - stands out on dark backgrounds */
+  --primary-foreground: oklch(0.3 0 0); /* Dark text on light primary */
+
+  --secondary: oklch(0.35 0 0); /* Medium dark gray - secondary actions */
+  --secondary-foreground: oklch(0.98 0 0); /* Light text on secondary */
+
+  --accent: oklch(0.35 0 0); /* Medium dark gray - hover states */
+  --accent-foreground: oklch(0.98 0 0); /* Light text on accent */
+
+  /* ========================================
+     Muted Colors
+     Subtle backgrounds for dark mode
+     ======================================== */
+
+  --muted: oklch(0.35 0 0); /* Medium dark gray - muted backgrounds */
+  --muted-foreground: oklch(0.75 0 0); /* Light gray - secondary text */
+
+  /* ========================================
+     Feedback Colors
+     Adjusted for better visibility on dark
+     ======================================== */
+
+  --destructive: oklch(0.704 0.191 22.216); /* Lighter red (hue ~22°) - more visible */
+
+  --gain: oklch(0.7 0.15 140); /* Lighter green (hue 140°) - positive feedback */
+  --loss: var(--destructive); /* Red - negative feedback */
+
+  --info: oklch(0.55 0.1 220); /* Lighter cyan (hue 220°) - information */
+  --info-foreground: oklch(0.98 0 0); /* Light text on info background */
+
+  /* ========================================
+     Form Elements
+     Borders and inputs for dark mode
+     ======================================== */
+
+  --border: oklch(0.35 0 0); /* Medium dark gray - borders */
+  --input: oklch(0.35 0 0); /* Medium dark gray - input borders */
+  --ring: oklch(0.6 0 0); /* Lighter gray - focus rings */
+
+  /* ========================================
+     Data Visualization (Charts)
+     Vibrant colors for dark backgrounds
+     ======================================== */
+
+  --chart-1: oklch(0.488 0.243 264.376); /* Purple - vibrant on dark */
+  --chart-2: oklch(0.696 0.17 162.48); /* Green - fresh accent */
+  --chart-3: oklch(0.769 0.188 70.08); /* Yellow-green - bright */
+  --chart-4: oklch(0.627 0.265 303.9); /* Magenta - bold accent */
+  --chart-5: oklch(0.645 0.246 16.439); /* Orange-red - warm */
+
+  /* ========================================
+     Sidebar Component
+     Navigation for dark mode
+     ======================================== */
+
+  --sidebar: oklch(0.25 0 0); /* Very dark - matches background */
+  --sidebar-foreground: oklch(0.98 0 0); /* Light text in sidebar */
+
+  --sidebar-primary: oklch(0.488 0.243 264.376); /* Purple - active items */
+  --sidebar-primary-foreground: oklch(0.98 0 0); /* Light text on selected */
+
+  --sidebar-accent: oklch(0.35 0 0); /* Medium dark - hover states */
+  --sidebar-accent-foreground: oklch(0.98 0 0); /* Light text on hover */
+
+  --sidebar-border: oklch(0.35 0 0); /* Medium dark - borders */
+  --sidebar-ring: oklch(0.6 0 0); /* Lighter - focus rings */
+}

@@ -1,0 +1,85 @@
+/* ==========================================
+   Base Layer Styles
+   Global element defaults and resets
+   Applied via @layer base
+   ========================================== */
+
+@layer base {
+  /* ========================================
+     Universal Element Defaults
+     Applied to all elements
+     ======================================== */
+
+  * {
+    /* Border styling - uses theme border color */
+    @apply border-border;
+
+    /* Focus ring - semi-transparent theme ring color */
+    @apply outline-ring/50;
+  }
+
+  /* ========================================
+     Body Element
+     Sets the foundation for the entire app
+     ======================================== */
+
+  body {
+    /* Background and text colors from theme */
+    @apply bg-background text-foreground;
+
+    /* Smooth font rendering on all platforms */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ========================================
+     Optional: Typography Defaults
+     Uncomment if you want semantic heading styles
+     ======================================== */
+
+  /* h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl;
+  }
+
+  h2 {
+    @apply text-3xl;
+  }
+
+  h3 {
+    @apply text-2xl;
+  }
+
+  h4 {
+    @apply text-xl;
+  }
+
+  h5 {
+    @apply text-lg;
+  }
+
+  h6 {
+    @apply text-base;
+  } */
+
+  /* ========================================
+     Optional: Link Defaults
+     Uncomment if you want global link styles
+     ======================================== */
+
+  /* a {
+    @apply text-primary underline-offset-4 hover:underline;
+  } */
+
+  /* ========================================
+     Optional: Focus Visible (Accessibility)
+     Uncomment for better keyboard navigation
+     ======================================== */
+
+  /* *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  } */
+}
