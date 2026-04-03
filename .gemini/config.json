@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "write": "allow",
-    "execute": "allow"
-  },
-  "confirmations": false,
-  "autoApprove": true
-}
