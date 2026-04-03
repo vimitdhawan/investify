@@ -75,7 +75,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@faker-js/faker": "^8.4.1",
+    "@faker-js/faker": "^10.4.0",
     "@playwright/mcp": "^0.0.68",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
