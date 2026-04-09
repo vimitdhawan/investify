@@ -4,17 +4,17 @@
     "next-devtools": {
       "type": "local",
       "command": ["npx", "-y", "next-devtools-mcp@latest"],
-      "enabled": true,
+      "enabled": true
     },
     "shadcn": {
       "type": "local",
       "command": ["npx", "shadcn@latest", "mcp"],
-      "enabled": true,
+      "enabled": true
     },
     "playwright": {
       "type": "local",
       "command": ["npx", "@playwright/mcp@latest"],
-      "enabled": true,
-    },
-  },
+      "enabled": true
+    }
+  }
 }
