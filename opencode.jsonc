@@ -1,7 +1,5 @@
 {
-  "security": {
-    "enablePermanentToolApproval": true
-  },
+  "$schema": "https://opencode.ai/config.json",
   "permissions": {
     "defaultMode": "default",
     "allow": [
@@ -34,18 +32,21 @@
       "Read(.env.local)"
     ]
   },
-  "mcpServers": {
-    "playwright": {
-      "command": "npx",
-      "args": ["@playwright/mcp@latest"]
-    },
+  "mcp": {
     "next-devtools": {
-      "command": "npx",
-      "args": ["next-devtools-mcp@latest"]
+      "type": "local",
+      "command": ["npx", "-y", "next-devtools-mcp@latest"],
+      "enabled": true
     },
     "shadcn": {
-      "command": "npx",
-      "args": ["shadcn@latest", "mcp"]
+      "type": "local",
+      "command": ["npx", "shadcn@latest", "mcp"],
+      "enabled": true
+    },
+    "playwright": {
+      "type": "local",
+      "command": ["npx", "@playwright/mcp@latest"],
+      "enabled": true
     }
   }
 }

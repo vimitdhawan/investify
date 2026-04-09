@@ -1,0 +1,20 @@
+{
+  "skill_name": "investify-testing",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I need to write unit tests for the calculateXIRR function in src/features/transactions/service.ts. This is a pure calculation function that takes an array of cash flows with dates and amounts, and returns an XIRR percentage. Write a complete test file with multiple test cases covering edge cases like single cash flow, positive returns, negative returns, and zero returns.",
+      "expected_output": "A complete src/features/transactions/service.test.ts file with no mocks (pure function), multiple test cases using describe/it blocks, Arrange-Act-Assert pattern, and jest matchers like toBeCloseTo for floating point comparisons"
+    },
+    {
+      "id": 2,
+      "prompt": "I want to add tests for the GoalService which has a getGoalProgress method. This method calls the GoalRepository to fetch goals, and the TransactionsRepository to fetch transactions, then calculates progress. Write unit tests that properly mock both repositories.",
+      "expected_output": "A complete service.test.ts file with jest.mock('./repository') at the top, jest.mock for other service dependencies, beforeEach clearing mocks, and tests following Arrange-Act-Assert pattern. Should NOT mock firebase since repository is mocked."
+    },
+    {
+      "id": 3,
+      "prompt": "Add tests for the GoalCard component. It should render the goal name and target amount, and call an onDelete callback when the delete button is clicked. The component uses useRouter from next/navigation.",
+      "expected_output": "A complete component.test.tsx file using render/screen from @testing-library/react, userEvent.setup() for interactions, getByRole queries, and proper async/await for user interactions. Should NOT mock useRouter since it's pre-mocked in jest.setup.js"
+    }
+  ]
+}
